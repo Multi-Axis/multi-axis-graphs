@@ -9,11 +9,27 @@ import (
 	"bufio"
 	"os"
 	"encoding/json"
+	"fmt"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
     t, _ := template.ParseFiles("zab.html")
     t.Execute(w, "testi")
+}
+
+func ghandler(w http.ResponseWriter, r *http.Request) {
+    t, _ := template.ParseFiles("graph.js")
+    t.Execute(w, "testi")
+}
+
+func dhandler(w http.ResponseWriter, r *http.Request) {
+    t, _ := template.ParseFiles("data_sample.txt")
+    t.Execute(w, "testi")
+}
+
+type TestZab struct {
+	clock int64
+	value float32
 }
 
 type TestJson struct {
@@ -28,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 	
-	rows, err := db.Query("SELECT name FROM hosts")
+	rows, err := db.Query("SELECT clock, value FROM history WHERE itemid = 23692 ORDER BY clock")
 	if err != nil {
             log.Fatal(err)
     	}
@@ -42,11 +58,13 @@ func main() {
 	// close fo on exit and check for its returned error
 
 	for rows.Next() {
-		var name string
-           	if err := rows.Scan(&name); err != nil {
+		var value float32
+		var clock int64
+           	if err := rows.Scan(&clock,&value); err != nil {
                     log.Fatal(err)
           	}
-          	m := TestJson{name,12345}
+          	fmt.Printf("%f\n", value)
+          	m := TestZab{clock,value}
           	b, err := json.Marshal(m)
        		if err != nil { panic(err) }
           	
@@ -59,7 +77,9 @@ func main() {
  	
 	defer fo.Close(); 
 	if err != nil { panic(err) }
-		
+	
+	http.HandleFunc("/data_sample.txt", dhandler)	
+	http.HandleFunc("/graph.js", ghandler)		
         http.HandleFunc("/", handler)
         http.ListenAndServe(":8080", nil)
 }
