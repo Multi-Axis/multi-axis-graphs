@@ -1,1 +1,5 @@
 language: go
+
+before_script:
+  - psql -c 'create database zabbix;' -U postgres
+  - psql zabbix < zabbix-db-dump
