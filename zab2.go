@@ -10,12 +10,32 @@ import (
 	"os"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"strconv"
 )
 
+var db sql.DB
+
 func handler(w http.ResponseWriter, r *http.Request) {
-    t, _ := template.ParseFiles("zab.html")
-    t.Execute(w, "testi")
-    fmt.Printf("%v testi",r.URL.Path)
+    url := r.URL.Path
+    if (strings.Contains(url, ":")) {
+        fmt.Printf("\nurl=%v",url)
+        ids := strings.Split(url, ":")
+        fmt.Printf("\nid=%v",ids[1])
+        //23672
+        id, err := strconv.Atoi(ids[1])
+        if err != nil {
+		log.Fatal(err)
+		}
+
+        dbquery(id)
+       	output := fmt.Sprintf("%v.txt",id)
+        t, _ := template.ParseFiles(output)
+        t.Execute(w, "testi")
+    } else {
+        t, _ := template.ParseFiles("zab.html")
+	t.Execute(w, "testi")
+    }
 }
 
 func ghandler(w http.ResponseWriter, r *http.Request) {
@@ -38,28 +58,26 @@ type TestJson struct {
 	Test int64
 }
 
-func main() {
-
+func dbquery(id int) {
 	db, err := sql.Open("postgres", "user=ohtu dbname=zabbix sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	rows, err := db.Query("SELECT clock, value FROM history WHERE itemid = 23672 ORDER BY clock")
+	query := fmt.Sprintf("SELECT clock, value FROM history WHERE itemid = %v ORDER BY clock",id)
+	rows, err := db.Query(query)
 	if err != nil {
             log.Fatal(err)
     	}
-    	
 	defer rows.Close()
-	fo, err := os.Create("testout.txt")
-	if err != nil { panic(err) }		
 	
+	output := fmt.Sprintf("%v.txt",id)
+	fo, err := os.Create(output)
+	if err != nil { panic(err) }		
+	defer fo.Close();
 	w := bufio.NewWriter(fo) 
 
-	//ssh -L 5432:localhost:5432 ohtu@85.23.130.197
-
 	// close fo on exit and check for its returned error
-	//fmt.Printf("test")
+
 	for rows.Next() {
 		var value string
 		var clock int64
@@ -71,7 +89,7 @@ func main() {
           	m := TestZab{value,clock}
           //	fmt.Printf("%v", m)
           	b, err := json.Marshal(m)
-		fmt.Printf("");
+	//	fmt.Printf("");
        		if err != nil { panic(err) }
           	
         	if _, err := w.Write(b); err != nil {
@@ -81,9 +99,10 @@ func main() {
 
  	if err = w.Flush(); err != nil { panic(err) }
  	
-	defer fo.Close(); 
-	if err != nil { panic(err) }
-	
+	if err != nil { panic(err) }	
+}
+
+func main() {
 	http.HandleFunc("/data_sample.txt", dhandler)	
 	http.HandleFunc("/graph.js", ghandler)		
         http.HandleFunc("/", handler)
