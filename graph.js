@@ -3,7 +3,7 @@ var allText = $.getJSON("http://localhost:8080/data_sample.txt", function(data) 
 });
 
 function draw(chartData) {
-    var width = 900;
+    var width = 800;
     var height = 700;
     var margin = {"left": 50, "right":20, "top": 30, "bottom":30};    
 
@@ -13,14 +13,14 @@ function draw(chartData) {
     var yMin = d3.min(chartData, function(d){return Math.min(d.val)});
     var yMax = d3.max(chartData, function(d){return Math.max(d.val)});
 
-    // console.log(" yMin: " + yMin + " ymax: " + yMax);
-
+    console.log(" yMin: " + yMin + " ymax: " + yMax + " " + chartData.length);
+	
     var xScale = d3.time.scale().domain([xMin, xMax]).range([margin.left, width - margin.right]);
 
-    var xAxisScale = d3.time.scale().domain([xMin,xMax]).range([0,width]);
-    var yScale = d3.scale.linear().domain([yMax,1]).range([10,height+margin.top])
+    var xAxisScale = d3.time.scale().domain([xMin,xMax]).range([margin.left,width]);
+    var yScale = d3.scale.linear().domain([(1.5*yMax),-3]).range([0,height+margin.top])
 
-    var valueFormat = (function(d) {return yScale(d.val)});
+    var valueFormat = (function(d) {return yScale(d.val) });
 
     var lineFunc = d3.svg.line()
                         .x(function(d, i) {return xScale(d.time)})
@@ -36,15 +36,15 @@ function draw(chartData) {
     var chartXAxis = d3.svg.axis()
                           .scale(xAxisScale)
                           .orient("bottom")
-                          .ticks(10)
-                          .tickFormat(function(d) { return d3.time.format('%b %d, %H : %M')(new Date(d)); });
+                          .ticks(30)
+                          .tickFormat(function(d) { return d3.time.format('%Y %b %d, %H : %M')(new Date(d)); });
 
 
     var chartYAxis = d3.svg.axis()
                           .scale(yScale)
                           .orient("left")
                           .ticks(7)
-                          .tickFormat(function(d) {return (d/1000000) + " MB"});
+                          .tickFormat(function(d) {return (d) + " MB"});
 
     svgContainer.append("g")
                 .attr("class", "axis")
