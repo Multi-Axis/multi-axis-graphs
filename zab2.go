@@ -24,11 +24,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
         fmt.Printf("\nurl=%v",url)
         ids := strings.Split(url, ":")
         fmt.Printf("\nid=%v",ids[1])
+        fmt.Printf("\nid2=%v",ids[2])
 //        fmt.Printf("\nid2=%v",ids[2])
         id, err := strconv.Atoi(ids[1])
+        
 //        id2, err2 := strconv.Atoi(ids[2])
         if (err == nil) {
-        	dbquery(id)
+        	dbquery(id,ids[2])
         }
 //	output := fmt.Sprintf("%v.txt",id) // this comment mess is alternate redirect to [id].txt
 //	t, _ := template.ParseFiles(output)
@@ -54,15 +56,16 @@ type TestZab struct {
 	Value float32	`json:"val"`
 }
 
-func dbquery(id int) {
+func dbquery(id int, id2 string) {
 
 	db, err := sql.Open("postgres", "user=ohtu dbname=multi-axis sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
 	
-	query := fmt.Sprintf("SELECT clock, value FROM history WHERE itemid = %v ORDER BY clock",id)
-//	query := fmt.Sprintf("SELECT clock, value FROM history LEFT JOIN items ON items.hostid=%v AND id=history.itemid WHERE history.itemid=%v ORDER BY clock",id,id2)
+	// query := fmt.Sprintf("SELECT clock, value FROM history WHERE itemid = %v ORDER BY clock",id)
+	// select value,clock from history where history.itemid in (select itemid from items where hostid = 10105 and key_ = 'vfs.fs.inode[/,pfree]');
+	query := fmt.Sprintf("SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = %v and key_ = '%v') ORDER BY clock", id, id2)
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -94,7 +97,7 @@ func dbquery(id int) {
 		if err := rows.Scan(&clock,&value); err != nil {
                     log.Fatal(err)
           	}
-			fmt.Printf("clock:%v\nvalue:%v\n", clock, value)
+			// fmt.Printf("clock:%v\nvalue:%v\n", clock, value)
           	m := TestZab{clock,value}
           	b, err := json.Marshal(m)
        		if err != nil { panic(err) }
