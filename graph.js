@@ -27,7 +27,7 @@ function draw(chartData) {
                         .y(valueFormat)
                         .interpolate("none");
 
-    var svgContainer = d3.select("body").append("svg:svg").attr("width", width).attr("height", height).append("svg:g");
+    var svgContainer = d3.select("div").append("svg:svg").attr("width", width).attr("height", height).append("svg:g");
 
     
     svgContainer.append("svg:path").attr("d",lineFunc(chartData)).attr("stroke","blue").attr("fill","none");
@@ -36,14 +36,14 @@ function draw(chartData) {
     var chartXAxis = d3.svg.axis()
                           .scale(xAxisScale)
                           .orient("bottom")
-                          .ticks(30)
+                          .ticks(5)
                           .tickFormat(function(d) { return d3.time.format('%Y %b %d, %H : %M')(new Date(d)); });
 
 
     var chartYAxis = d3.svg.axis()
                           .scale(yScale)
                           .orient("left")
-                          .ticks(7)
+                          .ticks(6)
                           .tickFormat(function(d) {return (d) + " MB"});
 
     svgContainer.append("g")
