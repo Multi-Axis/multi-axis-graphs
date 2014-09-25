@@ -24,7 +24,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
         fmt.Printf("\nurl=%v",url)
         ids := strings.Split(url, ":")
         fmt.Printf("\nid=%v",ids[1])
+//        fmt.Printf("\nid2=%v",ids[2])
         id, err := strconv.Atoi(ids[1])
+//        id2, err2 := strconv.Atoi(ids[2])
         if (err == nil) {
         	dbquery(id)
         }
@@ -32,7 +34,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 //	t, _ := template.ParseFiles(output)
 //	t.Execute(w, "testi")
     } //else {
-        t, _ := template.ParseFiles("zab.html")
+	t, _ := template.ParseFiles("zab.html")
 	t.Execute(w, "testi")
     //}
 }
@@ -60,22 +62,27 @@ func dbquery(id int) {
 	}
 	
 	query := fmt.Sprintf("SELECT clock, value FROM history WHERE itemid = %v ORDER BY clock",id)
+//	query := fmt.Sprintf("SELECT clock, value FROM history LEFT JOIN items ON items.hostid=%v AND id=history.itemid WHERE history.itemid=%v ORDER BY clock",id,id2)
+
 	rows, err := db.Query(query)
 	if err != nil {
             log.Fatal(err)
     	}
-    	
-	defer rows.Close() // close fo on exit and check for its returned error
+
+// close fo on exit and check for its returned error
+	defer rows.Close()
 	
 //	output := fmt.Sprintf("%v.txt",id) 	// will instead output
 //	fo, err := os.Create(output) 		// into [id].txt
 
 	fo, err := os.Create("data_sample.txt") //output file
 	if err != nil { panic(err) }	
+
+// close fo on exit and check for its returned error	
+	defer fo.Close(); 
 	
-	defer fo.Close(); // close fo on exit and check for its returned error
-	
-	w := bufio.NewWriter(fo) // file writer with a buffer cuz hueg!!! database
+// file writer with a buffer cuz hueg!!! database
+	w := bufio.NewWriter(fo) 
        	if _, err := w.Write([]byte("[")); err != nil {
        	    panic(err)
        	}
@@ -87,7 +94,7 @@ func dbquery(id int) {
 		if err := rows.Scan(&clock,&value); err != nil {
                     log.Fatal(err)
           	}
-//		fmt.Printf("clock:%v\nvalue:%v\n", clock, value)
+			fmt.Printf("clock:%v\nvalue:%v\n", clock, value)
           	m := TestZab{clock,value}
           	b, err := json.Marshal(m)
        		if err != nil { panic(err) }
@@ -104,7 +111,8 @@ func dbquery(id int) {
 	if _, err := w.Write([]byte("]")); err != nil {
        	    panic(err)
        	}
- 	if err = w.Flush(); err != nil { panic(err) } // buffer emptiness check thingy
+// buffer emptiness check thingy
+ 	if err = w.Flush(); err != nil { panic(err) } 
  	
 	if err != nil { panic(err) }	
 }
@@ -112,6 +120,7 @@ func dbquery(id int) {
 func main() {
 	http.HandleFunc("/data_sample.txt", dhandler)	
 	http.HandleFunc("/graph.js", ghandler)		
-        http.HandleFunc("/", handler)
-        http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/metric/", handler)
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
 }
