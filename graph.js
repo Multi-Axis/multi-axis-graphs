@@ -17,8 +17,8 @@ function draw(chartData) {
 
     var xScale = d3.time.scale().domain([xMin, xMax]).range([margin.left, width - margin.right]);
 
-    var xAxisScale = d3.time.scale().domain([xMin,xMax]).range([0,width]);
-    var yScale = d3.scale.linear().domain([yMax,1]).range([10,height+margin.top])
+    var xAxisScale = d3.time.scale().domain([xMin,xMax]).range([margin.left,width]);
+    var yScale = d3.scale.linear().domain([yMax,1]).range([margin.bottom,height+margin.top])
 
     var valueFormat = (function(d) {return yScale(d.val)});
 
@@ -37,7 +37,7 @@ function draw(chartData) {
                           .scale(xAxisScale)
                           .orient("bottom")
                           .ticks(10)
-                          .tickFormat(function(d) { return d3.time.format('%b %d, %H : %M')(new Date(d)); });
+                          .tickFormat(function(d) { return d3.time.format('%b %d, %H:%M')(new Date(d)); });
 
 
     var chartYAxis = d3.svg.axis()
