@@ -47,7 +47,7 @@ func ghandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func dhandler(w http.ResponseWriter, r *http.Request) {
-    t, _ := template.ParseFiles("data_sample.txt")
+    t, _ := template.ParseFiles("metric/data_sample.txt")
     t.Execute(w, "testi")
 }
 
@@ -78,7 +78,7 @@ func dbquery(id int, id2 string) {
 //	output := fmt.Sprintf("%v.txt",id) 	// will instead output
 //	fo, err := os.Create(output) 		// into [id].txt
 
-	fo, err := os.Create("data_sample.txt") //output file
+	fo, err := os.Create("metric/data_sample.txt") //output file
 	if err != nil { panic(err) }	
 
 // close fo on exit and check for its returned error	
@@ -124,6 +124,6 @@ func main() {
 	http.HandleFunc("/data_sample.txt", dhandler)	
 	http.HandleFunc("/graph.js", ghandler)		
 	http.HandleFunc("/metric/", handler)
-	http.HandleFunc("/", handler)
+//	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
