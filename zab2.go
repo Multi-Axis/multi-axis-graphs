@@ -127,9 +127,10 @@ func dbquery(id int, id2 string) {
 
 func main() {
 	http.HandleFunc("/data_sample.txt", dhandler)	
-	http.HandleFunc("/metric/graph.js", ghandler)		
-	http.HandleFunc("/metric/", handler)
+//	http.HandleFunc("/metric/graph.js", ghandler)		
+	http.HandleFunc("/graph.js", ghandler)		
+//	http.HandleFunc("/metric/", handler)
+	http.HandleFunc("/", handler)
 	http.HandleFunc("/dashboard", bhandler)
-//	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
