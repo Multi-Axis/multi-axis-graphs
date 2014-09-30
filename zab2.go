@@ -70,7 +70,6 @@ func dbquery(id int, id2 string) {
 	
 	// query := fmt.Sprintf("SELECT clock, value FROM history WHERE itemid = %v ORDER BY clock",id)
 	// select value,clock from history where history.itemid in (select itemid from items where hostid = 10105 and key_ = 'vfs.fs.inode[/,pfree]');
-//	query := fmt.Sprintf("SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = %v and key_ = '%v') ORDER BY clock", id, id2)
 
 	rows, err := db.Query(`SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock`, id, id2)
 //	rows, err := db.Query(query)
