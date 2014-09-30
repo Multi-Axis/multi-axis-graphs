@@ -46,8 +46,13 @@ func ghandler(w http.ResponseWriter, r *http.Request) {
     t.Execute(w, "testi")
 }
 
+func bhandler(w http.ResponseWriter, r *http.Request) {
+    t, _ := template.ParseFiles("dash.html")
+    t.Execute(w, "testi")
+}
+
 func dhandler(w http.ResponseWriter, r *http.Request) {
-    t, _ := template.ParseFiles("metric/data_sample.txt")
+    t, _ := template.ParseFiles("data_sample.txt")
     t.Execute(w, "testi")
 }
 
@@ -65,9 +70,10 @@ func dbquery(id int, id2 string) {
 	
 	// query := fmt.Sprintf("SELECT clock, value FROM history WHERE itemid = %v ORDER BY clock",id)
 	// select value,clock from history where history.itemid in (select itemid from items where hostid = 10105 and key_ = 'vfs.fs.inode[/,pfree]');
-	query := fmt.Sprintf("SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = %v and key_ = '%v') ORDER BY clock", id, id2)
+//	query := fmt.Sprintf("SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = %v and key_ = '%v') ORDER BY clock", id, id2)
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(`SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock`, id, id2)
+//	rows, err := db.Query(query)
 	if err != nil {
             log.Fatal(err)
     	}
@@ -78,7 +84,7 @@ func dbquery(id int, id2 string) {
 //	output := fmt.Sprintf("%v.txt",id) 	// will instead output
 //	fo, err := os.Create(output) 		// into [id].txt
 
-	fo, err := os.Create("metric/data_sample.txt") //output file
+	fo, err := os.Create("data_sample.txt") //output file
 	if err != nil { panic(err) }	
 
 // close fo on exit and check for its returned error	
@@ -122,8 +128,9 @@ func dbquery(id int, id2 string) {
 
 func main() {
 	http.HandleFunc("/data_sample.txt", dhandler)	
-	http.HandleFunc("/graph.js", ghandler)		
+	http.HandleFunc("/metric/graph.js", ghandler)		
 	http.HandleFunc("/metric/", handler)
+	http.HandleFunc("/dashboard", bhandler)
 //	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
