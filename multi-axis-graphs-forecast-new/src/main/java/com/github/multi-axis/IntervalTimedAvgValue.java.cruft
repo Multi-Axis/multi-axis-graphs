@@ -1,0 +1,98 @@
+package com.github.multi-axis;
+
+import static fj.Ordering;
+import static fj.Ord;
+//import static fj.Monoid;
+
+public abstract class IntervalTimedValue<T,V,OT> {
+
+  //===========================================================================
+  //  Public.
+  //===========================================================================
+
+  /**
+   * Constructor method. Produces an Itav(from, to, val) if 'from' is less or
+   * equal to 'to' and if 'val' is only zero if 'from' equals 'to'. Otherwise
+   * produces an ItavError(from, to, val).
+   */
+
+  public static < T, V,
+                  OT extends Ord<T>>
+                IntervalTimedAvgValue<T,V,OT> 
+    itav(T from, T to, V val, OT ordT) {
+
+      return validateItav(from, to, val, ordT);
+  }
+
+  public interface ItavMatch<T,V,R> {
+
+    public R caseItav(T from, T to, V val);
+
+    public R caseItavError(T from, T to, V val);
+  }
+
+  public abstract <R> R runMatch(ItavMatch<T,V,R> m);
+
+
+
+  //===========================================================================
+  //  Private.
+  //===========================================================================
+
+  private static <  T, V,
+                    OT extends Ord<T>>
+                 IntervalTimedAvgValue<T,V,OT>
+    validateItav(T from, T to, V val, OT ordT) {
+
+      final Ordering o = ordT.compare(from,to);
+
+      if  ( o == GT ) {
+
+        return new ItavError<T,V,OT>(from,to,val);
+
+      } else {
+
+        return new Itav<T,V,OT>(from,to,val);
+      }
+  }
+
+  private static final class Itav<T,V,OT> 
+    extends IntervalTimedAvgValue<T,V,OT> {
+    
+    private final T from;
+    private final T to;
+    private final V val;
+
+    public Itav<T,V,OT>(from,to,val) {
+      this.from = from;
+      this.to   = to;
+      this.val  = val;
+    }
+
+    public <R> R runMatch(ItavMatch<T,V,R> m) {
+      return m.caseItav(from,to,val);
+    }
+  }
+
+  private static final class ItavError<T,V,OT> 
+    extends IntervalTimedAvgValue<T,V,OT> {
+    
+    private final T from;
+    private final T to;
+    private final V val;
+
+    public ItavError<T,V,OT>(from,to,val) {
+      this.from = from;
+      this.to   = to;
+      this.val  = val;
+    }
+
+    public <R> R runMatch(ItavMatch<T,V,R> m) {
+      return m.caseItavError(from,to,val);
+    }
+  }
+
+  private IntervalTimedAvgValue<T,V,OT>() {
+  }
+
+}
