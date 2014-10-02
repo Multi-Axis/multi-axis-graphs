@@ -1,0 +1,35 @@
+.hosts {
+   float:left;
+   font-size:200%;
+   margin-top:3em;
+}
+.overview {
+   border-spacing:0;
+}
+.overview tr {
+   height:3em;
+}
+.overview th {
+   padding:0 0.5em;
+}
+.overview td {
+   text-align:center;
+}
+.overview td span {
+   padding:0.5em 1em;
+   border:1px solid gray;
+   border-radius:3px;
+   text-align:center;
+}
+.overview .high {
+   background:yellow;
+}
+.overview .warn {
+   background:orange;
+}
+.overview .critical {
+   background:red;
+}
+.overview td:nth-child(2) {
+   border-right:1px solid black;
+}
