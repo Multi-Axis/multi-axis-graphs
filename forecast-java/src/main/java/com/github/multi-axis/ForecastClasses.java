@@ -1,7 +1,6 @@
 package com.github.multi-axis;
 
 //TODO write Matcher interfaces and add runMatch methods.
-//TODO remove Stringy parser methods.
 
 public abstract class ForecastClasses {
 
@@ -74,75 +73,6 @@ public abstract class ForecastClasses {
     
     private ForecastFunction() {}
   }
-
-  public static abstract class ForecastValueParser<V> {
-
-    private static final class Zab0ValueParser
-      extends ForecastValueParser<Zab0> {
-
-      // TODO handle exceptions
-      private BigDecimal parse(String s) {
-        return new BigDecimal(s)
-      }
-
-      public Zab0ValueParser() {}
-    }
-
-    private static final class Zab3ValueParser
-      extends ForecastValueParser<Zab3> {
-
-      // TODO handle exceptions
-      private BigDecimal parse(String s) {
-        return new BigDecimal(s)
-      }
-
-      public Zab3ValueParser() {}
-    }
-
-    public static final ForecastValueParser<Zab0> zab0ValParser() {
-      return new Zab0ValueParser();
-    }
-
-    public static final ForecastValueParser<Zab3> zab3ValParser() {
-      return new Zab3ValueParser();
-    }
-
-    private ForecastValueParser() {}
-  }
-
-  public static abstract class ForecastValuePrinter<V> {
-
-    private static final class Zab0ValuePrinter
-      extends ForecastValuePrinter<Zab0> {
-
-      private F<BigDecimal,String> print =
-        (value)  -> //TODO implement
-      }
-
-      public Zab0ValuePrinter() {}
-    }
-
-    private static final class Zab3ValuePrinter
-      extends ForecastValuePrinter<Zab3> {
-
-      private F<BigDecimal,String> print =
-        (value)  -> //TODO implement
-      }
-
-      public Zab3ValuePrinter() {}
-    }
-
-    public ForecastValuePrinter<Zab0> zab0ValPrinter() {
-      return new Zab0ValuePrinter();
-    }
-
-    public ForecastValuePrinter<Zab3> zab3ValPrinter() {
-      return new Zab3ValuePrinter();
-    }
-
-    private ForecastValuePrinter() {}
-  }
-
 
 
   // TODO THINK Are these actually not needed? I just need to wrap
