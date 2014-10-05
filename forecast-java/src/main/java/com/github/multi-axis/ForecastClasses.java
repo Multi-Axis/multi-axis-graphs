@@ -75,39 +75,6 @@ public abstract class ForecastClasses {
   }
 
 
-  // TODO THINK Are these actually not needed? I just need to wrap
-  // e.g. String -> BigDecimal in their own parametric wrappers!
-  public static abstract class ForecastValue<V> {
-
-    private static final class Zab0Value extends ForecastValue<Zab0> {
-
-      private final BigDecimal value;
-
-      public Zab0Value(final BigDecimal value) {
-        this.value = value;
-      }
-    }
-
-    private static final class Zab3Value extends ForecastValue<Zab3> {
-
-      private final BigDecimal value;
-
-      public Zab3Value(final BigDecimal value) {
-        this.value = value;
-      }
-    }
-
-    private ForecastValue() {}
-  }
-
-  public static final ForecastValue<Zab0> zab0val(BigDecimal value) {
-    return new ForecastValue.Zab0Value(value);
-  }
-  public static final ForecastValue<Zab3> zab3val(BigDecimal value) {
-    return new ForecastValue.Zab3Value(value);
-  }
-  
-
   private ForecastClasses() {}
 
 }
