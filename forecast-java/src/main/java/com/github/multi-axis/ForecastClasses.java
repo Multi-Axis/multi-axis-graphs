@@ -1,6 +1,7 @@
 package com.github.multi-axis;
 
 //TODO write Matcher interfaces and add runMatch methods.
+//TODO write exception handling Validation methods for proper creation of JsonReaders
 
 public abstract class ForecastClasses {
 
