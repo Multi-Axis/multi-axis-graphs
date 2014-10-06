@@ -30,6 +30,7 @@
 .overview .critical {
    background:red;
 }
-.overview td:nth-child(2) {
+.overview td:nth-child(2),
+.overview th:nth-child(2) {
    border-right:1px solid black;
 }
