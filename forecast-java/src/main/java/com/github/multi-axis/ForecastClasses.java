@@ -1,7 +1,11 @@
-package com.github.multi-axis;
+package com.github.multi_axis;
 
-//TODO write Matcher interfaces and add runMatch methods.
-//TODO write exception handling Validation methods for proper creation of JsonReaders
+import java.math.BigDecimal;
+
+import fj.F;
+import fj.data.List;
+
+//TODO Write Matcher interfaces and add runMatch methods.
 
 public abstract class ForecastClasses {
 
@@ -22,7 +26,7 @@ public abstract class ForecastClasses {
     }
   }
 
-  public static TimedValue<V> timedVal(long clock, V value) {
+  public static <V> TimedValue<V> timedVal(long clock, V value) {
     return new TimedValue(clock, value);
   }
 
@@ -64,7 +68,7 @@ public abstract class ForecastClasses {
         this.func = func;
       }
 
-      public ForecastFunction<Zab0> zab3FcastFunc(
+      public ForecastFunction<Zab3> zab3FcastFunc(
         final F<List<TimedValue<BigDecimal>>,
                 List<TimedValue<BigDecimal>>> func) {
 
@@ -74,6 +78,7 @@ public abstract class ForecastClasses {
     
     private ForecastFunction() {}
   }
+
 
 
   private ForecastClasses() {}
