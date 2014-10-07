@@ -2,7 +2,9 @@ package com.github.multi_axis;
 
 import java.math.BigDecimal;
 import java.lang.Long;
+import java.math.RoundingMode;
 
+import fj.F;
 import fj.data.Option;
 import fj.data.List;
 import fj.data.Validation;
@@ -12,8 +14,10 @@ import fj.data.Java;
 
 import javax.json.Json;
 import javax.json.JsonReader;
+import javax.json.JsonValue;
 import javax.json.JsonObject;
 import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonNumber;
 
 import javax.json.stream.JsonParsingException;
@@ -28,12 +32,18 @@ import static fj.data.Java.JUList_List;
 //import static fj.data.IOFunctions.lazy;
 
 import static javax.json.Json.createReader;
+import static javax.json.Json.createObjectBuilder;
+import static javax.json.Json.createArrayBuilder;
 
 import static com.github.multi_axis.Errors.*;
 import static com.github.multi_axis.ForecastClasses.timedVal;
 
 public abstract class JsonUtils {
 
+
+  //---------------------------------------------------------------------------
+  //  READING
+  //---------------------------------------------------------------------------
 
   public static final IO<Validation<Errors, List<TimedValue<BigDecimal>>>>
     readZab0Or3Json() {
@@ -128,13 +138,72 @@ public abstract class JsonUtils {
   }
 
   private static final Validation<Errors,JsonArray>
-    zab0Or3Clocks(Validation<Errors,JsonObject> jsonObjV) {
+    zab0Or3Clocks(final Validation<Errors,JsonObject> jsonObjV) {
       try {
         return jsonObjV.map(jsonObj  -> jsonObj.getJsonArray("clocks"));
       } catch (ClassCastException e) {
         return fail(notJsonArray(e));
       }
   }
+
+  //---------------------------------------------------------------------------
+  //  WRITING
+  //---------------------------------------------------------------------------
+
+  public static F<BigDecimal,BigDecimal> zab0ify =
+    val  -> val.setScale(4, RoundingMode.HALF_EVEN);
+
+  public static F<BigDecimal,BigDecimal> zab3ify =
+    val  -> val.setScale(0, RoundingMode.HALF_EVEN);
+
+  public static F<BigDecimal,BigDecimal> clockify =
+    val  -> val.setScale(0, RoundingMode.HALF_EVEN);
+
+  public static JsonArray bigDecimalJsonArray(final List<BigDecimal> vals) {
+    final JsonArrayBuilder b = createArrayBuilder();
+    for (BigDecimal val : vals) {
+      b.add(val);
+    }
+    return b.build();
+  }
+
+  public static JsonArray longJsonArray(final List<Long> vals) {
+    final JsonArrayBuilder b = createArrayBuilder();
+    for (Long val : vals) {
+      b.add(val.longValue());
+    }
+    return b.build();
+  }
+
+
+  //TODO THINK should details also be a Validation?
+  public static final JsonObject
+    timedValsDetailsJson(
+      Validation<Errors,List<TimedValue<BigDecimal>>> timedValsV,
+      F<BigDecimal,BigDecimal>                        valFormat,
+      JsonValue                                       details) {
+
+        //  TODO THINK something cleverer?
+        final F<Errors,JsonObject> onFail = 
+          fail  -> createObjectBuilder().add("error","error").build();
+
+        final F<List<TimedValue<BigDecimal>>,JsonObject> onSuccess =
+          success  -> createObjectBuilder()
+          .add(
+            "clocks",
+            longJsonArray(
+              success.map(tv  -> Long.valueOf(tv.clock))))
+          .add(
+            "values",
+            bigDecimalJsonArray(
+              success.map(tv  -> tv.value).map(valFormat)))
+          .add("details",details)
+          .build();
+
+        return timedValsV.validation(onFail,onSuccess);
+  }
+
+
 
   private JsonUtils() {}
 
