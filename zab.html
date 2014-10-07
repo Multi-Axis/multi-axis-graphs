@@ -8,21 +8,21 @@
     </head>
     <style type="text/css">
         
-        .futureAxis path,
-        .futureAxis line {
+        
+        .futureAxis path, line {
             fill: none;
             stroke: red;
             shape-rendering: crispEdges;
         }
-        .futureAxis text {
-            font-family: sans-serif;
-            font-size: 11px;
-        }
-        .axis path,
-        .axis line {
+       
+        .axis, .axisleft path, line {
             fill: none;
             stroke: black;
             shape-rendering: crispEdges;
+        }
+        .axis, .axisleft, .futureAxis text {
+            font-family: sans-serif;
+            font-size: 11px;
         }
         .axis text {
             font-family: sans-serif;
@@ -33,10 +33,13 @@
         <H1>Graph demo v0.2 (now with forecasting!)</H1>
         <table>
             <tr>
-                <td><form action="http://localhost:8080/:10105:vfs.fs.inode%5B%2F%2Cpfree%5D"><input type="submit" value="Free inodes"></form></td>
-                <td><form action="http://localhost:8080/:10105:vfs.fs.size%5B%2F%2Cpfree%5D"><input type="submit" value="Free disk space"></form></td>
-                <td><form action="http://localhost:8080/:10105:system.cpu.util%5B%2Cidle%5D"><input type="submit" value="Idle time"></form></td>
-                <td><form action="http://localhost:8080/:10105:system.swap.size%5B%2Cpfree%5D"><input type="submit" value="Free swap space"></form></td>          
+                
+                <td><form action="http://localhost:8080/%3A10105%3Asystem.cpu.load%5Bpercpu%2Cavg1%5D"><input type="submit" value="cpu load"></form></td>
+                <td><form action="http://localhost:8080/%3A10105%3Avfs.fs.inode%5B%2Fboot%2Cpfree%5D"><input type="submit" value="Free inodes"></form></td>
+                <td><form action="http://localhost:8080/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D"><input type="submit" value="Free disk space"></form></td>
+                <td><form action="http://localhost:8080/%3A10105%3Asystem.cpu.util%5B%2Csystem%5D"><input type="submit" value="Idle time"></form></td>
+                <td><form action="http://localhost:8080/%3A10105%3Asystem.swap.size%5B%2Cpfree%5D"><input type="submit" value="Free swap space"></form></td> 
+                <button id="newGraph">Append</button>        
             </tr>
         </table>
         <br><br>
