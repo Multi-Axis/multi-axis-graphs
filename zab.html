@@ -4,17 +4,14 @@
         <meta charset="utf-8">
         <title>Multi-Axis</title>
         <script src="http://d3js.org/d3.v3.min.js"></script>
-	<script src="http://jqueryjs.googlecode.com/files/jquery-1.3.2.js"></script>        
+        <script src="http://jqueryjs.googlecode.com/files/jquery-1.3.2.js"></script>
     </head>
     <style type="text/css">
-        
-        
         .futureAxis path, line {
             fill: none;
             stroke: red;
             shape-rendering: crispEdges;
         }
-       
         .axis, .axisleft path, line {
             fill: none;
             stroke: black;
@@ -31,18 +28,13 @@
     </style>
     <body>
         <H1>Graph demo v0.2 (now with forecasting!)</H1>
-        <table>
-            <tr>
-                
-                <td><form action="http://localhost:8080/%3A10105%3Asystem.cpu.load%5Bpercpu%2Cavg1%5D"><input type="submit" value="cpu load"></form></td>
-                <td><form action="http://localhost:8080/%3A10105%3Avfs.fs.inode%5B%2Fboot%2Cpfree%5D"><input type="submit" value="Free inodes"></form></td>
-                <td><form action="http://localhost:8080/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D"><input type="submit" value="Free disk space"></form></td>
-                <td><form action="http://localhost:8080/%3A10105%3Asystem.cpu.util%5B%2Csystem%5D"><input type="submit" value="Idle time"></form></td>
-                <td><form action="http://localhost:8080/%3A10105%3Asystem.swap.size%5B%2Cpfree%5D"><input type="submit" value="Free swap space"></form></td> 
-                <button id="newGraph">Append</button>        
-            </tr>
-        </table>
-        <br><br>
+        <a href="/%3A10105%3Asystem.cpu.load%5Bpercpu%2Cavg1%5D">cpu load</a>
+        <a href="/%3A10105%3Avfs.fs.inode%5B%2Fboot%2Cpfree%5D">Free inodes</a>
+        <a href="/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D">Free disk space</a>
+        <a href="/%3A10105%3Asystem.cpu.util%5B%2Csystem%5D">Idle time</a>
+        <a href="/%3A10105%3Asystem.swap.size%5B%2Cpfree%5D">Free swap space</a>
+        <button id="newGraph">Append</button>
+        <br/>
         <div></div>
         <script src="graph.js"></script>
     </body>

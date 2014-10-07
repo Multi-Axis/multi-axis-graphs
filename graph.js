@@ -3,8 +3,7 @@ var height = 700;
 var margin = {"left": 50, "right":40, "top": 30, "bottom":30};
 var svgContainer = d3.select("div").append("svg:svg").attr("width", width).attr("height", height);
 var rightData;
-var historyXScale;
-var chartYAxis = d3.svg.axis();
+var xScale;
 
 $.getJSON(window.location.href, function(data) {
 	draw(data.history, data.future, svgContainer);
@@ -12,85 +11,73 @@ $.getJSON(window.location.href, function(data) {
     // console.log(JSON.stringify(allData))
 })
 
+var timeFormat = function(d) {
+  var date = new Date(0);
+  date.setUTCSeconds(d);
+  return d3.time.format('%Y %b %d, %H : %M')(date);
+};
+
 function draw(leftGrapHistoryhData, leftGraphFutureData, svgContainer) {
-    
-        
-    var today = (width * (2/3) ) - margin.right;
 
-    var historyXMin = d3.min(leftGrapHistoryhData, function(d){return Math.min(d.time)});
-    var historyXMax = d3.max(leftGrapHistoryhData, function(d){return Math.max(d.time)});
-    var historyYMin = d3.min(leftGrapHistoryhData, function(d){return Math.min(d.val)});
-    var historyYMax = d3.max(leftGrapHistoryhData, function(d){return Math.max(d.val)});
-    historyXScale = d3.time.scale().domain([historyXMin, historyXMax]).range([margin.left, today]);
+    // x scale
+    xScale = d3.time.scale()
+      .domain( d3.extent(leftGrapHistoryhData.concat(leftGraphFutureData),
+            function(d) { return d.time; }))
+      .range([margin.left, width - margin.right]);
 
-    var futureYMin = d3.min(leftGraphFutureData, function(d){return Math.min(d.val)});
-    var futureYMax = d3.max(leftGraphFutureData, function(d){return Math.max(d.val)});
-    var futureXMin = d3.min(leftGraphFutureData, function(d){return Math.min(d.time)});
-    var futureXMax = d3.max(leftGraphFutureData, function(d){return Math.max(d.time)});
-    var futureXScale = d3.time.scale().domain([futureXMin, futureXMax]).range([today, width - margin.right]);
+    // y scale
+    var historyYMin = d3.min(leftGrapHistoryhData, function(d){ return d.val });
+    var historyYMax = d3.max(leftGrapHistoryhData, function(d){ return d.val });
+    var futureYMin  = d3.min(leftGraphFutureData, function(d){ return d.val });
+    var futureYMax  = d3.max(leftGraphFutureData, function(d){ return d.val });
 
     var yMin = Math.min(historyYMin, futureYMin);
-    var yMax = (Math.max(historyYMax, futureYMax));
-    var yScale = d3.scale.linear().domain([(1.5*yMax),(yMin-30)]).range([0,height+margin.top])
+    var yMax = Math.max(historyYMax, futureYMax);
+
+    var yScale = d3.scale.linear()
+      .domain([1.1 * yMax, yMin - 1])
+      .range([margin.bottom, height - margin.top]);
 
     var historyGraphFunc = d3.svg.line()
-                                .x(function(d, i) {return historyXScale(d.time)})
-                                .y(function(d) {return yScale(d.val) })
+                                .x(function(d, i) { return xScale(d.time); })
+                                .y(function(d) { return yScale(d.val); })
                                 .interpolate("none");
 
     var futureGraphFunc = d3.svg.line()
-                                .x(function(d, i) {return futureXScale(d.time)})
-                                .y(function(d) {return yScale(d.val) })
+                                .x(function(d, i) { return xScale(d.time); })
+                                .y(function(d) { return yScale(d.val); })
                                 .interpolate("none");
 
-    
-    svgContainer.append("svg:path").attr("d", historyGraphFunc(leftGrapHistoryhData)).attr("stroke","blue").attr("fill","none");
-    svgContainer.append("svg:path").attr("d", futureGraphFunc(leftGraphFutureData)).attr("stroke","red").attr("fill","none")
+    svgContainer
+      .append("svg:path")
+      .attr("d", historyGraphFunc(leftGrapHistoryhData)).attr("stroke","blue").attr("fill","none");
 
-    var timeFormat = function(d) { 
-                                    var date = new Date(0);
-                                    date.setUTCSeconds(d);
-                                    return d3.time.format('%Y %b %d, %H : %M')(date);
-                                };
-    var chartXAxis = d3.svg.axis()
-                          .scale(historyXScale)
-                          .orient("bottom")
-                          .ticks(5)
-                          .tickFormat(timeFormat);
+    svgContainer
+      .append("svg:path")
+      .attr("d", futureGraphFunc(leftGraphFutureData)).attr("stroke","red").attr("fill","none");
 
-    var futureXAxis = d3.svg.axis()
-                          .scale(futureXScale)
-                          .orient("bottom")
-                          .ticks(3)
-                          .tickFormat(timeFormat)
+    var xAxis = d3.svg.axis()
+      .scale(xScale)
+      .orient("bottom")
+      .ticks(5)
+      .tickFormat(timeFormat);
 
-    
-    chartYAxis 
-                .scale(yScale)
-                .orient("left")
-                .ticks(6)
-                .tickFormat(function(d) {return (d)});
+    var yAxis = d3.svg.axis()
+      .scale(yScale)
+      .orient("left")
+      .ticks(6)
+      .tickFormat(function(d) { return d });
 
     svgContainer.append("g")
                 .attr("class", "axisleft")
                 .attr("transform", "translate("+ margin.left +",0)")
-                .call(chartYAxis);
+                .call(yAxis);
+
     svgContainer.append("g")
                 .attr("class", "axis")
                 .attr("transform", "translate(0," + (height-margin.bottom) + ")")
-                .call(chartXAxis);
-    svgContainer.append("g")
-                .attr("class", "futureAxis")
-                .attr("transform", "translate(" + 0 + "," + (height-margin.bottom) + ")")
-                .call(futureXAxis);
-    
+                .call(xAxis);
 }
-var jep = [{"time":1410504532,"val":703299584},{"time":1410505432,"val":702693376},{"time":1410506332,"val":702554112},{"time":1410507232,"val":702599168},{"time":1410508132,"val":699523072},{"time":1410509032,"val":699486208},{"time":1410509932,"val":699416576},{"time":1410510832,"val":697577472},{"time":1410511732,"val":695443456},{"time":1410512632,"val":696094720},{"time":1410513532,"val":695652352},{"time":1410514432,"val":697257984},{"time":1410515332,"val":696016896},{"time":1410516232,"val":695922688},{"time":1410517132,"val":695873536},{"time":1410518032,"val":695894016},{"time":1410518932,"val":698667008},{"time":1410519832,"val":698626048},{"time":1410520732,"val":698601472},{"time":1410521632,"val":693342208},{"time":1410522532,"val":698564608},{"time":1410523432,"val":698548224},{"time":1410524332,"val":698515456},{"time":1410525232,"val":698429440},{"time":1410526132,"val":698441728},{"time":1410527032,"val":698408960},{"time":1410527932,"val":698486784},{"time":1410528832,"val":698368000},{"time":1410529732,"val":698433536},{"time":1410530632,"val":698802176},{"time":1410531532,"val":698757120},{"time":1410532432,"val":698707968},{"time":1410533332,"val":698679296},{"time":1410534232,"val":698560512},{"time":1410535132,"val":698597376},{"time":1410536032,"val":698556416},{"time":1410536932,"val":698413056},{"time":1410537832,"val":698458112},{"time":1410538732,"val":698421248},{"time":1410539632,"val":698417152},{"time":1410540532,"val":698339328},{"time":1410541432,"val":698224640},{"time":1410542332,"val":698118144},{"time":1410543232,"val":696213504},{"time":1410544132,"val":697843712},{"time":1410545032,"val":697815040},{"time":1410545932,"val":697786368},{"time":1410546832,"val":697774080},{"time":1410547732,"val":697667584},{"time":1410548632,"val":697741312},{"time":1410549532,"val":697647104},{"time":1410550432,"val":697765888},{"time":1410551332,"val":697667584},{"time":1410552232,"val":697638912},{"time":1410553072,"val":697757696},{"time":1410553972,"val":697704448},{"time":1410554872,"val":697630720},{"time":1410555772,"val":697548800},{"time":1410556672,"val":697487360},{"time":1410557572,"val":697470976},{"time":1410558472,"val":697430016},{"time":1410559372,"val":697323520},{"time":1410560272,"val":697253888},{"time":1410561172,"val":697294848},{"time":1410562072,"val":697167872},{"time":1410562972,"val":697131008},{"time":1410563872,"val":697090048},{"time":1410564772,"val":697073664},{"time":1410565672,"val":697155584},{"time":1410566572,"val":697131008},{"time":1410567472,"val":697147392},{"time":1410568372,"val":697094144},{"time":1410569272,"val":697073664},{"time":1410570172,"val":697040896},{"time":1410571072,"val":697044992},{"time":1410571972,"val":697118720},{"time":1410572872,"val":696934400},{"time":1410573772,"val":696954880},{"time":1410574672,"val":696934400},{"time":1410575572,"val":696999936},{"time":1410576472,"val":697008128},{"time":1410577372,"val":696987648},{"time":1410578272,"val":696893440},{"time":1410579172,"val":696967168},{"time":1410580072,"val":696881152},{"time":1410580972,"val":696950784},{"time":1410581872,"val":696905728},{"time":1410582772,"val":696934400},{"time":1410583672,"val":696885248},{"time":1410584572,"val":696594432},{"time":1410585472,"val":696848384},{"time":1410586372,"val":696811520},{"time":1410587272,"val":696684544},{"time":1410588172,"val":696696832},{"time":1410589072,"val":696619008},{"time":1410589972,"val":696643584},{"time":1410590872,"val":696504320},{"time":1410591772,"val":696504320},{"time":1410592672,"val":696426496},{"time":1410593572,"val":696336384},{"time":1410594472,"val":696340480},{"time":1410595372,"val":696242176},{"time":1410596272,"val":696184832},{"time":1410597172,"val":696197120},{"time":1410598072,"val":696160256},{"time":1410598972,"val":696156160},{"time":1410599872,"val":696221696},{"time":1410600772,"val":696193024},{"time":1410601672,"val":696188928},{"time":1410602512,"val":696180736},{"time":1410603412,"val":696246272},{"time":1410604312,"val":696213504},{"time":1410605212,"val":691343360},{"time":1410606112,"val":696193024},{"time":1410607012,"val":696123392},{"time":1410607912,"val":696057856},{"time":1410608812,"val":696057856},{"time":1410609712,"val":697151488},{"time":1410610612,"val":695910400},{"time":1410611512,"val":694882304},{"time":1410612412,"val":695607296},{"time":1410613312,"val":695709696},{"time":1410614212,"val":695631872},{"time":1410615112,"val":695615488},{"time":1410616012,"val":695623680},{"time":1410616912,"val":695574528},{"time":1410617812,"val":695623680},{"time":1410618712,"val":695582720},{"time":1410619612,"val":695627776},{"time":1410620512,"val":695685120},{"time":1410621412,"val":695566336},{"time":1410622312,"val":695574528},{"time":1410623212,"val":695599104},{"time":1410624112,"val":690262016},{"time":1410625012,"val":695525376},{"time":1410625912,"val":695521280},{"time":1410626812,"val":695451648},{"time":1410627712,"val":696500224},{"time":1410628612,"val":695410688},{"time":1410629512,"val":695414784},{"time":1410630412,"val":695418880},{"time":1410631312,"val":693612544},{"time":1410632212,"val":693559296},{"time":1410633112,"val":695250944},{"time":1410634012,"val":695173120},{"time":1410634912,"val":695214080},{"time":1410635812,"val":695164928},{"time":1410636712,"val":695128064},{"time":1410637612,"val":695177216},{"time":1410638512,"val":695209984},{"time":1410639412,"val":695160832},{"time":1410640312,"val":695103488},{"time":1410641212,"val":694730752},{"time":1410642112,"val":694657024},{"time":1410643012,"val":694644736},{"time":1410643912,"val":694644736},{"time":1410644812,"val":694562816},{"time":1410645712,"val":695697408},{"time":1410646612,"val":694558720},{"time":1410647512,"val":694657024},{"time":1410648412,"val":694534144},{"time":1410649312,"val":694628352},{"time":1410650212,"val":694632448},{"time":1410651052,"val":694636544},{"time":1410651952,"val":694366208},{"time":1410652852,"val":694484992},{"time":1410653752,"val":694480896},{"time":1410654652,"val":694456320},{"time":1410655552,"val":694411264},{"time":1410656452,"val":694337536},{"time":1410657352,"val":694366208},{"time":1410658252,"val":694407168},{"time":1410659152,"val":694288384},{"time":1410660052,"val":694243328},{"time":1410660952,"val":694267904},{"time":1410661852,"val":694255616},{"time":1410662752,"val":694239232},{"time":1410663652,"val":694276096},{"time":1410664552,"val":694214656},{"time":1410665452,"val":694251520},{"time":1410666352,"val":694259712},{"time":1410667252,"val":694259712},{"time":1410668152,"val":688979968},{"time":1410669052,"val":694243328},{"time":1410669952,"val":694210560},{"time":1410670852,"val":694185984},{"time":1410671752,"val":692801536},{"time":1410672652,"val":693813248},{"time":1410673552,"val":835284992},{"time":1410674452,"val":835174400},{"time":1410675352,"val":835194880},{"time":1410676252,"val":835125248},{"time":1410677152,"val":835080192},{"time":1410678052,"val":835194880},{"time":1410678952,"val":835170304},{"time":1410679852,"val":835178496},{"time":1410680752,"val":835166208},{"time":1410681652,"val":835186688},{"time":1410682552,"val":835141632},{"time":1410683452,"val":835194880},{"time":1410684352,"val":835125248},{"time":1410685252,"val":835096576},{"time":1410686152,"val":835112960},{"time":1410687052,"val":835133440},{"time":1410687952,"val":835063808},{"time":1410688852,"val":835039232},{"time":1410689752,"val":834998272},{"time":1410690652,"val":835002368},{"time":1410691552,"val":834936832},{"time":1410692452,"val":834981888},{"time":1410693352,"val":834920448},{"time":1410694252,"val":834973696},{"time":1410695152,"val":834985984},{"time":1410696052,"val":835014656},{"time":1410696952,"val":834887680},{"time":1410697852,"val":834953216},{"time":1410698752,"val":834936832},{"time":1410699652,"val":834912256},{"time":1410700492,"val":834985984},{"time":1410701392,"val":834990080},{"time":1410702292,"val":834940928},{"time":1410703192,"val":835006464},{"time":1410704092,"val":834957312},{"time":1410704992,"val":834863104},{"time":1410705892,"val":834912256},{"time":1410706792,"val":834875392},{"time":1410707692,"val":834965504},{"time":1410708592,"val":834879488},{"time":1410709492,"val":834871296},{"time":1410710392,"val":834834432},{"time":1410711292,"val":834805760},{"time":1410712192,"val":829677568},{"time":1410713092,"val":834838528},{"time":1410713992,"val":834871296},{"time":1410714892,"val":834789376},{"time":1410715792,"val":834854912},{"time":1410716692,"val":834838528},{"time":1410717592,"val":834781184},{"time":1410718492,"val":834670592},{"time":1410719392,"val":834748416},{"time":1410720292,"val":832782336},{"time":1410721192,"val":833286144},{"time":1410722092,"val":834113536},{"time":1410722992,"val":833196032},{"time":1410723892,"val":832626688},{"time":1410724792,"val":834068480},{"time":1410725692,"val":834056192},{"time":1410726592,"val":833961984},{"time":1410727492,"val":834076672},{"time":1410728392,"val":834088960},{"time":1410729292,"val":834113536},{"time":1410730192,"val":832151552},{"time":1410731092,"val":832245760},{"time":1410731992,"val":832249856},{"time":1410732892,"val":832200704},{"time":1410733792,"val":828522496},{"time":1410734692,"val":833875968},{"time":1410735592,"val":833818624},{"time":1410736492,"val":833736704},{"time":1410737392,"val":833748992},{"time":1410738292,"val":833777664},{"time":1410739192,"val":833732608},{"time":1410740092,"val":833708032},{"time":1410740992,"val":833703936},{"time":1410741892,"val":833703936},{"time":1410742792,"val":833617920},{"time":1410743692,"val":833646592},{"time":1410744592,"val":833736704},{"time":1410745492,"val":833691648},{"time":1410746392,"val":833585152},{"time":1410747292,"val":833687552},{"time":1410748192,"val":833638400},{"time":1410749032,"val":831803392},{"time":1410749932,"val":833400832},{"time":1410750832,"val":833376256},{"time":1410751732,"val":833380352},{"time":1410752632,"val":833302528},{"time":1410753532,"val":833388544},{"time":1410754432,"val":833310720},{"time":1410755332,"val":833302528},{"time":1410756232,"val":833347584},{"time":1410757132,"val":833372160},{"time":1410758032,"val":832999424},{"time":1410758932,"val":832962560},{"time":1410759832,"val":833753088},{"time":1410760732,"val":833286144},{"time":1410761632,"val":833277952},{"time":1410762532,"val":833236992},{"time":1410763432,"val":833191936},{"time":1410764332,"val":833196032},{"time":1410765232,"val":833224704},{"time":1410766132,"val":833212416},{"time":1410767032,"val":712179712},{"time":1410767932,"val":696283136},{"time":1410768832,"val":696025088},{"time":1410769732,"val":695255040},{"time":1410770632,"val":695160832},{"time":1410771532,"val":695201792},{"time":1410772432,"val":701292544},{"time":1410773332,"val":694222848},{"time":1410774232,"val":698703872},{"time":1410775132,"val":696655872},{"time":1410776032,"val":696709120},{"time":1410776932,"val":696684544},{"time":1410777832,"val":697835520},{"time":1410778732,"val":696655872},{"time":1410779632,"val":691351552},{"time":1410780532,"val":695742464},{"time":1410781432,"val":698675200},{"time":1410782332,"val":696340480},{"time":1410783232,"val":698888192},{"time":1410784132,"val":696565760},{"time":1410785032,"val":696602624},{"time":1410785932,"val":696598528},{"time":1410786832,"val":696659968},{"time":1410787732,"val":696578048},{"time":1410788632,"val":696565760},{"time":1410789532,"val":696573952},{"time":1410790432,"val":696631296},{"time":1410791332,"val":696553472},{"time":1410792232,"val":696516608},{"time":1410793132,"val":696598528},{"time":1410794032,"val":696549376},{"time":1410794932,"val":696569856},{"time":1410795832,"val":697663488},{"time":1410796732,"val":696565760},{"time":1410797632,"val":696537088},{"time":1410798472,"val":696561664},{"time":1410799372,"val":696459264},{"time":1410800272,"val":696373248},{"time":1410801172,"val":684249088},{"time":1410802072,"val":684195840},{"time":1410802972,"val":684310528},{"time":1410803872,"val":684220416},{"time":1410804772,"val":684314624},{"time":1410805672,"val":684290048},{"time":1410806572,"val":683040768},{"time":1410807472,"val":684195840},{"time":1410808372,"val":684032000},{"time":1410809272,"val":639655936},{"time":1410810172,"val":644825088},{"time":1410811072,"val":647757824},{"time":1410811972,"val":674381824},{"time":1410812872,"val":397365248},{"time":1410813772,"val":713928704},{"time":1410814672,"val":713646080},{"time":1410815572,"val":712822784},{"time":1410816472,"val":712093696},{"time":1410817372,"val":686338048},{"time":1410818272,"val":690987008},{"time":1410819172,"val":775442432},{"time":1410820072,"val":758185984},{"time":1410820972,"val":745123840},{"time":1410821872,"val":745177088},{"time":1410822772,"val":744574976},{"time":1410823672,"val":744443904},{"time":1410824572,"val":741695488},{"time":1410825472,"val":741527552},{"time":1410826372,"val":741466112},{"time":1410827272,"val":741388288},{"time":1410828172,"val":741281792},{"time":1410829072,"val":741130240},{"time":1410829972,"val":740446208},{"time":1410830872,"val":740343808},{"time":1410831772,"val":740253696},{"time":1410832672,"val":740188160},{"time":1410833572,"val":738791424},{"time":1410834472,"val":738590720},{"time":1410835372,"val":738590720},{"time":1410836272,"val":738619392},{"time":1410837172,"val":738553856},{"time":1410838072,"val":738582528},{"time":1410838972,"val":738484224},{"time":1410839872,"val":738349056},{"time":1410840772,"val":741146624},{"time":1410841672,"val":740990976},{"time":1410842572,"val":740925440},{"time":1410843472,"val":739909632},{"time":1410844372,"val":739434496},{"time":1410845272,"val":740212736},{"time":1410846172,"val":740036608},{"time":1410847012,"val":739876864},{"time":1410847912,"val":739852288},{"time":1410848812,"val":737619968},{"time":1410849712,"val":697524224},{"time":1410850612,"val":685899776},{"time":1410851512,"val":690479104},{"time":1410852412,"val":670920704},{"time":1410853312,"val":661397504},{"time":1410854212,"val":652869632},{"time":1410855112,"val":660484096},{"time":1410856012,"val":669368320},{"time":1410856912,"val":664006656},{"time":1410857812,"val":663318528},{"time":1410858712,"val":651956224},{"time":1410859612,"val":660066304},{"time":1410860512,"val":661041152},{"time":1410861412,"val":660987904},{"time":1410862312,"val":662020096},{"time":1410863212,"val":663728128},{"time":1410864112,"val":656576512},{"time":1410865012,"val":670982144},{"time":1410865912,"val":670932992},{"time":1410866812,"val":670158848},{"time":1410867712,"val":670076928},{"time":1410868612,"val":669200384},{"time":1410869512,"val":670003200},{"time":1410870412,"val":670031872},{"time":1410871312,"val":662904832},{"time":1410872212,"val":667795456},{"time":1410873112,"val":662192128},{"time":1410874012,"val":664420352},{"time":1410874912,"val":664305664},{"time":1410875812,"val":658882560},{"time":1410876712,"val":672350208},{"time":1410877612,"val":672235520},{"time":1410878512,"val":674799616},{"time":1410879412,"val":672059392},{"time":1410880312,"val":672067584},{"time":1410881212,"val":672051200},{"time":1410882112,"val":672075776},{"time":1410883012,"val":671215616},{"time":1410883912,"val":672006144},{"time":1410884812,"val":672022528},{"time":1410885712,"val":671977472},{"time":1410886612,"val":671866880},{"time":1410887512,"val":672972800},{"time":1410888412,"val":672722944},{"time":1410889312,"val":671555584},{"time":1410890212,"val":669179904},{"time":1410891112,"val":669192192},{"time":1410892012,"val":669286400},{"time":1410892912,"val":669257728},{"time":1410893812,"val":669282304},{"time":1410894712,"val":677097472},{"time":1410895612,"val":677109760},{"time":1410896452,"val":677036032},{"time":1410897352,"val":677027840},{"time":1410898252,"val":677109760},{"time":1410899152,"val":677085184},{"time":1410900052,"val":676970496},{"time":1410900952,"val":676954112},{"time":1410901852,"val":677003264},{"time":1410902752,"val":676970496},{"time":1410903652,"val":671506432},{"time":1410904552,"val":676749312},{"time":1410905452,"val":676728832},{"time":1410906352,"val":676646912},{"time":1410907252,"val":676712448},{"time":1410908152,"val":676675584},{"time":1410909052,"val":676716544},{"time":1410909952,"val":676663296},{"time":1410910852,"val":676757504},{"time":1410911752,"val":676704256},{"time":1410912652,"val":676716544},{"time":1410913552,"val":676749312},{"time":1410914452,"val":676904960},{"time":1410915352,"val":676888576},{"time":1410916252,"val":676917248},{"time":1410917152,"val":676945920},{"time":1410918052,"val":677007360},{"time":1410918952,"val":676962304},{"time":1410919852,"val":676896768},{"time":1410920752,"val":676950016},{"time":1410921652,"val":677019648},{"time":1410922552,"val":677023744},{"time":1410923452,"val":677036032},{"time":1410924352,"val":677130240},{"time":1410925252,"val":677167104},{"time":1410926152,"val":677134336},{"time":1410927052,"val":677232640},{"time":1410927952,"val":677679104},{"time":1410928852,"val":677101568},{"time":1410929752,"val":677130240},{"time":1410930652,"val":677044224},{"time":1410931552,"val":677003264},{"time":1410932452,"val":670027776},{"time":1410933352,"val":676966400},{"time":1410934252,"val":676888576},{"time":1410935152,"val":676831232},{"time":1410936052,"val":676737024},{"time":1410936952,"val":676737024},{"time":1410937852,"val":676749312},{"time":1410938752,"val":676814848},{"time":1410939652,"val":676728832},{"time":1410940552,"val":676745216},{"time":1410941452,"val":676843520},{"time":1410942352,"val":676769792},{"time":1410943252,"val":676831232},{"time":1410944152,"val":672927744},{"time":1410944992,"val":676794368},{"time":1410945892,"val":677752832},{"time":1410946792,"val":676728832},{"time":1410947692,"val":676642816},{"time":1410948592,"val":676745216},{"time":1410949492,"val":676556800},{"time":1410950392,"val":676560896},{"time":1410951292,"val":676581376},{"time":1410952192,"val":676470784},{"time":1410953092,"val":676544512},{"time":1410953992,"val":676450304},{"time":1410954892,"val":676446208},{"time":1410955792,"val":676483072},{"time":1410956692,"val":673071104},{"time":1410957592,"val":676429824},{"time":1410958492,"val":676474880},{"time":1410959392,"val":676421632},{"time":1410960292,"val":676450304},{"time":1410961192,"val":676421632},{"time":1410962092,"val":697249792},{"time":1410962992,"val":700485632},{"time":1410963892,"val":700493824},{"time":1410964792,"val":700182528},{"time":1410965692,"val":700182528},{"time":1410966592,"val":700153856},{"time":1410967492,"val":700162048},{"time":1410968392,"val":699879424},{"time":1410969292,"val":699953152},{"time":1410970192,"val":699895808},{"time":1410971092,"val":695046144},{"time":1410971992,"val":699813888},{"time":1410972892,"val":699809792},{"time":1410973792,"val":699764736},{"time":1410974692,"val":699715584},{"time":1410975592,"val":699715584},{"time":1410976492,"val":693784576},{"time":1410977392,"val":699236352},{"time":1410978292,"val":699301888},{"time":1410979192,"val":703148032},{"time":1410980092,"val":703205376},{"time":1410980992,"val":703156224},{"time":1410981892,"val":703201280},{"time":1410982792,"val":703205376},{"time":1410983692,"val":703131648},{"time":1410984592,"val":703160320},{"time":1410985492,"val":703139840},{"time":1410986392,"val":703131648},{"time":1410987292,"val":703197184},{"time":1410988192,"val":703188992},{"time":1410989092,"val":703102976},{"time":1410989992,"val":703135744},{"time":1410990892,"val":703000576},{"time":1410991792,"val":703049728},{"time":1410992692,"val":703016960},{"time":1410993592,"val":703078400},{"time":1410994432,"val":702947328},{"time":1410995332,"val":702930944},{"time":1410996232,"val":702951424},{"time":1410997132,"val":703041536},{"time":1410998032,"val":703016960},{"time":1410998932,"val":702947328},{"time":1410999832,"val":702971904},{"time":1411000732,"val":702910464},{"time":1411001632,"val":702898176},{"time":1411002532,"val":702914560},{"time":1411003432,"val":702963712},{"time":1411004332,"val":703000576},{"time":1411005232,"val":703008768},{"time":1411006132,"val":702996480},{"time":1411007032,"val":702996480},{"time":1411007932,"val":703041536},{"time":1411008832,"val":703037440},{"time":1411009732,"val":703037440},{"time":1411010632,"val":703033344},{"time":1411011532,"val":702988288},{"time":1411012432,"val":703053824},{"time":1411013332,"val":702971904},{"time":1411014232,"val":701251584},{"time":1411015132,"val":702939136},{"time":1411016032,"val":702996480},{"time":1411016932,"val":702709760},{"time":1411017832,"val":702644224},{"time":1411018732,"val":702640128},{"time":1411019632,"val":702660608},{"time":1411020532,"val":702926848},{"time":1411021432,"val":702803968},{"time":1411022332,"val":709316608},{"time":1411023232,"val":709222400},{"time":1411024132,"val":698318848},{"time":1411025032,"val":691826688},{"time":1411025932,"val":695078912},{"time":1411026832,"val":694984704},{"time":1411027732,"val":692846592},{"time":1411028632,"val":702230528},{"time":1411029532,"val":670650368},{"time":1411030432,"val":670892032},{"time":1411031332,"val":666247168},{"time":1411032232,"val":665280512},{"time":1411033132,"val":657731584},{"time":1411034032,"val":661950464},{"time":1411034932,"val":650657792},{"time":1411035832,"val":676478976},{"time":1411036732,"val":681390080},{"time":1411037632,"val":677384192},{"time":1411038532,"val":673361920},{"time":1411039432,"val":670285824},{"time":1411040332,"val":667779072},{"time":1411041232,"val":674459648},{"time":1411042132,"val":675508224},{"time":1411043032,"val":606896128}]
-document.getElementById("newGraph").addEventListener("click", function() {$.getJSON(
-                                                                            "http://localhost:8080/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D", function(data) {
-                                                                                appendGraph(data.history, svgContainer) });
-                                                                                                            })
-                                            
 
 function appendGraph(data, svg) {
 
@@ -99,18 +86,21 @@ function appendGraph(data, svg) {
 
     var leftYMin = d3.min(rightData.history, function(d){return Math.min(d.val)});
     var leftYMax = d3.max(rightData.history, function(d){return Math.max(d.val)});
-    console.log("mo")
+
     var totMin = Math.min(rightYMin,leftYMin);
     var totMax = Math.max(rightYMax,leftYMax);
 
     var yScale = d3.scale.linear().domain([(1.5*totMax),(totMin-30)]).range([0,height+margin.top])
-    
+
     var rightGraphFunc = d3.svg.line()
-                            .x(function(d, i) {return historyXScale(d.time)})
+                            .x(function(d, i) {return xScale(d.time)})
                             .y(function(d) {return yScale(d.val) })
                             .interpolate("none");
 
-    svgContainer.append("path").attr("d", rightGraphFunc(data)).attr("stroke","black").attr("fill","none");
+    svgContainer.append("path")
+      .attr("d", rightGraphFunc(data))
+      .attr("stroke","black")
+      .attr("fill","none");
 
     var rightYAxis =  d3.svg.axis().scale(yScale)
                      .orient("right")
@@ -121,5 +111,11 @@ function appendGraph(data, svg) {
                 .attr("class", "axisleft")
                 .attr("transform", "translate("+ (width-margin.right) +",0)")
                 .call(rightYAxis);
-
 }
+
+// #newGraph button
+document.getElementById("newGraph").addEventListener("click", function() {
+  $.getJSON("/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D", function(data) {
+    appendGraph(data.history, svgContainer)
+  });
+});
