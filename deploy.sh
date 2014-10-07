@@ -6,8 +6,8 @@ TMP="~/multiaxis-dist.tmp"
 
 set -e
 
-go build -o multiaxis-dist
+go build -o multiaxis-dist zab2.go
 
 scp multiaxis-dist $HOST:$TMP
 
-ssh $HOST "killall multiaxis-dist; mv $TMP $BIN; $BIN </dev/null >multiaxis-dist.log 2>&1 &"
+ssh $HOST "cd multi-axis-graphs; killall multiaxis-dist; mv $TMP $BIN; $BIN </dev/null >multiaxis-dist.log 2>&1 &"
