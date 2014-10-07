@@ -156,9 +156,6 @@ public abstract class JsonUtils {
   public static F<BigDecimal,BigDecimal> zab3ify =
     val  -> val.setScale(0, RoundingMode.HALF_EVEN);
 
-  public static F<BigDecimal,BigDecimal> clockify =
-    val  -> val.setScale(0, RoundingMode.HALF_EVEN);
-
   public static JsonArray bigDecimalJsonArray(final List<BigDecimal> vals) {
     final JsonArrayBuilder b = createArrayBuilder();
     for (BigDecimal val : vals) {
