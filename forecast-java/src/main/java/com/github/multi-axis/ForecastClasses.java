@@ -16,20 +16,6 @@ public abstract class ForecastClasses {
     private Zab3() {}
   }
 
-  public static final class TimedValue<V> {
-    public final long clock;
-    public final V value;
-
-    public TimedValue(long clock, V value) {
-      this.clock = clock;
-      this.value = value;
-    }
-  }
-
-  public static <V> TimedValue<V> timedVal(long clock, V value) {
-    return new TimedValue(clock, value);
-  }
-
 
   private ForecastClasses() {}
 
