@@ -24,7 +24,7 @@ import javax.json.stream.JsonParsingException;
 import javax.json.JsonException;
 import java.lang.ClassCastException;
 
-import com.github.multi_axis.ForecastClasses.*;
+import com.github.multi_axis.ForecastSetup*;
 
 import static fj.data.Validation.success;
 import static fj.data.Validation.fail;
