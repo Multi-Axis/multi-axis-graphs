@@ -19,53 +19,73 @@ import (
 var db *sql.DB 
 
 // handles single server and json requests
-// long and ugly, needs some serious refactoring at some point
 func handler(w http.ResponseWriter, r *http.Request) {
-	var check bool
+	var wantsJson bool
 	if (len(r.Header["Accept"]) > 0) {
-		check = strings.Contains(r.Header["Accept"][0],"json")
+		wantsJson = strings.Contains(r.Header["Accept"][0],"json")
 	}
-	if (check) {
-	    url := r.URL.Path
-    	var id int
-		var id2 string
-    	if (strings.Contains(url, ":")) {
-    		fmt.Printf("\nurl=%v",url)
-			ids := strings.Split(url, ":")
-    	  	idT, err := strconv.Atoi(ids[1])
-    	  	if (err == nil) {
-    	    	id = idT
-    	    } else {
-    	    	id = 0
-    	    }
-    	  	if (len(ids) > 2) {
-				id2 = ids[2]
-			} else {
-				id2 = ""
-			}
-		fmt.Printf("\nid=%v",id)
-		fmt.Printf("\nid2=%v",id2)
-   		} else {
-    		id = 0
-    		id2 = ""
-    	}
-    	query := "SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
-	
-		history := dbquery(id,id2,query)
-	
-		query = "SELECT clock, value FROM item_future AS i RIGHT JOIN future AS f ON f.itemid = i.id WHERE i.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
-	
-		future := dbquery(id,id2,query)
-	
-		data := "{history:"+history+",future:"+future+"}"
-	
-		t := template.New("test")
-		t, _ = t.Parse(data)
-		t.Execute(w, "testi") } else {
+	if (wantsJson) {
+		fmt.Printf("\nDelivering json data to client...")
+		graphDeliver(w, r)
+	} else if (r.Method == "POST") {
+		fmt.Printf("\nModifying stuff?!?!...")
+		r.ParseForm()
+		test := r.FormValue("test")
+		fmt.Printf(test)
+		t, _ := template.ParseFiles("zab.html")
+		t.Execute(w, "testi")
+	} else {
 		t, _ := template.ParseFiles("zab.html")
 		t.Execute(w, "testi")
 	}
 }
+
+// handles graph requests
+// ugly, probs needs some serious refactoring at some point
+func graphDeliver(w http.ResponseWriter, r *http.Request) {
+ 	url := r.URL.Path
+    var id int
+	var id2 string
+	var paramsOut string
+    if (strings.Contains(url, ":")) {
+    	fmt.Printf("\nurl=%v",url)
+		ids := strings.Split(url, ":")
+      	idT, err := strconv.Atoi(ids[1])
+      	if (err == nil) {
+        	id = idT
+    } else {
+       	id = 0
+    }
+    if (len(ids) > 2) {
+		id2 = ids[2]
+	} else {
+		id2 = ""
+	}
+	fmt.Printf("\nid=%v",id)
+	fmt.Printf("\nid2=%v",id2)
+   	} else {
+    	id = 0
+    	id2 = ""
+    }
+    query := "SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
+	
+	history := dbquery(id,id2,query)
+	
+	query = "SELECT clock, value FROM item_future AS i RIGHT JOIN future AS f ON f.itemid = i.id WHERE i.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
+	
+	future := dbquery(id,id2,query)
+	
+	
+	row := db.QueryRow("SELECT params FROM item_future WHERE itemid = (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2)", id, id2)
+	
+	row.Scan(&paramsOut)
+	
+	data := "{params:"+paramsOut+",history:"+history+",future:"+future+"}"
+	
+	t := template.New("test")
+	t, _ = t.Parse(data)
+	t.Execute(w, "testi") }
+
 
 // handles graph drawing thingy requests...
 func jsHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +110,6 @@ type ClockValue struct {
 	Clock int64		`json:"time"`
 	Value float32	`json:"val"`
 }
-
 
 // db query yo
 func dbquery(id int, id2 string, query string) string {
