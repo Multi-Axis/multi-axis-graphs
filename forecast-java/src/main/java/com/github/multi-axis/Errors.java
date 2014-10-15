@@ -1,8 +1,9 @@
 package com.github.multi_axis;
 
+import java.math.BigDecimal;
+import java.lang.ClassCastException;
 import javax.json.stream.JsonParsingException;
 import javax.json.JsonException;
-import java.lang.ClassCastException;
 
 
 public abstract class Errors {
@@ -12,6 +13,7 @@ public abstract class Errors {
     public R caseJsonParsingError(JsonParsingException e);
     public R caseNonNumberInArray(ClassCastException e);
     public R caseNotJsonArray(ClassCastException e);
+    public R caseBadZabType(BigDecimal n);
   }
 
   public static final Errors miscJsonError(JsonException e) {
@@ -26,6 +28,9 @@ public abstract class Errors {
   public static final Errors notJsonArray(ClassCastException e) {
     return new NotJsonArray(e);
   }
+  public static final Errors badZabType(BigDecimal n) {
+    return new BadZabType(n);
+  }
 
   public abstract <R> R runMatch(ErrorMatcher<R> m);
 
@@ -33,9 +38,7 @@ public abstract class Errors {
 
     private final JsonException e;
 
-    public MiscJsonError(JsonException e) {
-      this.e = e;
-    }
+    public MiscJsonError(JsonException e) { this.e = e; }
 
     public final <R> R runMatch(ErrorMatcher<R> m) {
       return m.caseMiscJsonError(e);
@@ -46,9 +49,7 @@ public abstract class Errors {
 
     private final JsonParsingException e;
 
-    public JsonParsingError(JsonParsingException e) {
-      this.e = e;
-    }
+    public JsonParsingError(JsonParsingException e) { this.e = e; }
 
     public final <R> R runMatch(ErrorMatcher<R> m) {
       return m.caseJsonParsingError(e);
@@ -59,9 +60,7 @@ public abstract class Errors {
 
     private final ClassCastException e;
 
-    public NonNumberInArray(ClassCastException e) {
-      this.e = e;
-    }
+    public NonNumberInArray(ClassCastException e) { this.e = e; }
 
     public final <R> R runMatch(ErrorMatcher<R> m) {
       return m.caseNonNumberInArray(e);
@@ -72,14 +71,24 @@ public abstract class Errors {
 
     private final ClassCastException e;
 
-    public NotJsonArray(ClassCastException e) {
-      this.e = e;
-    }
+    public NotJsonArray(ClassCastException e) { this.e = e; }
 
     public final <R> R runMatch(ErrorMatcher<R> m) {
       return m.caseNotJsonArray(e);
     }
   }
+
+  private static final class BadZabType extends Errors {
+
+    private final BigDecimal n;
+
+    public BadZabType(BigDecimal n) { this.n = n; }
+
+    public final <R> R runMatch(ErrorMatcher<R> m) {
+      return m.caseBadZabType(n);
+    }
+  }
+
 
   private Errors() {}
 }

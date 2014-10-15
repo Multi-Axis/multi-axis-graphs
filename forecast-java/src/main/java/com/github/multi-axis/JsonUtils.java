@@ -24,7 +24,8 @@ import javax.json.stream.JsonParsingException;
 import javax.json.JsonException;
 import java.lang.ClassCastException;
 
-import com.github.multi_axis.ForecastSetup*;
+import com.github.multi_axis.TimedValue;
+import com.github.multi_axis.Errors;
 
 import static fj.data.Validation.success;
 import static fj.data.Validation.fail;
@@ -36,7 +37,7 @@ import static javax.json.Json.createObjectBuilder;
 import static javax.json.Json.createArrayBuilder;
 
 import static com.github.multi_axis.Errors.*;
-import static com.github.multi_axis.ForecastClasses.timedVal;
+import static com.github.multi_axis.TimedValue.timedVal;
 
 public abstract class JsonUtils {
 
