@@ -26,26 +26,26 @@ import static javax.json.Json.createObjectBuilder;
 
 import static com.github.multi_axis.ZabWriterUtils.timedValsDetailsJson;
 
-public abstract class Zab3WriterImpl {
+public abstract class Zab0WriterImpl {
 
-  public static final F2< Validation<Errors, List<TimedValue<BigDecimal>>>,
+  public static final F2<List<TimedValue<BigDecimal>>,
                           OutputStream,
                           IO<Unit>>
-    write = (vals, out)  -> writeZab3Json(vals,out);
+    write = (vals, out)  -> writeZab0Json(vals,out);
 
   public static final IO<Unit>
-    writeZab3Json(
-      Validation<Errors, List<TimedValue<BigDecimal>>> vals,
+    writeZab0Json(
+      List<TimedValue<BigDecimal>> vals,
       OutputStream out) {
       
       return new IO<Unit>() {
         public Unit run() {
 
-          final JsonWriter w =  createWriter(System.out);
+          final JsonWriter w = createWriter(out);
             
           w.write(timedValsDetailsJson(
             vals,
-            zab3ify,
+            zab0ify,
             createObjectBuilder().build()));
 
           w.close();
@@ -55,9 +55,9 @@ public abstract class Zab3WriterImpl {
       };
   }
 
-  public static final F<BigDecimal,BigDecimal> zab3ify =
-    val  -> val.setScale(0, RoundingMode.HALF_EVEN);
+  private static final F<BigDecimal,BigDecimal> zab0ify =
+    val  -> val.setScale(4, RoundingMode.HALF_EVEN);
 
 
-  private Zab3WriterImpl() {}
+  private Zab0WriterImpl() {}
 }

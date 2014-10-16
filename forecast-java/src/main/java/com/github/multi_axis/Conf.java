@@ -11,6 +11,14 @@ import fj.data.List;
 import fj.data.IO;
 import fj.data.Validation;
 
+import com.github.multi_axis.Alts2;
+import com.github.multi_axis.Alts2.Alts2Matcher;
+import com.github.multi_axis.Alts3;
+import com.github.multi_axis.Alts3.Alts3Matcher;
+import com.github.multi_axis.Alts4;
+import com.github.multi_axis.Alts4.Alts4Matcher;
+import com.github.multi_axis.Alts5;
+import com.github.multi_axis.Alts5.Alts5Matcher;
 import com.github.multi_axis.ZabReaderImpl;
 import com.github.multi_axis.Zab;
 import com.github.multi_axis.Zab.Zab0;
@@ -89,6 +97,19 @@ public abstract class Conf {
             write = (tagged,out)  -> w.f(tagged.val,out);
         };
     }
+
+    public static final <A> Writer<Validation<Errors,A>>
+      errorWriter(Writer<A> wa) {
+        return new Writer<Validation<Errors,A>>() {
+
+          private final F2<Validation<Errors,A>, OutputStream, IO<Unit>>
+            write = (vea,out)  ->
+              vea.validation( (err  -> ErrorWriterImpl.write.f(err,out)),
+                              (a    -> wa.write(a,out)));
+        };
+    }
+              
+
 
     public static final <A,B> Writer<Alts2<A,B>>
       writerAlts2(Writer<A> wa, Writer<B> wb) {

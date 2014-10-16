@@ -5,7 +5,7 @@ import java.lang.Long;
 
 import fj.F;
 import fj.data.List;
-import fj.data.Validation;
+//import fj.data.Validation;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -19,8 +19,8 @@ import com.github.multi_axis.TimedValue;
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
 
-import static fj.data.Validation.success;
-import static fj.data.Validation.fail;
+//import static fj.data.Validation.success;
+//import static fj.data.Validation.fail;
 
 import static com.github.multi_axis.Errors.*;
 import static com.github.multi_axis.TimedValue.timedVal;
@@ -54,28 +54,29 @@ public abstract class ZabWriterUtils {
   //  - Hm; perhaps Validation<JsonValue,JsonValue>?
   public static final JsonObject
     timedValsDetailsJson(
-      Validation<Errors,List<TimedValue<BigDecimal>>> timedValsV,
-      F<BigDecimal,BigDecimal>                        valFormat,
-      JsonValue                                       details) {
+      List<TimedValue<BigDecimal>> timedVals,
+      F<BigDecimal,BigDecimal>     valFormat,
+      JsonValue                    details) {
 
+
+        // TODO Errors now to be done in a separate handler.
         //  TODO THINK something cleverer?
-        final F<Errors,JsonObject> onFail = 
-          fail  -> createObjectBuilder().add("error","error").build();
+        //final F<Errors,JsonObject> onFail = 
+        //  fail  -> createObjectBuilder().add("error","error").build();
 
-        final F<List<TimedValue<BigDecimal>>,JsonObject> onSuccess =
-          success  -> createObjectBuilder()
+
+        final JsonObject jo =
+          createObjectBuilder()
           .add(
             "clocks",
-            longJsonArray(
-              success.map(tv  -> Long.valueOf(tv.clock))))
+            longJsonArray(timedVals.map(tv  -> Long.valueOf(tv.clock))))
           .add(
             "values",
-            bigDecimalJsonArray(
-              success.map(tv  -> tv.value).map(valFormat)))
+            bigDecimalJsonArray(timedVals.map(tv  -> tv.value).map(valFormat)))
           .add("details",details)
           .build();
 
-        return timedValsV.validation(onFail,onSuccess);
+        return jo;
   }
 
   private ZabWriterUtils() {}

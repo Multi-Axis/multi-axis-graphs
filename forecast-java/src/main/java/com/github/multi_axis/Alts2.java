@@ -1,5 +1,7 @@
 package com.github.multi_axis;
 
+import fj.F;
+import fj.F2;
 
 public abstract class Alts2<A,B> {
 
@@ -32,6 +34,23 @@ public abstract class Alts2<A,B> {
     }
     public Alt2(B b) { this.b = b; }
   }
+
+  private static final <A,B,C,D> Alts2Matcher<A,B,Alts2<C,D>>
+    mapMatcher(F<A,C> fac, F<B,D> fbd) {
+      return new Alts2Matcher<A,B,Alts2<C,D>>() {
+        public Alts2<C,D> caseAlt1(A a) { return alt1(fac.f(a)); }
+        public Alts2<C,D> caseAlt2(B b) { return alt2(fbd.f(b)); }
+      };
+  }
+
+  public static final <A,B,C,D> F<Alts2<A,B>, Alts2<C,D>>
+    map2(F<A,C> fac, F<B,D> fbd) {
+      return (altsAB  -> altsAB.runMatch(mapMatcher(fac,fbd)));
+  }
+
+  public static final <A,B,C,D> F2<F<A,C>, F<B,D>, F<Alts2<A,B>,Alts2<C,D>>>
+    map2() { return (fac, fbd)  -> map2(fac,fbd); }
+
  
   private Alts2() {}
 }
