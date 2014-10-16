@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"io/ioutil"
 )
 
 //	hopefully makes constant new db connections unnecessary, yay?
@@ -44,16 +45,13 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // handles graph drawing thingy requests...
-func jsHandler(w http.ResponseWriter, r *http.Request) {
+func staticHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path
-	var id string
 
-	id = strings.TrimPrefix(url, "/")
+	path := strings.TrimPrefix(url, "/")
 
-	//	fmt.Printf("\nurl=%v",url)
-	//	fmt.Printf("\nid=%v",id)
-	t, _ := template.ParseFiles(id)
-	t.Execute(w, "testi")
+	b, _ := ioutil.ReadFile(path)
+	w.Write(b)
 }
 
 /* /dashboard */
@@ -135,7 +133,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	http.HandleFunc("/static/", jsHandler)
+	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler) // Unintuitively, this is the default handler!(?)
 	http.ListenAndServe(":8080", nil)
