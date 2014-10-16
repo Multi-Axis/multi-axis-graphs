@@ -20,9 +20,7 @@ import com.github.multi_axis.Zab.Zab3;
 
 public abstract class Conf {
 
-  //TODO THINK Should these have a common supertype, and methods, after all?
-
-  public static abstract class Reader<FT,OUT> {
+  public static abstract class Reader<OUT> {
 
     private F<InputStream, IO<Validation<Errors,OUT>>> read;
 
@@ -42,10 +40,19 @@ public abstract class Conf {
    //   zab3Reader 
    //   = Reader.<Zab3, List<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
 
+    public static final Reader<Alts2<
+          Tagged<Zab0,List<TimedValue<BigDecimal>>>,
+          Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
 
-    private static final <FT,OUT> Reader<FT,OUT> 
+      zabReader 
+        = Reader.<Alts2< //TODO see if this declaration can be omitted.
+            Tagged<Zab0,List<TimedValue<BigDecimal>>>,
+            Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
+          reader(ZabReaderImpl.read);
+
+    private static final <OUT> Reader<OUT> 
       reader(F<InputStream, IO<Validation<Errors,OUT>>> r) {
-        return new Reader<FT,OUT>() {
+        return new Reader<OUT>() {
           private final F<InputStream, IO<Validation<Errors,OUT>>> 
             read = r;
         };
@@ -54,123 +61,106 @@ public abstract class Conf {
     private Reader() {}
   }
 
-  public static abstract class ReaderAlts2<FA,FB,OA,OB> {
+  public static abstract class Writer<IN> {
 
-    private F<InputStream, IO<Validation<Errors, Alts2<OA,OB>>>> read;
-
-
-    public final IO<Validation<Errors, Alts2<OA,OB>>> 
-      read(InputStream in) { return read.f(in); }
-
-    public final F<InputStream, IO<Validation<Errors, Alts2<OA,OB>>>>
-      read() { return read; }
-
-    private static final <FA,FB,OA,OB> ReaderAlts2<FA,FB,OA,OB>
-      reader(F<InputStream, IO<Validation<Errors, Alts2<OA,OB>>>> r) {
-        return new ReaderAlts2<FA,FB,OA,OB>() {
-          private final F<InputStream, IO<Validation<Errors,Alts2<OA,OB>>>>
-            read = r;
-        };
-    }
-
-    private ReaderAlts2() {}
-  }
-
-  public static abstract class ReaderAlts3<FA,FB,FC,OA,OB,OC> {
-
-    private F<InputStream, IO<Validation<Errors, Alts3<OA,OB,OC>>>> read;
-
-
-    public final IO<Validation<Errors, Alts3<OA,OB,OC>>> 
-      read(InputStream in) { return read.f(in); }
-
-    public final F<InputStream, IO<Validation<Errors, Alts3<OA,OB,OC>>>>
-      read() { return read; }
-
-    private static final <FA,FB,FC,OA,OB,OC> ReaderAlts3<FA,FB,FC,OA,OB,OC>
-      reader(F<InputStream, IO<Validation<Errors, Alts3<OA,OB,OC>>>> r) {
-        return new ReaderAlts3<FA,FB,FC,OA,OB,OC>() {
-          private final F<InputStream, IO<Validation<Errors,Alts3<OA,OB,OC>>>>
-            read = r;
-        };
-    }
-
-    private ReaderAlts3() {}
-  }
-
-  public static abstract class ReaderAlts4<FA,FB,FC,FD,OA,OB,OC,OD> {
-
-    private F<InputStream, IO<Validation<Errors, Alts4<OA,OB,OC,OD>>>> read;
-
-
-    public final IO<Validation<Errors, Alts4<OA,OB,OC,OD>>> 
-      read(InputStream in) { return read.f(in); }
-
-    public final F<InputStream, IO<Validation<Errors, Alts4<OA,OB,OC,OD>>>>
-      read() { return read; }
-
-    private static final <FA,FB,FC,FD,OA,OB,OC,OD> ReaderAlts4<FA,FB,FC,FD,OA,OB,OC,OD>
-      reader(F<InputStream, IO<Validation<Errors, Alts4<OA,OB,OC,OD>>>> r) {
-        return new ReaderAlts4<FA,FB,FC,FD,OA,OB,OC,OD>() {
-          private final F<InputStream, IO<Validation<Errors,Alts4<OA,OB,OC,OD>>>>
-            read = r;
-        };
-    }
-
-    private ReaderAlts4() {}
-  }
-
-  public static abstract class ReaderAlts5<FA,FB,FC,FD,FE,OA,OB,OC,OD,OE> {
-
-    private F<InputStream, IO<Validation<Errors, Alts5<OA,OB,OC,OD,OE>>>> read;
-
-
-    public final IO<Validation<Errors, Alts5<OA,OB,OC,OD,OE>>> 
-      read(InputStream in) { return read.f(in); }
-
-    public final F<InputStream, IO<Validation<Errors, Alts5<OA,OB,OC,OD,OE>>>>
-      read() { return read; }
-
-    private static final <FA,FB,FC,FD,FE,OA,OB,OC,OD,OE> ReaderAlts5<FA,FB,FC,FD,FE,OA,OB,OC,OD,OE>
-      reader(F<InputStream, IO<Validation<Errors, Alts5<OA,OB,OC,OD,OE>>>> r) {
-        return new ReaderAlts5<FA,FB,FC,FD,FE,OA,OB,OC,OD,OE>() {
-          private final F<InputStream, IO<Validation<Errors,Alts5<OA,OB,OC,OD,OE>>>>
-            read = r;
-        };
-    }
-
-    private ReaderAlts5() {}
-  }
-
-  public static abstract class Writer<FT,IN> {
-
-    private F2<Validation<Errors,IN>, OutputStream, IO<Unit>> write;
+    private F2<IN, OutputStream, IO<Unit>> write;
 
 
     public final IO<Unit>
-      write(Validation<Errors,IN> in, OutputStream out) { return write.f(in,out); }
+      write(IN in, OutputStream out) { return write.f(in,out); }
 
-    public final F2<Validation<Errors,IN>, OutputStream, IO<Unit>>
+    public final F2<IN, OutputStream, IO<Unit>>
       write() { return write; }
 
 
-    public static final Writer<Zab0, List<TimedValue<BigDecimal>>>
+    public static final Writer<Tagged<Zab0,List<TimedValue<BigDecimal>>>>
       zab0Writer 
       = Writer.<Zab0, List<TimedValue<BigDecimal>>>writer(Zab0WriterImpl.write);
 
-    public static final Writer<Zab3, List<TimedValue<BigDecimal>>>
+    public static final Writer<Tagged<Zab3,List<TimedValue<BigDecimal>>>>
       zab3Writer 
       = Writer.<Zab3, List<TimedValue<BigDecimal>>>writer(Zab3WriterImpl.write);
 
 
-    private static final <FT,IN> Writer<FT,IN> 
-      writer(F2<Validation<Errors,IN>, OutputStream, IO<Unit>> w) {
-        return new Writer<FT,IN>() {
-          private final 
-            F2<Validation<Errors,IN>, OutputStream, IO<Unit>>
-              write = w;
+    private static final <FT,IN> Writer<Tagged<FT,IN>> 
+      writer(F2<IN, OutputStream, IO<Unit>> w) {
+        return new Writer<Tagged<FT,IN>>() {
+          private final F2<Tagged<FT,IN>, OutputStream, IO<Unit>>
+            write = (tagged,out)  -> w.f(tagged.val,out);
         };
     }
+
+    public static final <A,B> Writer<Alts2<A,B>>
+      writerAlts2(Writer<A> wa, Writer<B> wb) {
+        return new Writer<Alts2<A,B>>() {
+
+          private Alts2Matcher<A,B,IO<Unit>> matcher(OutputStream out) {
+            return new Alts2Matcher<A,B,IO<Unit>>() {
+              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+            };
+          }
+
+          private final F2<Alts2<A,B>, OutputStream, IO<Unit>>
+            write = (alts,out)  -> alts.runMatch(matcher(out));
+        };
+    }
+
+    public static final <A,B,C> Writer<Alts3<A,B,C>>
+      writerAlts3(Writer<A> wa, Writer<B> wb, Writer<C> wc) {
+        return new Writer<Alts3<A,B,C>>() {
+
+          private Alts3Matcher<A,B,C,IO<Unit>> matcher(OutputStream out) {
+            return new Alts3Matcher<A,B,C,IO<Unit>>() {
+              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+              public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
+            };
+          }
+
+          private final F2<Alts3<A,B,C>, OutputStream, IO<Unit>>
+            write = (alts,out)  -> alts.runMatch(matcher(out));
+        };
+    }
+
+    public static final <A,B,C,D> Writer<Alts4<A,B,C,D>>
+      writerAlts4(Writer<A> wa, Writer<B> wb, Writer<C> wc, Writer<D> wd) {
+        return new Writer<Alts4<A,B,C,D>>() {
+
+          private Alts4Matcher<A,B,C,D,IO<Unit>> matcher(OutputStream out) {
+            return new Alts4Matcher<A,B,C,D,IO<Unit>>() {
+              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+              public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
+              public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
+            };
+          }
+
+          private final F2<Alts4<A,B,C,D>, OutputStream, IO<Unit>>
+            write = (alts,out)  -> alts.runMatch(matcher(out));
+        };
+    }
+
+    public static final <A,B,C,D,E> Writer<Alts5<A,B,C,D,E>>
+      writerAlts5(Writer<A> wa, Writer<B> wb, Writer<C> wc, Writer<D> wd,
+                  Writer<E> we) {
+        return new Writer<Alts5<A,B,C,D,E>>() {
+
+          private Alts5Matcher<A,B,C,D,E,IO<Unit>> matcher(OutputStream out) {
+            return new Alts5Matcher<A,B,C,D,E,IO<Unit>>() {
+              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+              public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
+              public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
+              public IO<Unit> caseAlt5(E e) { return we.write(e,out); }
+            };
+          }
+
+          private final F2<Alts5<A,B,C,D,E>, OutputStream, IO<Unit>>
+            write = (alts,out)  -> alts.runMatch(matcher(out));
+        };
+    }
+
 
     private Writer() {}
   }

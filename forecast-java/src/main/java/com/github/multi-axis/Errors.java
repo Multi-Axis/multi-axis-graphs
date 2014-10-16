@@ -13,7 +13,8 @@ public abstract class Errors {
     public R caseJsonParsingError(JsonParsingException e);
     public R caseNonNumberInArray(ClassCastException e);
     public R caseNotJsonArray(ClassCastException e);
-    public R caseBadZabType(BigDecimal n);
+    public R caseBadZabType();
+    public R caseValueTypeNotNumber(ClassCastException e);
   }
 
   public static final Errors miscJsonError(JsonException e) {
@@ -28,8 +29,11 @@ public abstract class Errors {
   public static final Errors notJsonArray(ClassCastException e) {
     return new NotJsonArray(e);
   }
-  public static final Errors badZabType(BigDecimal n) {
-    return new BadZabType(n);
+  public static final Errors badZabType() {
+    return new BadZabType();
+  }
+  public static final Errors valueTypeNotNumber(ClassCastException e) {
+    return new ValueTypeNotNumber(e);
   }
 
   public abstract <R> R runMatch(ErrorMatcher<R> m);
@@ -80,12 +84,23 @@ public abstract class Errors {
 
   private static final class BadZabType extends Errors {
 
-    private final BigDecimal n;
+    //private final BigDecimal n;
 
-    public BadZabType(BigDecimal n) { this.n = n; }
+    public BadZabType() {}
 
     public final <R> R runMatch(ErrorMatcher<R> m) {
-      return m.caseBadZabType(n);
+      return m.caseBadZabType();
+    }
+  }
+
+  private static final class ValueTypeNotNumber extends Errors {
+
+    private final ClassCastException e;
+
+    public ValueTypeNotNumber(ClassCastException e) { this.e = e; }
+
+    public final <R> R runMatch(ErrorMatcher<R> m) {
+      return m.caseValueTypeNotNumber(e);
     }
   }
 
