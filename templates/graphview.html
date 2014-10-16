@@ -29,15 +29,16 @@
     <body>
         <H1>Graph demo v0.2 (now with forecasting!)</H1>
 
-        <a href="/%3A10105%3Asystem.cpu.load%5Bpercpu%2Cavg1%5D">cpu load</a>
-        <a href="/%3A10105%3Avfs.fs.inode%5B%2Fboot%2Cpfree%5D">Free inodes</a>
-        <a href="/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D">Free disk space</a>
-        <a href="/%3A10105%3Asystem.cpu.util%5B%2Csystem%5D">Idle time</a>
-        <a href="/%3A10105%3Asystem.swap.size%5B%2Cpfree%5D">Free swap space</a>
+        <a href="/item/1">cpu load</a>
+        <a href="/item/5">Free inodes</a>
+        <a href="/item/4">Free disk space</a>
+        <a href="/item/2">Idle time</a>
+        <a href="/item/6">Free swap space</a>
+
         <button id="newGraph">Append</button>
         <br/>
         <div></div>
-        <script src="graph.js"></script>
+        <script src="/graph.js"></script>
 
         <form method=POST>
            <textarea name=params id=field_params>
