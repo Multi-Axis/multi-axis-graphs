@@ -22,6 +22,9 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, _ := strconv.Atoi(parts[len(parts)-1])
 
+	//	fmt.Printf("\nurl=%v",r.URL.Path)
+	//	fmt.Printf("\nid=%v",id)
+
 	var wantsJson bool
 	if len(r.Header["Accept"]) > 0 {
 		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
@@ -30,7 +33,8 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		r.ParseForm()
 		params := r.FormValue("params")
-		fmt.Printf(params)
+		//		fmt.Printf(params)
+		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
 		graphViewHTML(w) // TODO output json if wantsJson
 	} else if wantsJson {
 		deliverItemByItemFutureId(w, id)
@@ -41,7 +45,14 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 
 // handles graph drawing thingy requests...
 func jsHandler(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("graph.js")
+	url := r.URL.Path
+	var id string
+
+	id = strings.TrimPrefix(url, "/")
+
+	//	fmt.Printf("\nurl=%v",url)
+	//	fmt.Printf("\nid=%v",id)
+	t, _ := template.ParseFiles(id)
 	t.Execute(w, "testi")
 }
 
@@ -129,9 +140,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	http.HandleFunc("/graph.js", jsHandler)
-	http.HandleFunc("/dashboard", dashboardHandler)
-	http.HandleFunc("/", itemHandler) // Unintuitively, this is the default handler!(?)
+	http.HandleFunc("/static/", jsHandler)
+	http.HandleFunc("/", dashboardHandler)
+	http.HandleFunc("/item/", itemHandler) // Unintuitively, this is the default handler!(?)
 	http.ListenAndServe(":8080", nil)
 }
 
