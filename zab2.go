@@ -105,15 +105,6 @@ func parseValueJSON(rows *sql.Rows) string {
 	return buffer.String()
 }
 
-/* Query graph data based on (items.)hostid, (items.)key_ and a query */
-func dbquery(id int, id2 string, query string) string {
-	rows, err := db.Query(query, id, id2)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return parseValueJSON(rows)
-}
-
 /* Deliver graph JSON data based on an item_future.id */
 func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 	var itemId int
@@ -121,13 +112,17 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 
 	db.QueryRow(`SELECT itemid, params FROM item_future WHERE id = $1`, ifId).Scan(&itemId, &params)
 
-	rows, _ := db.Query(`SELECT clock, value FROM history WHERE history.itemid = $1 ORDER BY clock`, itemId)
+	rows, _ := db.Query(`SELECT lower, value FROM threshold WHERE itemid = $1`, ifId);
+	defer rows.Close() // thresholds := TODO parse to list?
+
+	rows, _ = db.Query(`SELECT clock, value FROM history WHERE history.itemid = $1 ORDER BY clock`, itemId)
 	history := parseValueJSON(rows)
 
 	rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 	future := parseValueJSON(rows)
 
-	output := "{params:" + params + ", history:" + history + ", future:" + future + "}"
+	output := fmt.Sprintf(`{ "params": %s, "threshold": %s, "history": %s, "future": %s }`,
+		params, "{}" /* TODO */, history, future)
 	w.Write([]byte(output))
 }
 
