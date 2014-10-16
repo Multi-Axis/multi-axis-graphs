@@ -118,7 +118,7 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 	rows, _ := db.Query(`SELECT lower, value FROM threshold WHERE itemid = $1`, ifId);
 	defer rows.Close() // thresholds := TODO parse to list?
 
-	rows, _ = db.Query(`SELECT clock, value FROM history WHERE history.itemid = $1 ORDER BY clock`, itemId)
+	rows, _ = db.Query(`SELECT * FROM (SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q ORDER BY clock`, itemId)
 	history := parseValueJSON(rows)
 
 	rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
