@@ -46,9 +46,14 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 
 // handles graph drawing thingy requests...
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	url := r.URL.Path
-
+	url  := r.URL.Path
 	path := strings.TrimPrefix(url, "/")
+
+	if strings.HasSuffix(path, ".js") {
+		w.Header().Set("Content-Type", "application/javascript")
+	} else if strings.HasSuffix(path, ".css") {
+		w.Header().Set("Content-Type", "text/css")
+	}
 
 	b, _ := ioutil.ReadFile(path)
 	w.Write(b)
