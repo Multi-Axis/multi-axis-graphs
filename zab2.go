@@ -1,33 +1,33 @@
 package main
 
 import (
-	_ "github.com/lib/pq"
-	"database/sql"
-	"log"
-	"net/http"
-	"html/template"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
+	_ "github.com/lib/pq"
+	"html/template"
+	"log"
+	"net/http"
 	"strconv"
+	"strings"
 )
 
 // non-empty ids: 23672, 23690, 23685, 23715, 23710
 
 //	hopefully makes constant new db connections unnecessary, yay?
-var db *sql.DB 
+var db *sql.DB
 
 // handles single server and json requests
 func handler(w http.ResponseWriter, r *http.Request) {
 	var wantsJson bool
-	if (len(r.Header["Accept"]) > 0) {
-		wantsJson = strings.Contains(r.Header["Accept"][0],"json")
+	if len(r.Header["Accept"]) > 0 {
+		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
 	}
-	if (wantsJson) {
+	if wantsJson {
 		fmt.Printf("\nDelivering json data to client...")
 		graphDeliver(w, r)
-	} else if (r.Method == "POST") {
+	} else if r.Method == "POST" {
 		fmt.Printf("\nModifying stuff?!?!...")
 		r.ParseForm()
 		test := r.FormValue("test")
@@ -43,72 +43,71 @@ func handler(w http.ResponseWriter, r *http.Request) {
 // handles graph requests
 // ugly, probs needs some serious refactoring at some point
 func graphDeliver(w http.ResponseWriter, r *http.Request) {
- 	url := r.URL.Path
-    var id int
+	url := r.URL.Path
+	var id int
 	var id2 string
 	var paramsOut string
-    if (strings.Contains(url, ":")) {
-    	fmt.Printf("\nurl=%v",url)
+	if strings.Contains(url, ":") {
+		fmt.Printf("\nurl=%v", url)
 		ids := strings.Split(url, ":")
-      	idT, err := strconv.Atoi(ids[1])
-      	if (err == nil) {
-        	id = idT
-    } else {
-       	id = 0
-    }
-    if (len(ids) > 2) {
-		id2 = ids[2]
+		idT, err := strconv.Atoi(ids[1])
+		if err == nil {
+			id = idT
+		} else {
+			id = 0
+		}
+		if len(ids) > 2 {
+			id2 = ids[2]
+		} else {
+			id2 = ""
+		}
+		fmt.Printf("\nid=%v", id)
+		fmt.Printf("\nid2=%v", id2)
 	} else {
+		id = 0
 		id2 = ""
 	}
-	fmt.Printf("\nid=%v",id)
-	fmt.Printf("\nid2=%v",id2)
-   	} else {
-    	id = 0
-    	id2 = ""
-    }
-    query := "SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
-	
-	history := dbquery(id,id2,query)
-	
+	query := "SELECT clock, value FROM history where history.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
+
+	history := dbquery(id, id2, query)
+
 	query = "SELECT clock, value FROM item_future AS i RIGHT JOIN future AS f ON f.itemid = i.id WHERE i.itemid IN (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2) ORDER BY clock"
-	
-	future := dbquery(id,id2,query)
-	
-	
+
+	future := dbquery(id, id2, query)
+
 	row := db.QueryRow("SELECT params FROM item_future WHERE itemid = (SELECT itemid FROM items WHERE hostid = $1 and key_ = $2)", id, id2)
-	
+
 	row.Scan(&paramsOut)
-	
-	data := "{params:"+paramsOut+",history:"+history+",future:"+future+"}"
-	
+
+	data := "{params:" + paramsOut + ",history:" + history + ",future:" + future + "}"
+
 	t := template.New("test")
 	t, _ = t.Parse(data)
-	t.Execute(w, "testi") }
-
+	t.Execute(w, "testi")
+}
 
 // handles graph drawing thingy requests...
 func jsHandler(w http.ResponseWriter, r *http.Request) {
-    t, _ := template.ParseFiles("graph.js")
-    t.Execute(w, "testi")
+	t, _ := template.ParseFiles("graph.js")
+	t.Execute(w, "testi")
 }
 
 // temp test thingy
 func dashBoardHandler(w http.ResponseWriter, r *http.Request) {
-    t, _ := template.ParseFiles("dash.html")
-    t.Execute(w, "testi")
+	t, _ := template.ParseFiles("dash.html")
+	t.Execute(w, "testi")
 }
 
 // temp test testing thingy (...)
 func testHandler(w http.ResponseWriter, r *http.Request) {
-    t, _ := template.ParseFiles("test.html")
-    t.Execute(w, "testi")
+	t, _ := template.ParseFiles("test.html")
+	t.Execute(w, "testi")
 }
 
 // used by dbquery
 type ClockValue struct {
-	Clock int64		`json:"time"`
-	Value float32	`json:"val"`
+	Clock int64   `json:"time"`
+	Value float32 `json:"val"`
 }
 
 // db query yo
@@ -116,39 +115,41 @@ func dbquery(id int, id2 string, query string) string {
 	rows, err := db.Query(query, id, id2)
 	if err != nil {
 		log.Fatal(err)
-    }
+	}
 	defer rows.Close()
-	
-	var buffer bytes.Buffer 
-    var value float32
+
+	var buffer bytes.Buffer
+	var value float32
 	var clock int64
-    first := true;
-    buffer.WriteString("[")
+	first := true
+	buffer.WriteString("[")
 	for rows.Next() {
-		if err := rows.Scan(&clock,&value); err != nil {
-                    log.Fatal(err)
-          	}
-          	m := ClockValue{clock,value}
-          	b, err := json.Marshal(m)
-       		if err != nil { panic(err) }
-       		if (!first) {
-	          	buffer.WriteString(",")
-       		}
-        	buffer.Write(b) 
-        	first = false;  	
-    	}
+		if err := rows.Scan(&clock, &value); err != nil {
+			log.Fatal(err)
+		}
+		m := ClockValue{clock, value}
+		b, err := json.Marshal(m)
+		if err != nil {
+			panic(err)
+		}
+		if !first {
+			buffer.WriteString(",")
+		}
+		buffer.Write(b)
+		first = false
+	}
 	buffer.WriteString("]")
 	return buffer.String()
 }
 
-// go, go server, go, go! 
+// go, go server, go, go!
 func main() {
 	var err error
 	db, err = sql.Open("postgres", "user=ohtu dbname=multi-axis sslmode=disable")
-	if err != nil { 
+	if err != nil {
 		log.Fatal(err)
-		}
-	http.HandleFunc("/graph.js", jsHandler)		
+	}
+	http.HandleFunc("/graph.js", jsHandler)
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/test", testHandler)
 	http.HandleFunc("/dashboard", dashBoardHandler)
