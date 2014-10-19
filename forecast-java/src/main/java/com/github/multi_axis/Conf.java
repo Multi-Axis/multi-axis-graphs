@@ -28,7 +28,7 @@ import com.github.multi_axis.Zab.Zab3;
 
 public abstract class Conf {
 
-  public static abstract class Reader<OUT> {
+  public static class Reader<OUT> {
 
     private F<InputStream, IO<Validation<Errors,OUT>>> read;
 
@@ -60,16 +60,17 @@ public abstract class Conf {
 
     private static final <OUT> Reader<OUT> 
       reader(F<InputStream, IO<Validation<Errors,OUT>>> r) {
-        return new Reader<OUT>() {
-          private final F<InputStream, IO<Validation<Errors,OUT>>> 
-            read = r;
-        };
+        return new Reader<OUT>(r);
+    }
+
+    private Reader(F<InputStream, IO<Validation<Errors,OUT>>> read) {
+      this.read = read;
     }
 
     private Reader() {}
   }
 
-  public static abstract class Writer<IN> {
+  public static class Writer<IN> {
 
     private F2<IN, OutputStream, IO<Unit>> write;
 
@@ -83,105 +84,70 @@ public abstract class Conf {
 
     public static final Writer<Tagged<Zab0,List<TimedValue<BigDecimal>>>>
       zab0Writer 
-      = Writer.<Zab0, List<TimedValue<BigDecimal>>>writer(Zab0WriterImpl.write);
+        = Writer.<Zab0, List<TimedValue<BigDecimal>>>
+            taggedWriter(Zab0WriterImpl.write);
 
     public static final Writer<Tagged<Zab3,List<TimedValue<BigDecimal>>>>
       zab3Writer 
-      = Writer.<Zab3, List<TimedValue<BigDecimal>>>writer(Zab3WriterImpl.write);
+        = Writer.<Zab3, List<TimedValue<BigDecimal>>>
+            taggedWriter(Zab3WriterImpl.write);
+
+
+    private static final <IN> Writer<IN>
+      writer(F2<IN, OutputStream, IO<Unit>> w) { return new Writer<IN>(w); }
 
 
     private static final <FT,IN> Writer<Tagged<FT,IN>> 
-      writer(F2<IN, OutputStream, IO<Unit>> w) {
-        return new Writer<Tagged<FT,IN>>() {
-          private final F2<Tagged<FT,IN>, OutputStream, IO<Unit>>
-            write = (tagged,out)  -> w.f(tagged.val,out);
-        };
-    }
+      taggedWriter(F2<IN, OutputStream, IO<Unit>> w) {
+        return writer((tagged,out)  -> w.f(tagged.val,out)); }
 
     public static final <A> Writer<Validation<Errors,A>>
       errorWriter(Writer<A> wa) {
-        return new Writer<Validation<Errors,A>>() {
-
-          private final F2<Validation<Errors,A>, OutputStream, IO<Unit>>
-            write = (vea,out)  ->
-              vea.validation( (err  -> ErrorWriterImpl.write.f(err,out)),
-                              (a    -> wa.write(a,out)));
-        };
-    }
+        return writer((vea,out)  -> 
+                        vea.validation(
+                          (err  -> ErrorWriterImpl.write.f(err,out)),
+                          (a    -> wa.write(a,out)))); }
               
-
 
     public static final <A,B> Writer<Alts2<A,B>>
       writerAlts2(Writer<A> wa, Writer<B> wb) {
-        return new Writer<Alts2<A,B>>() {
-
-          private Alts2Matcher<A,B,IO<Unit>> matcher(OutputStream out) {
-            return new Alts2Matcher<A,B,IO<Unit>>() {
-              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-            };
-          }
-
-          private final F2<Alts2<A,B>, OutputStream, IO<Unit>>
-            write = (alts,out)  -> alts.runMatch(matcher(out));
-        };
-    }
+        return writer((alts,out)  -> alts.runMatch(
+          new Alts2Matcher<A,B,IO<Unit>>() {
+            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); } } ) ); }
 
     public static final <A,B,C> Writer<Alts3<A,B,C>>
       writerAlts3(Writer<A> wa, Writer<B> wb, Writer<C> wc) {
-        return new Writer<Alts3<A,B,C>>() {
-
-          private Alts3Matcher<A,B,C,IO<Unit>> matcher(OutputStream out) {
-            return new Alts3Matcher<A,B,C,IO<Unit>>() {
-              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-              public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
-            };
-          }
-
-          private final F2<Alts3<A,B,C>, OutputStream, IO<Unit>>
-            write = (alts,out)  -> alts.runMatch(matcher(out));
-        };
-    }
+        return writer((alts,out)  -> alts.runMatch(
+          new Alts3Matcher<A,B,C,IO<Unit>>() {
+            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+            public IO<Unit> caseAlt3(C c) { return wc.write(c,out); } } ) ); }
 
     public static final <A,B,C,D> Writer<Alts4<A,B,C,D>>
       writerAlts4(Writer<A> wa, Writer<B> wb, Writer<C> wc, Writer<D> wd) {
-        return new Writer<Alts4<A,B,C,D>>() {
-
-          private Alts4Matcher<A,B,C,D,IO<Unit>> matcher(OutputStream out) {
-            return new Alts4Matcher<A,B,C,D,IO<Unit>>() {
-              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-              public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
-              public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
-            };
-          }
-
-          private final F2<Alts4<A,B,C,D>, OutputStream, IO<Unit>>
-            write = (alts,out)  -> alts.runMatch(matcher(out));
-        };
-    }
+        return writer((alts,out)  -> alts.runMatch(
+          new Alts4Matcher<A,B,C,D,IO<Unit>>() {
+            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+            public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
+            public IO<Unit> caseAlt4(D d) { return wd.write(d,out); } } ) ); }
 
     public static final <A,B,C,D,E> Writer<Alts5<A,B,C,D,E>>
       writerAlts5(Writer<A> wa, Writer<B> wb, Writer<C> wc, Writer<D> wd,
                   Writer<E> we) {
-        return new Writer<Alts5<A,B,C,D,E>>() {
+        return writer((alts,out)  -> alts.runMatch(
+          new Alts5Matcher<A,B,C,D,E,IO<Unit>>() {
+            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
+            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
+            public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
+            public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
+            public IO<Unit> caseAlt5(E e) { return we.write(e,out); } } ) ); }
 
-          private Alts5Matcher<A,B,C,D,E,IO<Unit>> matcher(OutputStream out) {
-            return new Alts5Matcher<A,B,C,D,E,IO<Unit>>() {
-              public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-              public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-              public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
-              public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
-              public IO<Unit> caseAlt5(E e) { return we.write(e,out); }
-            };
-          }
 
-          private final F2<Alts5<A,B,C,D,E>, OutputStream, IO<Unit>>
-            write = (alts,out)  -> alts.runMatch(matcher(out));
-        };
+    private Writer(F2<IN, OutputStream, IO<Unit>> write) {
+      this.write = write;
     }
-
 
     private Writer() {}
   }
