@@ -18,7 +18,6 @@ import static org.github.multi_axis.Time.dateOrd;
 
 public abstract class ForecastFunctions {
 
-
   public static List<TimedValue<BigDecimal>>
     dailyMaximums(List<TimedValue<BigDecimal>> data) {
       return  data
@@ -26,11 +25,12 @@ public abstract class ForecastFunctions {
                   (dmaxs,tval)  ->
                     dmaxs.update( 
                       date(tval.clock),
-                      oldtval  -> timedVal( tval.clock, 
-                                            max(oldtval.value, tval.value))),
+                      oldtval  -> 
+                        timedVal(tval.clock, max(oldtval.value, tval.value)),
+                      tval),
                   TreeMap.empty(dateOrd)
                 ).values(); }
 
 
   private ForecastFunctions() {}
-
+}
