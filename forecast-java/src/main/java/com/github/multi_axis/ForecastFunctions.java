@@ -11,9 +11,9 @@ import org.joda.time.LocalDate;
 import com.github.multi_axis.TimedValue;
 
 
-import static org.github.multi_axis.TimedValue.timedVal;
-import static org.github.multi_axis.Time.date;
-import static org.github.multi_axis.Time.dateOrd;
+import static com.github.multi_axis.TimedValue.timedVal;
+import static com.github.multi_axis.Time.date;
+import static com.github.multi_axis.Time.dateOrd;
 
 
 public abstract class ForecastFunctions {
@@ -22,14 +22,20 @@ public abstract class ForecastFunctions {
     dailyMaximums(List<TimedValue<BigDecimal>> data) {
       return  data
                 .foldLeft(
-                  (dmaxs,tval)  ->
-                    dmaxs.update( 
-                      date(tval.clock),
-                      oldtval  -> 
-                        timedVal(tval.clock, max(oldtval.value, tval.value)),
-                      tval),
+                  (TreeMap<LocalDate,TimedValue<BigDecimal>>  dmaxs,
+                   TimedValue<BigDecimal>                     tval)  ->
+                      dmaxs.update( 
+                        date(tval.clock),
+                        oldtval  -> 
+                          timedVal(tval.clock, oldtval.value.max(tval.value)),
+                        tval),
                   TreeMap.empty(dateOrd)
                 ).values(); }
+
+  //TODO implement
+  //public static F<Long,BigDecimal>
+  //  simpleLeastSquares(List<TimedValue<BigDecimal>> data) { }
+
 
 
   private ForecastFunctions() {}
