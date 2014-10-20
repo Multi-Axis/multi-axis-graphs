@@ -6,7 +6,7 @@ import java.math.RoundingMode;
 
 import fj.F;
 import fj.data.Option;
-import fj.data.List;
+import fj.data.Stream;
 import fj.data.Validation;
 import fj.data.IO;
 import fj.data.IOFunctions;
@@ -46,11 +46,11 @@ public abstract class JsonUtils {
   //  READING
   //---------------------------------------------------------------------------
 
-  public static final IO<Validation<Errors, List<TimedValue<BigDecimal>>>>
+  public static final IO<Validation<Errors, Stream<TimedValue<BigDecimal>>>>
     readZab0Or3Json() {
       //return lazy(x  -> zab0Or3Json());
-      return new IO<Validation<Errors, List<TimedValue<BigDecimal>>>>() {
-        public Validation<Errors, List<TimedValue<BigDecimal>>> run() {
+      return new IO<Validation<Errors, Stream<TimedValue<BigDecimal>>>>() {
+        public Validation<Errors, Stream<TimedValue<BigDecimal>>> run() {
           return zab0Or3Json();
         }
       };
@@ -58,14 +58,14 @@ public abstract class JsonUtils {
 
 
   //TODO THINK should there be some abstraction here?
-  private static final Validation<Errors, List<TimedValue<BigDecimal>>>
+  private static final Validation<Errors, Stream<TimedValue<BigDecimal>>>
     zab0Or3Json() {
 
       final JsonReader jsonReader = createReader(System.in);
 
       final Validation<Errors,JsonObject> jsonObjV = zab0Or3Object(jsonReader);
 
-      final Validation<Errors, List<TimedValue<BigDecimal>>> timedValsV = 
+      final Validation<Errors, Stream<TimedValue<BigDecimal>>> timedValsV = 
         zab0Or3TimedVals(zab0Or3Clocks(jsonObjV), zab0Or3Values(jsonObjV));
 
       jsonReader.close();
@@ -83,15 +83,15 @@ public abstract class JsonUtils {
     }
   }
 
-  private static final Validation<Errors,List<TimedValue<BigDecimal>>>
+  private static final Validation<Errors,Stream<TimedValue<BigDecimal>>>
     zab0Or3TimedVals(
       Validation<Errors,JsonArray> jsonClocksV,
       Validation<Errors,JsonArray> jsonValuesV) {
 
-        final Validation<Errors,List<Long>> clocksV
+        final Validation<Errors,Stream<Long>> clocksV
           = jsonClocksV.bind(cs  -> jsonNumbers(cs)).bind(ns  -> longs(ns));
 
-        final Validation<Errors,List<BigDecimal>> valsV
+        final Validation<Errors,Stream<BigDecimal>> valsV
           = jsonValuesV.bind(vs  -> jsonNumbers(vs)).bind(ns  -> bigDecimals(ns));
 
         return  clocksV.bind(
@@ -111,19 +111,21 @@ public abstract class JsonUtils {
       }
   }
 
-  private static final Validation<Errors,List<BigDecimal>>
+  private static final Validation<Errors,Stream<BigDecimal>>
     bigDecimals(java.util.List<JsonNumber> jsonNums) {
       try {
-        return success(Java.<JsonNumber>JUList_List().f(jsonNums).map(n  ->  n.bigDecimalValue()));
+        return success( Java.<JsonNumber>JUList_List().f(jsonNums)
+                          .toStream().map(n  ->  n.bigDecimalValue()));
       } catch (ClassCastException e) {
         return fail(nonNumberInArray(e));
       }
   }
 
-  private static final Validation<Errors,List<Long>>
+  private static final Validation<Errors,Stream<Long>>
     longs(java.util.List<JsonNumber> jsonNums) {
       try {
-        return success(Java.<JsonNumber>JUList_List().f(jsonNums).map(n  ->  Long.valueOf(n.longValue())));
+        return success( Java.<JsonNumber>JUList_List().f(jsonNums)
+                          .toStream().map(n  ->  Long.valueOf(n.longValue())));
       } catch (ClassCastException e) {
         return fail(nonNumberInArray(e));
       }
@@ -157,7 +159,7 @@ public abstract class JsonUtils {
   public static final F<BigDecimal,BigDecimal> zab3ify =
     val  -> val.setScale(0, RoundingMode.HALF_EVEN);
 
-  public static final JsonArray bigDecimalJsonArray(final List<BigDecimal> vals) {
+  public static final JsonArray bigDecimalJsonArray(final Stream<BigDecimal> vals) {
     final JsonArrayBuilder b = createArrayBuilder();
     for (BigDecimal val : vals) {
       b.add(val);
@@ -165,7 +167,7 @@ public abstract class JsonUtils {
     return b.build();
   }
 
-  public static final JsonArray longJsonArray(final List<Long> vals) {
+  public static final JsonArray longJsonArray(final Stream<Long> vals) {
     final JsonArrayBuilder b = createArrayBuilder();
     for (Long val : vals) {
       b.add(val.longValue());
@@ -184,7 +186,7 @@ public abstract class JsonUtils {
   //  - Hm; perhaps Validation<JsonValue,JsonValue>?
   public static final JsonObject
     timedValsDetailsJson(
-      Validation<Errors,List<TimedValue<BigDecimal>>> timedValsV,
+      Validation<Errors,Stream<TimedValue<BigDecimal>>> timedValsV,
       F<BigDecimal,BigDecimal>                        valFormat,
       JsonValue                                       details) {
 
@@ -192,7 +194,7 @@ public abstract class JsonUtils {
         final F<Errors,JsonObject> onFail = 
           fail  -> createObjectBuilder().add("error","error").build();
 
-        final F<List<TimedValue<BigDecimal>>,JsonObject> onSuccess =
+        final F<Stream<TimedValue<BigDecimal>>,JsonObject> onSuccess =
           success  -> createObjectBuilder()
           .add(
             "clocks",

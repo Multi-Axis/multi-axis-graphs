@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import fj.F;
 import fj.F2;
 import fj.Unit;
-import fj.data.List;
+import fj.data.Stream;
 import fj.data.IO;
 import fj.data.Validation;
 
@@ -40,22 +40,22 @@ public abstract class Conf {
       read() { return read; }
 
 
-   // public static final Reader<Zab0, List<TimedValue<BigDecimal>>>
+   // public static final Reader<Zab0, Stream<TimedValue<BigDecimal>>>
    //   zab0Reader 
-   //   = Reader.<Zab0, List<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
+   //   = Reader.<Zab0, Stream<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
 
-   // public static final Reader<Zab3, List<TimedValue<BigDecimal>>>
+   // public static final Reader<Zab3, Stream<TimedValue<BigDecimal>>>
    //   zab3Reader 
-   //   = Reader.<Zab3, List<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
+   //   = Reader.<Zab3, Stream<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
 
     public static final Reader<Alts2<
-          Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-          Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
+          Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+          Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
 
       zabReader 
         = Reader.<Alts2< //TODO see if this declaration can be omitted.
-            Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-            Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
+            Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+            Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
           reader(ZabReaderImpl.read);
 
     private static final <OUT> Reader<OUT> 
@@ -82,14 +82,14 @@ public abstract class Conf {
       write() { return write; }
 
 
-    public static final Writer<Tagged<Zab0,List<TimedValue<BigDecimal>>>>
+    public static final Writer<Tagged<Zab0,Stream<TimedValue<BigDecimal>>>>
       zab0Writer 
-        = Writer.<Zab0, List<TimedValue<BigDecimal>>>
+        = Writer.<Zab0, Stream<TimedValue<BigDecimal>>>
             taggedWriter(Zab0WriterImpl.write);
 
-    public static final Writer<Tagged<Zab3,List<TimedValue<BigDecimal>>>>
+    public static final Writer<Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>
       zab3Writer 
-        = Writer.<Zab3, List<TimedValue<BigDecimal>>>
+        = Writer.<Zab3, Stream<TimedValue<BigDecimal>>>
             taggedWriter(Zab3WriterImpl.write);
 
 

@@ -3,7 +3,7 @@ package com.github.multi_axis;
 
 import java.math.BigDecimal;
 
-import fj.data.List;
+import fj.data.Stream;
 import fj.data.TreeMap;
 
 import org.joda.time.LocalDate;
@@ -18,8 +18,8 @@ import static com.github.multi_axis.Time.dateOrd;
 
 public abstract class ForecastFunctions {
 
-  public static List<TimedValue<BigDecimal>>
-    dailyMaximums(List<TimedValue<BigDecimal>> data) {
+  public static Stream<TimedValue<BigDecimal>>
+    dailyMaximums(Stream<TimedValue<BigDecimal>> data) {
       return  data
                 .foldLeft(
                   (TreeMap<LocalDate,TimedValue<BigDecimal>>  dmaxs,
@@ -30,11 +30,11 @@ public abstract class ForecastFunctions {
                           timedVal(tval.clock, oldtval.value.max(tval.value)),
                         tval),
                   TreeMap.empty(dateOrd)
-                ).values(); }
+                ).values().toStream(); }
 
   //TODO implement
   //public static F<Long,BigDecimal>
-  //  simpleLeastSquares(List<TimedValue<BigDecimal>> data) { }
+  //  simpleLeastSquares(Stream<TimedValue<BigDecimal>> data) { }
   
   // public static covariance // TODO ...
 

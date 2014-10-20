@@ -7,7 +7,7 @@ import java.io.InputStream;
 
 import fj.F;
 import fj.data.Option;
-import fj.data.List;
+import fj.data.Stream;
 import fj.data.Validation;
 import fj.data.IO;
 import fj.data.IOFunctions;
@@ -54,30 +54,30 @@ import static com.github.multi_axis.Zab.zab3;
 public abstract class ZabReaderImpl {
 
   public static final F<InputStream, IO<Validation<Errors, Alts2<
-                        Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-                        Tagged<Zab3,List<TimedValue<BigDecimal>>>>>>>
+                        Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+                        Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>>>
     read = in  -> readZabJson(in);
 
 
   public static final IO<Validation<Errors, Alts2<
-                        Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-                        Tagged<Zab3,List<TimedValue<BigDecimal>>>>>>
+                        Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+                        Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>>
     readZabJson(InputStream in) {
       //return lazy(x  -> zab0Or3Json());
       return new  IO<Validation<Errors, Alts2<
-                    Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-                    Tagged<Zab3,List<TimedValue<BigDecimal>>>>>>() {
+                    Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+                    Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>>() {
 
         public  Validation<Errors, Alts2<
-                  Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-                  Tagged<Zab3,List<TimedValue<BigDecimal>>>>> 
+                  Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+                  Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>> 
           run() { return zabJson(in); } }; }
 
 
   //TODO THINK should there be some abstraction here?
   private static final  Validation<Errors, Alts2<
-                          Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-                          Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
+                          Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+                          Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
     zabJson(InputStream in) {
 
       final JsonReader jsonReader = createReader(in);
@@ -85,8 +85,8 @@ public abstract class ZabReaderImpl {
       final Validation<Errors,JsonObject> jsonObjV = jsonObject(jsonReader);
 
       final Validation<Errors,Alts2<
-              Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-              Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
+              Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+              Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
         
         zabTimedValsV = zabTimedVals(
                           zabTypeJsonNum(jsonObjV),
@@ -109,8 +109,8 @@ public abstract class ZabReaderImpl {
   private enum ZEnum { ZAB0, ZAB3, NONE }
 
   private static final  Validation<Errors,Alts2<
-                          Tagged<Zab0,List<TimedValue<BigDecimal>>>,
-                          Tagged<Zab3,List<TimedValue<BigDecimal>>>>>
+                          Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
+                          Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
     zabTimedVals(
       Validation<Errors,JsonNumber> jsonZabTypeV,
       Validation<Errors,JsonArray> jsonClocksV,
@@ -119,11 +119,11 @@ public abstract class ZabReaderImpl {
         final Validation<Errors,ZEnum> 
           zabTypeV = jsonZabTypeV.map(jzt  -> zabType(jzt));
 
-        final Validation<Errors,List<Long>> 
+        final Validation<Errors,Stream<Long>> 
           clocksV = jsonClocksV.bind(cs  -> jsonNumbers(cs))
                       .bind(ns  -> longs(ns));
 
-        final Validation<Errors,List<BigDecimal>>
+        final Validation<Errors,Stream<BigDecimal>>
           valsV = jsonValuesV.bind(vs  -> jsonNumbers(vs))
                     .bind(ns  -> bigDecimals(ns));
 
@@ -157,19 +157,19 @@ public abstract class ZabReaderImpl {
       catch (ClassCastException e) { 
         return fail(nonNumberInArray(e)); } }
 
-  private static final Validation<Errors,List<BigDecimal>>
+  private static final Validation<Errors,Stream<BigDecimal>>
     bigDecimals(java.util.List<JsonNumber> jsonNums) {
       try {
         return  success(Java.<JsonNumber>JUList_List().f(jsonNums)
-                  .map(n  ->  n.bigDecimalValue())); }
+                  .toStream().map(n  ->  n.bigDecimalValue())); }
       catch (ClassCastException e) {
         return  fail(nonNumberInArray(e)); } }
 
-  private static final Validation<Errors,List<Long>>
+  private static final Validation<Errors,Stream<Long>>
     longs(java.util.List<JsonNumber> jsonNums) {
       try {
         return success(Java.<JsonNumber>JUList_List().f(jsonNums)
-                .map(n  ->  Long.valueOf(n.longValue()))); }
+                .toStream().map(n  ->  Long.valueOf(n.longValue()))); }
       catch (ClassCastException e) {
         return fail(nonNumberInArray(e)); } }
 

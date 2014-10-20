@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.lang.Long;
 
 import fj.F;
-import fj.data.List;
+import fj.data.Stream;
 //import fj.data.Validation;
 
 import javax.json.Json;
@@ -27,7 +27,7 @@ import static com.github.multi_axis.TimedValue.timedVal;
 
 public abstract class ZabWriterUtils {
 
-  public static final JsonArray bigDecimalJsonArray(final List<BigDecimal> vals) {
+  public static final JsonArray bigDecimalJsonArray(final Stream<BigDecimal> vals) {
     final JsonArrayBuilder b = createArrayBuilder();
     for (BigDecimal val : vals) {
       b.add(val);
@@ -35,7 +35,7 @@ public abstract class ZabWriterUtils {
     return b.build();
   }
 
-  public static final JsonArray longJsonArray(final List<Long> vals) {
+  public static final JsonArray longJsonArray(final Stream<Long> vals) {
     final JsonArrayBuilder b = createArrayBuilder();
     for (Long val : vals) {
       b.add(val.longValue());
@@ -54,7 +54,7 @@ public abstract class ZabWriterUtils {
   //  - Hm; perhaps Validation<JsonValue,JsonValue>?
   public static final JsonObject
     timedValsDetailsJson(
-      List<TimedValue<BigDecimal>> timedVals,
+      Stream<TimedValue<BigDecimal>> timedVals,
       F<BigDecimal,BigDecimal>     valFormat,
       JsonValue                    details) {
 

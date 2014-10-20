@@ -8,7 +8,7 @@ import java.math.RoundingMode;
 import fj.F;
 import fj.F2;
 import fj.Unit;
-import fj.data.List;
+import fj.data.Stream;
 import fj.data.Validation;
 import fj.data.IO;
 
@@ -28,14 +28,14 @@ import static com.github.multi_axis.ZabWriterUtils.timedValsDetailsJson;
 
 public abstract class Zab3WriterImpl {
 
-  public static final F2< List<TimedValue<BigDecimal>>,
+  public static final F2< Stream<TimedValue<BigDecimal>>,
                           OutputStream,
                           IO<Unit>>
     write = (vals, out)  -> writeZab3Json(vals,out);
 
   public static final IO<Unit>
     writeZab3Json(
-      List<TimedValue<BigDecimal>> vals,
+      Stream<TimedValue<BigDecimal>> vals,
       OutputStream out) {
       
       return new IO<Unit>() {
