@@ -35,6 +35,8 @@ public abstract class ForecastFunctions {
   //TODO implement
   //public static F<Long,BigDecimal>
   //  simpleLeastSquares(List<TimedValue<BigDecimal>> data) { }
+  
+  // public static covariance // TODO ...
 
 
 
