@@ -37,17 +37,13 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		threshold := r.FormValue("threshold")
 		//		fmt.Printf(params)
 		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
-<<<<<<< HEAD
-		db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
-=======
 
+		// threshold
 		res, _ := db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
 		affected, _ := res.RowsAffected()
 		if affected == 0 {
 			db.Exec(`INSERT INTO threshold VALUES (default, $1, true, $2)`, id, threshold)
 		}
-
->>>>>>> antti-nvd3
 		updateFuture(id)
 	} 
 	if wantsJson {
