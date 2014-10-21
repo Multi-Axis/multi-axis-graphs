@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"io/ioutil"
+	"os/exec"
 )
 
 //	hopefully makes constant new db connections unnecessary, yay?
@@ -30,14 +31,16 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 	if len(r.Header["Accept"]) > 0 {
 		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
 	}
-
 	if r.Method == "POST" {
 		r.ParseForm()
 		params := r.FormValue("params")
+		threshold := r.FormValue("threshold")
 		//		fmt.Printf(params)
 		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
-		graphViewHTML(w) // TODO output json if wantsJson
-	} else if wantsJson {
+		db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
+		updateFuture(id)
+	} 
+	if wantsJson {
 		deliverItemByItemFutureId(w, id)
 	} else {
 		graphViewHTML(w)
@@ -74,6 +77,15 @@ func graphViewHTML(w http.ResponseWriter) {
 }
 
 /* }}} */
+
+func updateFuture(id int) {
+	fmt.Printf("\nStarting sync...")
+	err := exec.Command("habbix","sync-db","-i",strconv.Itoa(id)).Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("\nDB Synced.")
+}
 
 /* {{{ Querying graph JSON ------------------------------------------------------ */
 type ClockValue struct {
@@ -112,9 +124,14 @@ func parseValueJSON(rows *sql.Rows) string {
 func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 	var itemId int
 	var params string
-
+	var threshold float32
+	
 	db.QueryRow(`SELECT itemid, params FROM item_future WHERE id = $1`, ifId).Scan(&itemId, &params)
+	
+	db.QueryRow(`SELECT value FROM threshold WHERE itemid = $1`, ifId).Scan(&threshold)
 
+//	fmt.Printf("%f",threshold)
+	
 	rows, _ := db.Query(`SELECT lower, value FROM threshold WHERE itemid = $1`, ifId);
 	defer rows.Close() // thresholds := TODO parse to list?
 
@@ -125,7 +142,7 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 	future := parseValueJSON(rows)
 
 	output := fmt.Sprintf(`{ "params": %s, "threshold": %s, "history": %s, "future": %s }`,
-		params, "{}" /* TODO */, history, future)
+		params, fmt.Sprintf("%f",threshold), history, future)
 	w.Write([]byte(output))
 }
 
