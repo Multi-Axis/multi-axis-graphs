@@ -15,6 +15,7 @@ public abstract class Errors {
     public R caseNotJsonArray(ClassCastException e);
     public R caseBadZabType();
     public R caseValueTypeNotNumber(ClassCastException e);
+    public R caseNotEnoughData();
   }
 
   public static final Errors miscJsonError(JsonException e) {
@@ -34,6 +35,9 @@ public abstract class Errors {
   }
   public static final Errors valueTypeNotNumber(ClassCastException e) {
     return new ValueTypeNotNumber(e);
+  }
+  public static final Errors notEnoughData() {
+    return new NotEnoughData();
   }
 
   public abstract <R> R runMatch(ErrorMatcher<R> m);
@@ -101,6 +105,15 @@ public abstract class Errors {
 
     public final <R> R runMatch(ErrorMatcher<R> m) {
       return m.caseValueTypeNotNumber(e);
+    }
+  }
+
+  private static final class NotEnoughData extends Errors {
+
+    public NotEnoughData() {}
+
+    public final <R> R runMatch(ErrorMatcher<R> m) {
+      return m.caseNotEnoughData();
     }
   }
 

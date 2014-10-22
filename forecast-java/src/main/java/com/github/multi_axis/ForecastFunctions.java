@@ -3,9 +3,12 @@ package com.github.multi_axis;
 
 import java.math.BigDecimal;
 
+import fj.F;
 import fj.P2;
+import fj.data.List;
 import fj.data.Stream;
 import fj.data.TreeMap;
+import fj.Ord;
 
 import org.joda.time.LocalDate;
 
@@ -13,6 +16,10 @@ import com.github.multi_axis.TimedValue;
 
 import static java.math.BigDecimal.ONE;
 import static java.math.BigDecimal.ZERO;
+import static java.math.RoundingMode.HALF_EVEN;
+
+import static fj.Ord.longOrd;
+import static fj.data.Stream.iterateWhile;
 
 import static com.github.multi_axis.TimedValue.timedVal;
 import static com.github.multi_axis.Time.date;
@@ -21,22 +28,73 @@ import static com.github.multi_axis.Time.dateOrd;
 
 public abstract class ForecastFunctions {
 
-  public static Stream<TimedValue<BigDecimal>
+
+  public static F<Stream<TimedValue<BigDecimal>>,
+                  Stream<TimedValue<BigDecimal>>>
+    weekOfDailyMaximumsLeastSquares =
+      (tvs  -> weekOfDailyMaximumsLeastSquares(tvs));
+
+  //TODO Fix ugly hacks and refactor a bunch of stuff out of here.
+  //  - Should return some error rather than empty Stream.
+  public static Stream<TimedValue<BigDecimal>>
     weekOfDailyMaximumsLeastSquares(Stream<TimedValue<BigDecimal>> data) {
 
-      final long end = //TODO write...
+      final Stream<TimedValue<BigDecimal>>
+        dmaxs = dailyMaximums(data);
 
-  public static F<BigDecimal, BigDecimal>
-    dailyMaximumsLeastSquares(Stream<TimedValue<BigDecimal>> data) {
+      final List<Long> 
+        clocks = dmaxs.map(tv  -> Long.valueOf(tv.clock)).toList();
+
+      final Long first =  clocks.minimum(longOrd);
+      final Long last  =  clocks.maximum(longOrd);
+
+      final Long daySecs = Long.valueOf(24 * 60 * 60);
+      final Long weekSecs = Long.valueOf(7 * 24 * 60 * 60);
+
+      final Stream<BigDecimal> 
+        outTimes =  range(first, last+weekSecs, daySecs)
+                      .map(x  -> BigDecimal.valueOf(x.longValue()));
+
+      //TODO FIXME Ugly bad place for these checks.
+      if (length(dmaxs).compareTo(ONE) > 0) {
+        if (variance(dmaxs.map(tv  -> BigDecimal.valueOf(tv.clock)))
+            .compareTo(ZERO) > 0) {
+
+              final F<BigDecimal,BigDecimal> 
+                prediction = timedValsLeastSquares(dmaxs);
+
+              return 
+                outTimes.map(t  -> timedVal(t.longValue(),
+                                            prediction.f(t))); }
+
+        else { return Stream.<TimedValue<BigDecimal>>nil(); } } //FIXME hack.
+      else { return Stream.<TimedValue<BigDecimal>>nil(); } 
+  }
+
       
-      final Stream<TimedValue<BigDecimal>> 
-        maxs = dailyMaximums(data);
+
+  public static Long add(Long a, Long b) {
+    return Long.valueOf(a.longValue() + b.longValue()); }
+
+  
+  public static Stream<Long> range(Long from, Long to, Long step) {
+    return  iterateWhile( (Long i)  -> add(i,step),
+                          (Long i)  -> !longOrd.isGreaterThan(i,to),
+                          from); }
+
+
+  
+  //TODO FIXME This will fail given insufficient / insufficiently variant data!
+  //  - Though, FWIW, for daily maxes, just checking for length should suffice
+  //    since there won't be repeats of clock.
+  public static F<BigDecimal, BigDecimal>
+    timedValsLeastSquares(Stream<TimedValue<BigDecimal>> data) {
 
       final Stream<BigDecimal>
-        times = maxs.map(tv  -> BigDecimal.valueOf(tv.clock));
+        times = data.map(tv  -> BigDecimal.valueOf(tv.clock));
 
       final Stream<BigDecimal>
-        vals = maxs.map(tv  -> tv.value);
+        vals = data.map(tv  -> tv.value);
 
       return simpleLeastSquares(times,vals); }
 
@@ -62,11 +120,12 @@ public abstract class ForecastFunctions {
   public static F<BigDecimal,BigDecimal>
     simpleLeastSquares(Stream<BigDecimal> as, Stream<BigDecimal> bs) {
       
+      //TODO FIXME THINK Better number type for this kind of arithmetic?
       final BigDecimal
-        slope = covariance(as,bs).divide(variance(as));
+        slope = covariance(as,bs).divide(variance(as),20,HALF_EVEN);
 
       final BigDecimal
-        intercept = mean(as).subtract(slope.multiply(mean(bs)));
+        intercept = mean(bs).subtract(slope.multiply(mean(as)));
 
       return (x  -> intercept.add(slope.multiply(x))); }
 
@@ -76,26 +135,28 @@ public abstract class ForecastFunctions {
   public static BigDecimal
     covariance(Stream<BigDecimal> as, Stream<BigDecimal> bs) {
 
-      final BigDecimal amean = mean(a);
-      final BigDecimal bmean = mean(b);
+      final BigDecimal amean = mean(as);
+      final BigDecimal bmean = mean(bs);
 
-      final P2<BigDecimal,BigDecimal> asbs = as.zip(bs);
+      final Stream<P2<BigDecimal,BigDecimal>> asbs = as.zip(bs);
 
-      final BigDecimal n = asbs.length()
+      final BigDecimal n = length(asbs);
 
+      //TODO FIXME THINK Better number type for this kind of arithmetic?
       return  sum(
                 asbs.map(ab  -> 
-                  ab_1().subtract(amean).multiply(
-                  ab_2().subtract(bmean)))
+                  ab._1().subtract(amean).multiply(
+                  ab._2().subtract(bmean)))
               ).divide(
-                  n.subtract(ONE));}
+                  n.subtract(ONE),20,HALF_EVEN);}
 
   public static BigDecimal variance(Stream<BigDecimal> as) {
     return covariance(as,as); }
 
+  //TODO FIXME THINK Better number type for this kind of arithmetic?
   public static BigDecimal
     mean(Stream<BigDecimal> as) {
-      return sum(as).divide(length(as)); }
+      return sum(as).divide(length(as),20,HALF_EVEN); }
 
   public static BigDecimal
     sum(Stream<BigDecimal> as) {
@@ -103,9 +164,9 @@ public abstract class ForecastFunctions {
                             acc.add(a),
                           ZERO); }
 
-  public static BigDecimal
-    length(Stream<BigDecimal> as) {
-      return valueOf(as.length()); }
+  public static <A> BigDecimal
+    length(Stream<A> as) {
+      return BigDecimal.valueOf(as.length()); }
 
 
   private ForecastFunctions() {}
