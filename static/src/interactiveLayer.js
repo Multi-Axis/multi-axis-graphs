@@ -195,7 +195,6 @@ nv.interactiveGuideline = function() {
           text.enter()
               .append("text")
               .text("Threshold")
-              .style("text-anchor", "middle")  
               .attr("y", x-4)
               .attr("x", availableWidth/2);
 

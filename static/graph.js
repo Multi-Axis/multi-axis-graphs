@@ -11,11 +11,13 @@ function setData(data) {
   chartData = [
     {
       key: "History",
-      values: data.history
+      values: data.history,
+      yAxis: 2
     },
     {
       key: "Future",
       values: data.future,
+      yAxis: 2,
       color: "green"
     }
   ];
@@ -50,7 +52,8 @@ function draw() {
                   .transitionDuration(350)
                   .showLegend(true)
                   .showYAxis(true)
-                  .showXAxis(true);
+                  .showXAxis(true)
+                  .showY2Axis(true);
 
     //set up X and Y-axis
     chart.xAxis.axisLabel('Time').tickFormat(timeFormat);

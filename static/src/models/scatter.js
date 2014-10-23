@@ -12,6 +12,7 @@ nv.models.scatter = function() {
     , id           = Math.floor(Math.random() * 100000) //Create semi-unique ID incase user doesn't select one
     , x            = d3.scale.linear()
     , y            = d3.scale.linear()
+    , y2           = d3.scale.linear()
     , z            = d3.scale.linear() //linear because d3.svg.shape.size is treated as area
     , getX         = function(d) { return d.time } // accessor to get the x value
     , getY         = function(d) { return d.val } // accessor to get the y value
@@ -20,6 +21,7 @@ nv.models.scatter = function() {
     , onlyCircles  = true // Set to false to use shapes
     , forceX       = [] // List of numbers to Force into the X scale (ie. 0, or a max / min, etc.)
     , forceY       = [] // List of numbers to Force into the Y scale
+    , forceY2      = []
     , forceSize    = [] // List of numbers to Force into the Size scale
     , interactive  = true // If true, plots a voronoi overlay for advanced point intersection
     , pointKey     = null
@@ -31,8 +33,10 @@ nv.models.scatter = function() {
     , clipRadius   = function() { return 25 } // function to get the radius for voronoi point clips
     , xDomain      = null // Override x domain (skips the calculation from data)
     , yDomain      = null // Override y domain
+    , y2Domain     = null
     , xRange       = null // Override x range
     , yRange       = null // Override y range
+    , y2Range      = null
     , sizeDomain   = null // Override point size domain
     , sizeRange    = null
     , singlePoint  = false
@@ -57,6 +61,7 @@ nv.models.scatter = function() {
 
   function chart(selection) {
     selection.each(function(data) {
+      console.log(data)
       var availableWidth = width - margin.left - margin.right,
           availableHeight = height - margin.top - margin.bottom,
           container = d3.select(this);
@@ -72,16 +77,43 @@ nv.models.scatter = function() {
       // Setup Scales
 
       // remap and flatten the data for use in calculating the scales' domains
-      var seriesData = (xDomain && yDomain && sizeDomain) ? [] : // if we know xDomain and yDomain and sizeDomain, no need to calculate.... if Size is constant remember to set sizeDomain to speed up performance
-            d3.merge(
-              data.map(function(d) {
+      // Old one
+      // var seriesData = (xDomain && yDomain && sizeDomain) ? [] : // if we know xDomain and yDomain and sizeDomain, no need to calculate.... if Size is constant remember to set sizeDomain to speed up performance
+      //       d3.merge(
+      //         data.map(function(d) {
+      //           return d.values.map(function(d,i) {
+      //             return { x: getX(d,i), y: getY(d,i), size: getSize(d,i) }
+      //           })
+      //         })
+      //       );
+      //       console.log(seriesData)
+      
+       var series1Data = d3.merge(data.filter(function(d) {return !d.disabled && d.yAxis == 1})
+                .map(function(d) {
                 return d.values.map(function(d,i) {
                   return { x: getX(d,i), y: getY(d,i), size: getSize(d,i) }
                 })
-              })
-            );
+              }));
 
-      x   .domain(xDomain || d3.extent(seriesData.map(function(d) { return d.x; }).concat(forceX)))
+       var series2Data = d3.merge(data.filter(function(d) {return !d.disabled && d.yAxis == 2})
+                .map(function(d) {
+                return d.values.map(function(d,i) {
+                  return { x: getX(d,i), y: getY(d,i), size: getSize(d,i) }
+                })
+              }));
+       console.log(series2Data)
+            // var series1 = data.filter(function(d) {return !d.disabled && d.yAxis == 1})
+            // .map(function(d) {
+            //   return d.values.map(function(d,i) {
+            //     return { x: d.x, y: d.y }
+            //   })
+            // })
+
+
+
+
+
+      x   .domain(xDomain || d3.extent(series1Data.map(function(d) { return d.x; }).concat(forceX)))
 
       if (padData && data[0])
         x.range(xRange || [(availableWidth * padDataOuter +  availableWidth) / (2 *data[0].values.length), availableWidth - availableWidth * (1 + padDataOuter) / (2 * data[0].values.length)  ]);
@@ -89,10 +121,13 @@ nv.models.scatter = function() {
       else
         x.range(xRange || [0, availableWidth]);
 
-      y   .domain(yDomain || d3.extent(seriesData.map(function(d) { return d.y }).concat(forceY)))
+      y   .domain(yDomain || d3.extent(series1Data.map(function(d) { return d.y }).concat(forceY)))
           .range(yRange || [availableHeight, 0]);
 
-      z   .domain(sizeDomain || d3.extent(seriesData.map(function(d) { return d.size }).concat(forceSize)))
+      y2  .domain(y2Domain || d3.extent(series2Data.map(function(d) { return d.y}).concat(forceY2)))
+          .range(y2Range || [availableHeight, 0]);
+          console.log("ss",y2.domain())
+      z   .domain(sizeDomain || d3.extent(series1Data.map(function(d) { return d.size }).concat(forceSize)))
           .range(sizeRange || [16, 256]);
 
       // If scale's domain don't have a range, slightly adjust to make one... so a chart can show a single data point
@@ -107,11 +142,20 @@ nv.models.scatter = function() {
             y.domain([y.domain()[0] - y.domain()[0] * 0.01, y.domain()[1] + y.domain()[1] * 0.01])
           : y.domain([-1,1]);
 
+      if (y2.domain()[0] === y2.domain()[1])
+        y2.domain()[0] ?
+            y2.domain([y2.domain()[0] - y2.domain()[0] * 0.01, y2.domain()[1] + y2.domain()[1] * 0.01])
+          : y2.domain([-1,1]);
+
       if ( isNaN(x.domain()[0])) {
           x.domain([-1,1]);
       }
 
       if ( isNaN(y.domain()[0])) {
+          y.domain([-1,1]);
+      }
+
+      if (isNaN(y2.domain()[0])) {
           y.domain([-1,1]);
       }
 
@@ -481,6 +525,12 @@ nv.models.scatter = function() {
     return chart;
   };
 
+  chart.y2 = function(_) {
+    if (!arguments.length) return getY;
+    getY = d3.functor(_);
+    return chart;
+  }
+
   chart.size = function(_) {
     if (!arguments.length) return getSize;
     getSize = d3.functor(_);
@@ -519,6 +569,14 @@ nv.models.scatter = function() {
     y = _;
     return chart;
   };
+
+  chart.y2Scale = function(_) {
+    if (!arguments.length) {
+      return y2;
+    }
+    y2 = _;
+    return chart;
+  }
 
   chart.zScale = function(_) {
     if (!arguments.length) return z;

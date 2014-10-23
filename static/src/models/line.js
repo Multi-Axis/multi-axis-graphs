@@ -19,6 +19,7 @@ nv.models.line = function() {
     , clipEdge = false // if true, masks lines within x and y scale
     , x //can be accessed via chart.xScale()
     , y //can be accessed via chart.yScale()
+    , y2
     , interpolate = "linear" // controls the line interpolation
     ;
 
@@ -51,6 +52,7 @@ nv.models.line = function() {
 
       x = scatter.xScale();
       y = scatter.yScale();
+      y2 = scatter.y2Scale();
 
       x0 = x0 || x;
       y0 = y0 || y;
@@ -196,7 +198,7 @@ nv.models.line = function() {
   chart.dispatch = scatter.dispatch;
   chart.scatter = scatter;
 
-  d3.rebind(chart, scatter, 'id', 'interactive', 'size', 'xScale', 'yScale', 'zScale', 'xDomain', 'yDomain', 'xRange', 'yRange',
+  d3.rebind(chart, scatter, 'id', 'interactive', 'size', 'xScale', 'yScale', 'y2Scale', 'zScale', 'xDomain', 'yDomain', 'xRange', 'yRange',
     'sizeDomain', 'forceX', 'forceY', 'forceSize', 'clipVoronoi', 'useVoronoi', 'clipRadius', 'padData','highlightPoint','clearHighlights');
 
   chart.options = nv.utils.optionsFunc.bind(chart);
