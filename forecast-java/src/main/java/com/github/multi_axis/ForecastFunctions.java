@@ -5,7 +5,8 @@ import java.math.BigDecimal;
 
 import fj.F;
 import fj.P2;
-import fj.data.List;
+//import fj.data.List;
+import fj.data.Option;
 import fj.data.Stream;
 import fj.data.TreeMap;
 import fj.Ord;
@@ -42,18 +43,22 @@ public abstract class ForecastFunctions {
       final Stream<TimedValue<BigDecimal>>
         dmaxs = dailyMaximums(data);
 
-      final List<Long> 
-        clocks = dmaxs.map(tv  -> Long.valueOf(tv.clock)).toList();
+      final Stream<Long> 
+        clocks = dmaxs.map(tv  -> Long.valueOf(tv.clock));
 
-      final Long first =  clocks.minimum(longOrd);
-      final Long last  =  clocks.maximum(longOrd);
+      final Option<Long> firstO =  minimum(longOrd,clocks);
+      final Option<Long> lastO  =  maximum(longOrd,clocks);
 
       final Long daySecs = Long.valueOf(24 * 60 * 60);
       final Long weekSecs = Long.valueOf(7 * 24 * 60 * 60);
 
-      final Stream<BigDecimal> 
-        outTimes =  range(first, last+weekSecs, daySecs)
-                      .map(x  -> BigDecimal.valueOf(x.longValue()));
+      final Stream<BigDecimal>
+        outTimes =
+          firstO.bind( first  ->
+          lastO.map( last  ->
+            range(first, add(last,weekSecs), daySecs)
+              .map(x  -> BigDecimal.valueOf(x.longValue())))
+          ).orSome(Stream.<BigDecimal>nil());
 
       //TODO FIXME Ugly bad place for these checks.
       if (length(dmaxs).compareTo(ONE) > 0) {
@@ -73,14 +78,29 @@ public abstract class ForecastFunctions {
 
       
 
-  public static Long add(Long a, Long b) {
-    return Long.valueOf(a.longValue() + b.longValue()); }
+  public static Long
+    add(Long a, Long b) {
+      return Long.valueOf(a.longValue() + b.longValue()); }
 
+  public static <A> Option<A> 
+    maximum(Ord<A> ord, Stream<A> as) {
+      return as.foldLeft(
+                  (Option<A> maxO, A a)  ->
+                    maxO.map( max  -> ord.max.f(max).f(a)),
+                  as.toOption()); }
+
+  public static <A> Option<A> 
+    minimum(Ord<A> ord, Stream<A> as) {
+      return as.foldLeft(
+                  (Option<A> minO, A a)  ->
+                    minO.map( min  -> ord.min.f(min).f(a)),
+                  as.toOption()); }
   
-  public static Stream<Long> range(Long from, Long to, Long step) {
-    return  iterateWhile( (Long i)  -> add(i,step),
-                          (Long i)  -> !longOrd.isGreaterThan(i,to),
-                          from); }
+  public static Stream<Long>
+    range(Long from, Long to, Long step) {
+      return  iterateWhile( (Long i)  -> add(i,step),
+                            (Long i)  -> !longOrd.isGreaterThan(i,to),
+                            from); }
 
 
   

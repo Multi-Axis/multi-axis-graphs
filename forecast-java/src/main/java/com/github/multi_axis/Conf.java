@@ -32,6 +32,9 @@ public abstract class Conf {
 
     private F<InputStream, IO<Validation<Errors,OUT>>> read;
 
+    //-------------------------------------------------------------------------
+    //  Instance methods.
+    //-------------------------------------------------------------------------
 
     public final IO<Validation<Errors,OUT>>
       read(InputStream in) { return read.f(in); }
@@ -39,14 +42,9 @@ public abstract class Conf {
     public final F<InputStream,IO<Validation<Errors,OUT>>> 
       read() { return read; }
 
-
-   // public static final Reader<Zab0, Stream<TimedValue<BigDecimal>>>
-   //   zab0Reader 
-   //   = Reader.<Zab0, Stream<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
-
-   // public static final Reader<Zab3, Stream<TimedValue<BigDecimal>>>
-   //   zab3Reader 
-   //   = Reader.<Zab3, Stream<TimedValue<BigDecimal>>>reader(ZabReaderImpl.read);
+    //-------------------------------------------------------------------------
+    //  Static readers. Add your own here.
+    //-------------------------------------------------------------------------
 
     public static final Reader<Alts2<
           Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
@@ -57,6 +55,10 @@ public abstract class Conf {
             Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
             Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
           reader(ZabReaderImpl.read);
+
+    //-------------------------------------------------------------------------
+    //  Private.
+    //-------------------------------------------------------------------------
 
     private static final <OUT> Reader<OUT> 
       reader(F<InputStream, IO<Validation<Errors,OUT>>> r) {
@@ -74,6 +76,9 @@ public abstract class Conf {
 
     private F2<IN, OutputStream, IO<Unit>> write;
 
+    //-------------------------------------------------------------------------
+    //  Instance methods.
+    //-------------------------------------------------------------------------
 
     public final IO<Unit>
       write(IN in, OutputStream out) { return write.f(in,out); }
@@ -81,6 +86,12 @@ public abstract class Conf {
     public final F2<IN, OutputStream, IO<Unit>>
       write() { return write; }
 
+    //-------------------------------------------------------------------------
+    //  Static writers and writer construction methods
+    //-------------------------------------------------------------------------
+
+    //-------------------------------------------------
+    //  The various actual writers. Add your own here.
 
     public static final Writer<Tagged<Zab0,Stream<TimedValue<BigDecimal>>>>
       zab0Writer 
@@ -93,13 +104,8 @@ public abstract class Conf {
             taggedWriter(Zab3WriterImpl.write);
 
 
-    private static final <IN> Writer<IN>
-      writer(F2<IN, OutputStream, IO<Unit>> w) { return new Writer<IN>(w); }
-
-
-    private static final <FT,IN> Writer<Tagged<FT,IN>> 
-      taggedWriter(F2<IN, OutputStream, IO<Unit>> w) {
-        return writer((tagged,out)  -> w.f(tagged.val,out)); }
+    //-----------------------------------------------
+    //  Construction methods for derivative writers.
 
     public static final <A> Writer<Validation<Errors,A>>
       errorWriter(Writer<A> wa) {
@@ -144,6 +150,18 @@ public abstract class Conf {
             public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
             public IO<Unit> caseAlt5(E e) { return we.write(e,out); } } ) ); }
 
+
+    //-------------------------------------------------------------------------
+    //  Private
+    //-------------------------------------------------------------------------
+
+    private static final <IN> Writer<IN>
+      writer(F2<IN, OutputStream, IO<Unit>> w) { return new Writer<IN>(w); }
+
+
+    private static final <FT,IN> Writer<Tagged<FT,IN>> 
+      taggedWriter(F2<IN, OutputStream, IO<Unit>> w) {
+        return writer((tagged,out)  -> w.f(tagged.val,out)); }
 
     private Writer(F2<IN, OutputStream, IO<Unit>> write) {
       this.write = write;
