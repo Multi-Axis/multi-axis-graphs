@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	_ "github.com/lib/pq"
 	"html/template"
 	"log"
 	"net/http"
+	"fmt"
 	"strconv"
 	"strings"
 	"io/ioutil"
@@ -37,7 +37,17 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		threshold := r.FormValue("threshold")
 		//		fmt.Printf(params)
 		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
+<<<<<<< HEAD
 		db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
+=======
+
+		res, _ := db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
+		affected, _ := res.RowsAffected()
+		if affected == 0 {
+			db.Exec(`INSERT INTO threshold VALUES (default, $1, true, $2)`, id, threshold)
+		}
+
+>>>>>>> antti-nvd3
 		updateFuture(id)
 	} 
 	if wantsJson {
@@ -80,10 +90,11 @@ func graphViewHTML(w http.ResponseWriter) {
 
 func updateFuture(id int) {
 	fmt.Printf("\nStarting sync...")
-	err := exec.Command("habbix","sync-db","-i",strconv.Itoa(id)).Run()
+	out, err := exec.Command("habbix","sync-db","-i",strconv.Itoa(id)).CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("%s", out)
 	fmt.Printf("\nDB Synced.")
 }
 

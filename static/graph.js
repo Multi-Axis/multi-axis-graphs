@@ -1,15 +1,25 @@
-var width = 1200;
-var height = 700;
-var margin = {"left": 50, "right":40, "top": 30, "bottom":30};
-var svgContainer = d3.select("div").append("svg:svg").attr("width", width).attr("height", height);
-var rightData;
-var xScale;
+var chartData;
+var period = [];
+var chart;
+var wholeData;
 
 $.getJSON(window.location.href, function(data) {
-	draw(data.history, data.future, svgContainer);
-    rightData = data;
-    // console.log(JSON.stringify(allData))
+  drawAndSetData(data);
 })
+
+function setData(data) {
+  chartData = [
+    {
+      key: "History",
+      values: data.history
+    },
+    {
+      key: "Future",
+      values: data.future,
+      color: "green"
+    }
+  ];
+}
 
 var timeFormat = function(d) {
   var date = new Date(0);
@@ -17,105 +27,115 @@ var timeFormat = function(d) {
   return d3.time.format('%Y %b %d, %H : %M')(date);
 };
 
-function draw(leftGrapHistoryhData, leftGraphFutureData, svgContainer) {
-
-    // x scale
-    xScale = d3.time.scale()
-      .domain( d3.extent(leftGrapHistoryhData.concat(leftGraphFutureData),
-            function(d) { return d.time; }))
-      .range([margin.left, width - margin.right]);
-
-    // y scale
-    var historyYMin = d3.min(leftGrapHistoryhData, function(d){ return d.val });
-    var historyYMax = d3.max(leftGrapHistoryhData, function(d){ return d.val });
-    var futureYMin  = d3.min(leftGraphFutureData, function(d){ return d.val });
-    var futureYMax  = d3.max(leftGraphFutureData, function(d){ return d.val });
-
-    var yMin = Math.min(historyYMin, futureYMin);
-    var yMax = Math.max(historyYMax, futureYMax);
-
-    var yScale = d3.scale.linear()
-      .domain([1.1 * yMax, yMin - 1])
-      .range([margin.bottom, height - margin.top]);
-
-    var historyGraphFunc = d3.svg.line()
-                                .x(function(d, i) { return xScale(d.time); })
-                                .y(function(d) { return yScale(d.val); })
-                                .interpolate("none");
-
-    var futureGraphFunc = d3.svg.line()
-                                .x(function(d, i) { return xScale(d.time); })
-                                .y(function(d) { return yScale(d.val); })
-                                .interpolate("none");
-
-    svgContainer
-      .append("svg:path")
-      .attr("d", historyGraphFunc(leftGrapHistoryhData)).attr("stroke","blue").attr("fill","none");
-
-    svgContainer
-      .append("svg:path")
-      .attr("d", futureGraphFunc(leftGraphFutureData)).attr("stroke","red").attr("fill","none");
-
-    var xAxis = d3.svg.axis()
-      .scale(xScale)
-      .orient("bottom")
-      .ticks(5)
-      .tickFormat(timeFormat);
-
-    var yAxis = d3.svg.axis()
-      .scale(yScale)
-      .orient("left")
-      .ticks(6)
-      .tickFormat(function(d) { return d });
-
-    svgContainer.append("g")
-                .attr("class", "axisleft")
-                .attr("transform", "translate("+ margin.left +",0)")
-                .call(yAxis);
-
-    svgContainer.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(0," + (height-margin.bottom) + ")")
-                .call(xAxis);
+var sortAscending = function(a, b) {
+  return a-b;
 }
 
-function appendGraph(data, svg) {
-
-    var rightYMin = d3.min(data, function(d){return Math.min(d.val)});
-    var rightYMax = d3.max(data, function(d){return Math.max(d.val)});
-
-    var leftYMin = d3.min(rightData.history, function(d){return Math.min(d.val)});
-    var leftYMax = d3.max(rightData.history, function(d){return Math.max(d.val)});
-
-    var totMin = Math.min(rightYMin,leftYMin);
-    var totMax = Math.max(rightYMax,leftYMax);
-
-    var yScale = d3.scale.linear().domain([(1.5*totMax),(totMin-30)]).range([0,height+margin.top])
-
-    var rightGraphFunc = d3.svg.line()
-                            .x(function(d, i) {return xScale(d.time)})
-                            .y(function(d) {return yScale(d.val) })
-                            .interpolate("none");
-
-    svgContainer.append("path")
-      .attr("d", rightGraphFunc(data))
-      .attr("stroke","black")
-      .attr("fill","none");
-
-    var rightYAxis =  d3.svg.axis().scale(yScale)
-                     .orient("right")
-                     .ticks(6)
-                     .tickFormat(function(d) {return (d)});
-
-    svgContainer.append("g")
-                .attr("class", "axisleft")
-                .attr("transform", "translate("+ (width-margin.right) +",0)")
-                .call(rightYAxis);
+Array.min = function(array) {
+    return Math.min.apply(Math, array.map(function(x){return x.val;}));
 }
 
-// #newGraph button
-document.getElementById("newGraph").addEventListener("click", function() {
-  $.getJSON("/%3A10105%3Avfs.fs.size%5B%2F%2Cpfree%5D", function(data) {
-    appendGraph(data.history, svgContainer)
+Array.max = function(array) {
+    return Math.max.apply(Math, array.map(function(x){return x.val;}));
+}
+
+
+
+function draw() {
+  nv.addGraph(function(data) {
+    //chart configurations
+    chart = nv.models.lineChart()
+                  .margin({left: 100})
+                  .useInteractiveGuideline(true)
+                  .transitionDuration(350)
+                  .showLegend(true)
+                  .showYAxis(true)
+                  .showXAxis(true);
+
+    //set up X and Y-axis
+    chart.xAxis.axisLabel('Time').tickFormat(timeFormat);
+    chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
+
+    //set domain based on history, future and threshold
+    chart.yDomain(getYDomain(chartData[0].values, chartData[1].values, wholeData.threshold))
+
+    //render the chart
+    d3.select('#chart svg').datum(chartData).call(chart);
+
+    //Clear the previous threshold line and render the given threshold
+    chart.interactiveLayer.clearThresholdLineAndText();
+    chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold));
+
+    //if the period comes from db it should be rendered
+    if (!$.isEmptyObject(wholeData) && wholeData.params.stop_lower != undefined && wholeData.params.stop_upper != undefined) {
+      chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
+      chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
+      period.push(wholeData.params.stop_lower);
+      period.push(wholeData.params.stop_upper);
+      appendStartAndEnd(period)
+    }
+    
+    //Update the chart when window resizes.
+    nv.utils.windowResize(function() { chart.update() });
+
+    //draw a line when chart is clicked
+    chart.interactiveLayer.dispatch.on('elementClick', function(e) {
+                                                          if (e != undefined && period.length<2) {
+                                                            chart.interactiveLayer.renderPosition(e.pointXValue)
+                                                            period.push(e.pointXValue);
+                                                            period.sort(sortAscending);
+                                                            if (period.length == 2) {appendStartAndEnd(period)}
+                                                        }});
+    //clear start and end points
+    document.getElementById('clearPeriods').addEventListener('click', function() {
+                                                                        chart.interactiveLayer.clearPeriodLines();
+                                                                        period = [];
+                                                                        document.getElementById('from').innerHTML = '';
+                                                                      });
+
+    document.getElementById('threshold').value = wholeData.threshold;
+    return chart;
   });
-});
+}
+
+function appendStartAndEnd(period) {
+  document.getElementById('from').innerHTML = "From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]);
+}
+
+//Un-tested. 
+document.getElementById('sendPeriod').addEventListener('click', function() {
+  var threshold = document.getElementById('threshold').value;
+  setPeriodParams();
+  $.post(window.location.href, {'params': JSON.stringify(wholeData.params), 'threshold': threshold}, function(data) {
+    drawAndSetData(data)
+  }, "json")
+})
+
+function drawAndSetData(data) {
+  period = [];
+  wholeData = data;
+  setData(data);
+  draw();
+}
+
+function setPeriodParams() {
+  if(period.length == 2) {
+    wholeData.params.stop_lower = period[0];
+    wholeData.params.stop_upper = period[1];
+  }
+}
+
+function getYDomain(history, future, threshold) {
+  if (threshold !== undefined) {
+    var domain = [];
+    var historyMax = Array.max(history);
+    var futureMax = Array.max(future);
+    var historyMin = Array.min(history);
+    var futureMin =Array.min(future)
+    domain.push(Math.min(threshold,Math.min(historyMin,futureMin)) - 1);
+    domain.push(Math.max(threshold,Math.max(historyMax,futureMax)) * 1.3);
+    return domain;
+  } else {
+    return undefined;
+  }
+}
