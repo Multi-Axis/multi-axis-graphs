@@ -19,6 +19,8 @@ function setData(data) {
       color: "green"
     }
   ];
+	$("#details").val(JSON.stringify(data.details));
+	$("#itemhost").text(data.metric + " @ " + data.host);
 }
 
 var timeFormat = function(d) {
@@ -57,14 +59,14 @@ function draw() {
     chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
 
     //set domain based on history, future and threshold
-    chart.yDomain(getYDomain(chartData[0].values, chartData[1].values, wholeData.threshold))
+    chart.yDomain(getYDomain(chartData[0].values, chartData[1].values, wholeData.threshold.value))
 
     //render the chart
     d3.select('#chart svg').datum(chartData).call(chart);
 
     //Clear the previous threshold line and render the given threshold
     chart.interactiveLayer.clearThresholdLineAndText();
-    chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold));
+    chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.value));
 
     //if the period comes from db it should be rendered
     if (!$.isEmptyObject(wholeData) && wholeData.params.stop_lower != undefined && wholeData.params.stop_upper != undefined) {
@@ -93,7 +95,7 @@ function draw() {
                                                                         document.getElementById('from').innerHTML = '';
                                                                       });
 
-    document.getElementById('threshold').value = wholeData.threshold;
+    document.getElementById('threshold').value = wholeData.threshold.value;
     return chart;
   });
 }

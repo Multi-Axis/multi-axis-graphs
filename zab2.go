@@ -24,9 +24,6 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, _ := strconv.Atoi(parts[len(parts)-1])
 
-	//	fmt.Printf("\nurl=%v",r.URL.Path)
-	//	fmt.Printf("\nid=%v",id)
-
 	var wantsJson bool
 	if len(r.Header["Accept"]) > 0 {
 		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
@@ -35,10 +32,11 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		params := r.FormValue("params")
 		threshold := r.FormValue("threshold")
-		//		fmt.Printf(params)
 		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
 
-		// threshold
+      // threshold: update, or insert if non exists
+      // TODO: client should specify which threshold.id to use (or create new
+      // threshold)
 		res, _ := db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
 		affected, _ := res.RowsAffected()
 		if affected == 0 {
@@ -130,26 +128,36 @@ func parseValueJSON(rows *sql.Rows) string {
 /* Deliver graph JSON data based on an item_future.id */
 func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 	var itemId int
+	var host string
 	var params string
+	var details string
+	var metric string
 	var threshold float32
-	
-	db.QueryRow(`SELECT itemid, params FROM item_future WHERE id = $1`, ifId).Scan(&itemId, &params)
-	
-	db.QueryRow(`SELECT value FROM threshold WHERE itemid = $1`, ifId).Scan(&threshold)
+	var lower bool
 
-//	fmt.Printf("%f",threshold)
-	
-	rows, _ := db.Query(`SELECT lower, value FROM threshold WHERE itemid = $1`, ifId);
-	defer rows.Close() // thresholds := TODO parse to list?
+	db.QueryRow(`SELECT item_future.itemid, items.name, host, params, details
+	FROM item_future
+	LEFT JOIN items on items.itemid = item_future.itemid
+	LEFT JOIN hosts on hosts.hostid = items.hostid
+	WHERE item_future.id = $1`,
+	ifId).Scan(&itemId, &metric, &host, &params, &details)
 
-	rows, _ = db.Query(`SELECT * FROM (SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q ORDER BY clock`, itemId)
+	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`, ifId).Scan(&threshold, &lower)
+
+	rows, _ := db.Query(`SELECT * FROM
+	(SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q
+	ORDER BY clock`, itemId)
 	history := parseValueJSON(rows)
 
 	rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 	future := parseValueJSON(rows)
 
-	output := fmt.Sprintf(`{ "params": %s, "threshold": %s, "history": %s, "future": %s }`,
-		params, fmt.Sprintf("%f",threshold), history, future)
+	output := fmt.Sprintf(
+		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s, "threshold":%s, "history":%s, "future":%s }`,
+		host, params, metric, details,
+		fmt.Sprintf(`{ "value":%f }`, threshold),
+		history, future)
+
 	w.Write([]byte(output))
 }
 
