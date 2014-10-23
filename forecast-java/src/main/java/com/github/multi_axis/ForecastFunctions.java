@@ -130,8 +130,6 @@ public abstract class ForecastFunctions {
       return (x  -> intercept.add(slope.multiply(x))); }
 
 
-  //TODO FIXME I'm not sure this is right!
-  //  - Rewrite from proper defn of covariance.
   public static BigDecimal
     covariance(Stream<BigDecimal> as, Stream<BigDecimal> bs) {
 
