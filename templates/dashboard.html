@@ -57,7 +57,16 @@
          </tbody>
       </table>
    </section>
-
+   <section>
+   <table>
+            {{range .}}
+            <tr>
+               <th>ID</th>
+               <th>{{.}}</th>
+            </tr>
+            {{end}}
+   </table>
+   </section>
    <h1>Insufficient data to estimate next 7 days</h1>
    ...
 

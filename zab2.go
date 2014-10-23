@@ -68,8 +68,12 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 
 /* /dashboard */
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("templates/dashboard.html")
-	t.Execute(w, "testi")
+        futureIds := getFutureIds(w)
+        for i := range futureIds {
+            fmt.Println(futureIds[i])
+        }
+        t, _ := template.ParseFiles("templates/dashboard.html")
+	t.Execute(w, futureIds)
 }
 
 /* }}} */
@@ -159,6 +163,31 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 		history, future)
 
 	w.Write([]byte(output))
+}
+
+
+func getFutureIds(w http.ResponseWriter) []int {
+    rows, err := db.Query("select id FROM item_future")
+    if err != nil {
+            log.Fatal(err)
+    }
+    defer rows.Close()
+
+    var results []int
+    
+    for rows.Next() {
+        var id int
+        if err := rows.Scan(&id); err != nil {
+                log.Fatal(err)
+        }
+        results = append(results, id)
+    }
+    if err := rows.Err(); err != nil {
+            log.Fatal(err)
+    }
+    
+    return results
+
 }
 
 /*}}}*/
