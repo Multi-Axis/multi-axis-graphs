@@ -133,10 +133,6 @@ public abstract class ForecastFunctions {
             TreeMap.empty(dateOrd)
           ).values().toStream(); }
 
-  //TODO implement
-  //public static F<Long,BigDecimal>
-  //  simpleLeastSquares(Stream<TimedValue<BigDecimal>> data) { }
-
   public static F<BigDecimal,BigDecimal>
     simpleLeastSquares(Stream<BigDecimal> as, Stream<BigDecimal> bs) {
       
