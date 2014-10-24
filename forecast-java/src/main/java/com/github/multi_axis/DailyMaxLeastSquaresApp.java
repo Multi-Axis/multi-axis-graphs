@@ -13,15 +13,17 @@ import static com.github.multi_axis.ForecastFunctions.weekOfDailyMaximumsLeastSq
 public class DailyMaxLeastSquaresApp {
 
   private static IO<Unit> 
-    app = forecastAlts2(System.in,
-                        System.out,
-                        Conf.Reader.zabReader,
-                        Conf.Writer.zab0Writer,
-                        Conf.Writer.zab3Writer,
-                        weekOfDailyMaximumsLeastSquares,
-                        weekOfDailyMaximumsLeastSquares);
+    app() { 
+      return
+        forecastAlts2(System.in,
+                      System.out,
+                      Conf.Reader.zabReader,
+                      Conf.Writer.zab0Writer,
+                      Conf.Writer.zab3Writer,
+                      weekOfDailyMaximumsLeastSquares,
+                      weekOfDailyMaximumsLeastSquares); }
 
   public static void main(String[] args) throws IOException {
-    app.run(); }
+    app().run(); }
 
 }

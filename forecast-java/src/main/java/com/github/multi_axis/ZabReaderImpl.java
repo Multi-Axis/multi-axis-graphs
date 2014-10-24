@@ -42,6 +42,7 @@ import static javax.json.Json.createObjectBuilder;
 import static javax.json.Json.createArrayBuilder;
 
 
+import static com.github.multi_axis.Utils.toStream;
 import static com.github.multi_axis.Tagged.tag;
 import static com.github.multi_axis.Alts2.alt1;
 import static com.github.multi_axis.Alts2.alt2;
@@ -160,16 +161,16 @@ public abstract class ZabReaderImpl {
   private static final Validation<Errors,Stream<BigDecimal>>
     bigDecimals(java.util.List<JsonNumber> jsonNums) {
       try {
-        return  success(Java.<JsonNumber>JUList_List().f(jsonNums)
-                  .toStream().map(n  ->  n.bigDecimalValue())); }
+        return  success(toStream(Java.<JsonNumber>JUList_List().f(jsonNums))
+                          .map(n  ->  n.bigDecimalValue())); }
       catch (ClassCastException e) {
         return  fail(nonNumberInArray(e)); } }
 
   private static final Validation<Errors,Stream<Long>>
     longs(java.util.List<JsonNumber> jsonNums) {
       try {
-        return success(Java.<JsonNumber>JUList_List().f(jsonNums)
-                .toStream().map(n  ->  Long.valueOf(n.longValue()))); }
+        return  success(toStream(Java.<JsonNumber>JUList_List().f(jsonNums))
+                          .map(n  ->  Long.valueOf(n.longValue()))); }
       catch (ClassCastException e) {
         return fail(nonNumberInArray(e)); } }
 
