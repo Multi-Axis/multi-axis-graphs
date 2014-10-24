@@ -94,17 +94,17 @@ These units are invoked by `habbix sync-db`. In stdin, the unit receives a JSON
 object (dubbed as an *Event*):
 
     { "value_type" : 0               // items.value_type (usually 0 or 3)
-    , "clocks" : [...]               // list of epoch times (x values)
+    , "clocks" : [<epochs>]          // list of epoch times (x values)
     , "values" : [...]               // y values
-    , "draw_future" : [lower, upper] // bounds within which to extrapolate future with model
+    , "draw_future" : [<epochs>]     // bounds within which to extrapolate future with model
     , "params" : { ... }             // Extra parameters, forecast-unit specific
     }
 
 In exchange, another JSON object (dubbed *Result*) is expected in the stdout:
 
-    { "clocks"  : [...]    // Extrapolated clock-value pairs
+    { "clocks"  : [<epochs>]         // Extrapolated clock-value pairs
     , "values"  : [...]
-    , "details" : { ... }  // Forecast-specific details (R^2 etc.)
+    , "details" : {<obj>}            // Forecast-specific details (R^2 etc.)
     }
 
 These (clocks, values) are inserted to the future of the original item.
