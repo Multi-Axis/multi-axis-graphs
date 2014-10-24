@@ -68,9 +68,11 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 
 /* /dashboard */
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-        futureIds := getFutureIds(w)
+        var futureIds []Item
+        futureIds = getFutureItems(w)
         for i := range futureIds {
-            fmt.Println(futureIds[i])
+            fmt.Println(futureIds[i].name)
+            fmt.Println(futureIds[i].id)
         }
         t, _ := template.ParseFiles("templates/dashboard.html")
 	t.Execute(w, futureIds)
@@ -181,6 +183,40 @@ func getFutureIds(w http.ResponseWriter) []int {
                 log.Fatal(err)
         }
         results = append(results, id)
+    }
+    if err := rows.Err(); err != nil {
+            log.Fatal(err)
+    }
+    
+    return results
+
+}
+
+//Get items id and names from item_future and items
+
+type Item struct {
+    id int
+    name string
+}
+func getFutureItems(w http.ResponseWriter) []Item {
+    rows, err := db.Query("select a.id, b.name FROM item_future a, items b where a.itemid = b.itemid")
+    if err != nil {
+            log.Fatal(err)
+    }
+    defer rows.Close()
+
+    var results []Item
+    
+    for rows.Next() {
+        var res Item
+        var id int
+        var name string
+        if err := rows.Scan(&id, &name); err != nil {
+                log.Fatal(err)
+        }
+        res.name = name
+        res.id = id
+        results = append(results, res)
     }
     if err := rows.Err(); err != nil {
             log.Fatal(err)
