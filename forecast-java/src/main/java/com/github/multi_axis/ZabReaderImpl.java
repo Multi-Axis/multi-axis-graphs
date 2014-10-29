@@ -35,6 +35,7 @@ import com.github.multi_axis.Zab.Zab3;
 import static fj.data.Validation.success;
 import static fj.data.Validation.fail;
 import static fj.data.Java.JUList_List;
+import static fj.data.Option.fromNull;
 //import static fj.data.IOFunctions.lazy;
 
 import static javax.json.Json.createReader;
@@ -54,95 +55,59 @@ import static com.github.multi_axis.Zab.zab3;
 
 public abstract class ZabReaderImpl {
 
-  public static final F<InputStream, IO<Validation<Errors, Alts2<
-                        Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
-                        Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>>>
-    read = in  -> readZabJson(in);
-
-
-  public static final IO<Validation<Errors, Alts2<
+  public static final F<JsonObject, Validation<Errors, Alts2<
                         Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
                         Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>>
-    readZabJson(InputStream in) {
-      //return lazy(x  -> zab0Or3Json());
-      return new  IO<Validation<Errors, Alts2<
-                    Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
-                    Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>>() {
-
-        public  Validation<Errors, Alts2<
-                  Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
-                  Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>> 
-          run() { return zabJson(in); } }; }
+    read = json  -> zabFromJson(json);
 
 
-  //TODO THINK should there be some abstraction here?
   private static final  Validation<Errors, Alts2<
                           Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
                           Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
-    zabJson(InputStream in) {
+    zabFromJson(final JsonObject json) {
 
-      final JsonReader jsonReader = createReader(in);
+      return
+        zabTypeJsonNum(json).bind(  jZabType  ->
+        zabClocks(json).bind(       jClocks  ->
+        zabValues(json).bind(       jVals  -> 
+        zabTimedVals(jZabType,jClocks,jVals)))); }
 
-      final Validation<Errors,JsonObject> jsonObjV = jsonObject(jsonReader);
-
-      final Validation<Errors,Alts2<
-              Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
-              Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
-        
-        zabTimedValsV = zabTimedVals(
-                          zabTypeJsonNum(jsonObjV),
-                          zabClocks(jsonObjV),
-                          zabValues(jsonObjV));
-
-      jsonReader.close();
-
-      return zabTimedValsV; }
-
-  private static final Validation<Errors,JsonObject>
-    jsonObject(JsonReader r) {
-      try {
-        return success(r.readObject()); }
-      catch (JsonParsingException e) {
-        return fail(jsonParsingError(e)); }
-      catch (JsonException e) {
-        return fail(miscJsonError(e)); } }
-
-  private enum ZEnum { ZAB0, ZAB3, NONE }
 
   private static final  Validation<Errors,Alts2<
                           Tagged<Zab0,Stream<TimedValue<BigDecimal>>>,
                           Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>>
     zabTimedVals(
-      Validation<Errors,JsonNumber> jsonZabTypeV,
-      Validation<Errors,JsonArray> jsonClocksV,
-      Validation<Errors,JsonArray> jsonValuesV) {
-
-        final Validation<Errors,ZEnum> 
-          zabTypeV = jsonZabTypeV.map(jzt  -> zabType(jzt));
+      final JsonNumber jZabType,
+      final JsonArray  jClocks,
+      final JsonArray  jValues) {
 
         final Validation<Errors,Stream<Long>> 
-          clocksV = jsonClocksV.bind(cs  -> jsonNumbers(cs))
-                      .bind(ns  -> longs(ns));
+          clocksV = jsonNumbers(jClocks).bind(ns  -> longs(ns));
 
         final Validation<Errors,Stream<BigDecimal>>
-          valsV = jsonValuesV.bind(vs  -> jsonNumbers(vs))
-                    .bind(ns  -> bigDecimals(ns));
+          valsV = jsonNumbers(jValues).bind(ns  -> bigDecimals(ns));
+
+        final ZEnum 
+          zabType = zabType(jZabType);
 
         return  
-          zabTypeV.bind(                      ztype  -> 
-          clocksV.bind(                       clocks  -> 
-          valsV.map(                          vals  -> 
-            clocks.zip(vals).map(             cval  ->
-              timedVal(
-                cval._1().longValue(),
-                cval._2()))           ).bind( tvals  -> 
+          clocksV.bind( clocks  -> 
+          valsV.map(    vals  -> 
+                  clocks.zip(vals).map( cval  ->
+                    timedVal(
+                      cval._1().longValue(),
+                      cval._2()))           
+                ).bind( tvals  -> 
 
-          ztype == ZEnum.ZAB0 ? success(alt1(tag(zab0,tvals))) : (
-          ztype == ZEnum.ZAB3 ? success(alt2(tag(zab3,tvals))) : 
-                                fail(badZabType()) )))); }
+          zabType == ZEnum.ZAB0 ? success(alt1(tag(zab0,tvals))) : (
+          zabType == ZEnum.ZAB3 ? success(alt2(tag(zab3,tvals))) : 
+                                  fail(badZabType()) ))); }
+
+
+  private enum ZEnum { ZAB0, ZAB3, NONE }
 
   private static final ZEnum 
-    zabType(JsonNumber jn) {
+    zabType(final JsonNumber jn) {
       final BigDecimal num = jn.bigDecimalValue();
       if      (num.compareTo(BigDecimal.valueOf(0)) == 0) { 
         return ZEnum.ZAB0; }
@@ -152,14 +117,14 @@ public abstract class ZabReaderImpl {
         return ZEnum.NONE; } }
 
   private static final Validation<Errors,java.util.List<javax.json.JsonNumber>>
-    jsonNumbers(JsonArray arr) {
+    jsonNumbers(final JsonArray arr) {
       try { 
         return success(arr.getValuesAs(JsonNumber.class)); }
       catch (ClassCastException e) { 
         return fail(nonNumberInArray(e)); } }
 
   private static final Validation<Errors,Stream<BigDecimal>>
-    bigDecimals(java.util.List<JsonNumber> jsonNums) {
+    bigDecimals(final java.util.List<JsonNumber> jsonNums) {
       try {
         return  success(toStream(Java.<JsonNumber>JUList_List().f(jsonNums))
                           .map(n  ->  n.bigDecimalValue())); }
@@ -167,32 +132,37 @@ public abstract class ZabReaderImpl {
         return  fail(nonNumberInArray(e)); } }
 
   private static final Validation<Errors,Stream<Long>>
-    longs(java.util.List<JsonNumber> jsonNums) {
+    longs(final java.util.List<JsonNumber> jsonNums) {
       try {
         return  success(toStream(Java.<JsonNumber>JUList_List().f(jsonNums))
                           .map(n  ->  Long.valueOf(n.longValue()))); }
       catch (ClassCastException e) {
         return fail(nonNumberInArray(e)); } }
 
-  //TODO FIXME These don't look for nulls on missing field!
   private static final Validation<Errors,JsonNumber>
-    zabTypeJsonNum(Validation<Errors,JsonObject> jsonObjV) {
+    zabTypeJsonNum(final JsonObject jsonObj) {
       try {
-        return jsonObjV.map(jsonObj -> jsonObj.getJsonNumber("value_type")); }
+        return  fromNull(jsonObj.getJsonNumber("value_type"))
+                  .map(x  -> Validation.<Errors,JsonNumber>success(x))
+                  .orSome(fail(noJsonField("value_type"))); }
       catch (ClassCastException e) {
         return fail(valueTypeNotNumber(e)); } }
 
   private static final Validation<Errors,JsonArray>
-    zabValues(Validation<Errors,JsonObject> jsonObjV) {
+    zabValues(final JsonObject jsonObj) {
       try {
-        return jsonObjV.map(jsonObj  -> jsonObj.getJsonArray("values")); }
+        return  fromNull(jsonObj.getJsonArray("values"))
+                  .map(x  -> Validation.<Errors,JsonArray>success(x))
+                  .orSome(fail(noJsonField("values"))); }
       catch (ClassCastException e) {
         return fail(notJsonArray(e)); } }
 
   private static final Validation<Errors,JsonArray>
-    zabClocks(final Validation<Errors,JsonObject> jsonObjV) {
+    zabClocks(final JsonObject jsonObj) {
       try {
-        return jsonObjV.map(jsonObj  -> jsonObj.getJsonArray("clocks")); }
+        return  fromNull(jsonObj.getJsonArray("clocks"))
+                  .map(x  -> Validation.<Errors,JsonArray>success(x))
+                  .orSome(fail(noJsonField("clocks"))); }
       catch (ClassCastException e) {
         return fail(notJsonArray(e)); } }
 

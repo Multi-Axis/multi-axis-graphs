@@ -11,6 +11,8 @@ import fj.data.Stream;
 import fj.data.IO;
 import fj.data.Validation;
 
+import javax.json.JsonObject;
+
 import com.github.multi_axis.Alts2;
 import com.github.multi_axis.Alts2.Alts2Matcher;
 import com.github.multi_axis.Alts3;
@@ -30,16 +32,16 @@ public abstract class Conf {
 
   public static class Reader<OUT> {
 
-    private F<InputStream, IO<Validation<Errors,OUT>>> read;
+    private F<JsonObject, Validation<Errors,OUT>> read;
 
     //-------------------------------------------------------------------------
     //  Instance methods.
     //-------------------------------------------------------------------------
 
-    public final IO<Validation<Errors,OUT>>
-      read(InputStream in) { return read.f(in); }
+    public final Validation<Errors,OUT>
+      read(JsonObject json) { return read.f(json); }
 
-    public final F<InputStream,IO<Validation<Errors,OUT>>> 
+    public final F<JsonObject,Validation<Errors,OUT>> 
       read() { return read; }
 
     //-------------------------------------------------------------------------
@@ -61,29 +63,27 @@ public abstract class Conf {
     //-------------------------------------------------------------------------
 
     private static final <OUT> Reader<OUT> 
-      reader(F<InputStream, IO<Validation<Errors,OUT>>> r) {
-        return new Reader<OUT>(r);
-    }
+      reader(F<JsonObject, Validation<Errors,OUT>> r) {
+        return new Reader<OUT>(r); }
 
-    private Reader(F<InputStream, IO<Validation<Errors,OUT>>> read) {
-      this.read = read;
-    }
+    private Reader(F<JsonObject, Validation<Errors,OUT>> read) {
+      this.read = read; }
 
     private Reader() {}
   }
 
   public static class Writer<IN> {
 
-    private F2<IN, OutputStream, IO<Unit>> write;
+    private F<IN, JsonObject> write;
 
     //-------------------------------------------------------------------------
     //  Instance methods.
     //-------------------------------------------------------------------------
 
-    public final IO<Unit>
-      write(IN in, OutputStream out) { return write.f(in,out); }
+    public final JsonObject
+      write(IN in) { return write.f(in); }
 
-    public final F2<IN, OutputStream, IO<Unit>>
+    public final F<IN,JsonObject>
       write() { return write; }
 
     //-------------------------------------------------------------------------
@@ -109,46 +109,46 @@ public abstract class Conf {
 
     public static final <A> Writer<Validation<Errors,A>>
       errorWriter(Writer<A> wa) {
-        return writer((vea,out)  -> 
+        return writer(vea  -> 
                         vea.validation(
-                          (err  -> ErrorWriterImpl.write.f(err,out)),
-                          (a    -> wa.write(a,out)))); }
+                          (err  -> ErrorWriterImpl.write.f(err)),
+                          (a    -> wa.write(a)))); }
               
 
     public static final <A,B> Writer<Alts2<A,B>>
       writerAlts2(Writer<A> wa, Writer<B> wb) {
-        return writer((alts,out)  -> alts.runMatch(
-          new Alts2Matcher<A,B,IO<Unit>>() {
-            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); } } ) ); }
+        return writer(alts  -> alts.runMatch(
+          new Alts2Matcher<A,B,JsonObject>() {
+            public JsonObject caseAlt1(A a) { return wa.write(a); }
+            public JsonObject caseAlt2(B b) { return wb.write(b); } } ) ); }
 
     public static final <A,B,C> Writer<Alts3<A,B,C>>
       writerAlts3(Writer<A> wa, Writer<B> wb, Writer<C> wc) {
-        return writer((alts,out)  -> alts.runMatch(
-          new Alts3Matcher<A,B,C,IO<Unit>>() {
-            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-            public IO<Unit> caseAlt3(C c) { return wc.write(c,out); } } ) ); }
+        return writer(alts  -> alts.runMatch(
+          new Alts3Matcher<A,B,C,JsonObject>() {
+            public JsonObject caseAlt1(A a) { return wa.write(a); }
+            public JsonObject caseAlt2(B b) { return wb.write(b); }
+            public JsonObject caseAlt3(C c) { return wc.write(c); } } ) ); }
 
     public static final <A,B,C,D> Writer<Alts4<A,B,C,D>>
       writerAlts4(Writer<A> wa, Writer<B> wb, Writer<C> wc, Writer<D> wd) {
-        return writer((alts,out)  -> alts.runMatch(
-          new Alts4Matcher<A,B,C,D,IO<Unit>>() {
-            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-            public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
-            public IO<Unit> caseAlt4(D d) { return wd.write(d,out); } } ) ); }
+        return writer(alts  -> alts.runMatch(
+          new Alts4Matcher<A,B,C,D,JsonObject>() {
+            public JsonObject caseAlt1(A a) { return wa.write(a); }
+            public JsonObject caseAlt2(B b) { return wb.write(b); }
+            public JsonObject caseAlt3(C c) { return wc.write(c); }
+            public JsonObject caseAlt4(D d) { return wd.write(d); } } ) ); }
 
     public static final <A,B,C,D,E> Writer<Alts5<A,B,C,D,E>>
       writerAlts5(Writer<A> wa, Writer<B> wb, Writer<C> wc, Writer<D> wd,
                   Writer<E> we) {
-        return writer((alts,out)  -> alts.runMatch(
-          new Alts5Matcher<A,B,C,D,E,IO<Unit>>() {
-            public IO<Unit> caseAlt1(A a) { return wa.write(a,out); }
-            public IO<Unit> caseAlt2(B b) { return wb.write(b,out); }
-            public IO<Unit> caseAlt3(C c) { return wc.write(c,out); }
-            public IO<Unit> caseAlt4(D d) { return wd.write(d,out); }
-            public IO<Unit> caseAlt5(E e) { return we.write(e,out); } } ) ); }
+        return writer(alts  -> alts.runMatch(
+          new Alts5Matcher<A,B,C,D,E,JsonObject>() {
+            public JsonObject caseAlt1(A a) { return wa.write(a); }
+            public JsonObject caseAlt2(B b) { return wb.write(b); }
+            public JsonObject caseAlt3(C c) { return wc.write(c); }
+            public JsonObject caseAlt4(D d) { return wd.write(d); }
+            public JsonObject caseAlt5(E e) { return we.write(e); } } ) ); }
 
 
     //-------------------------------------------------------------------------
@@ -156,16 +156,15 @@ public abstract class Conf {
     //-------------------------------------------------------------------------
 
     private static final <IN> Writer<IN>
-      writer(F2<IN, OutputStream, IO<Unit>> w) { return new Writer<IN>(w); }
+      writer(F<IN,JsonObject> w) { return new Writer<IN>(w); }
 
 
     private static final <FT,IN> Writer<Tagged<FT,IN>> 
-      taggedWriter(F2<IN, OutputStream, IO<Unit>> w) {
-        return writer((tagged,out)  -> w.f(tagged.val,out)); }
+      taggedWriter(F<IN,JsonObject> w) {
+        return writer(tagged  -> w.f(tagged.val)); }
 
-    private Writer(F2<IN, OutputStream, IO<Unit>> write) {
-      this.write = write;
-    }
+    private Writer(F<IN,JsonObject> write) {
+      this.write = write; }
 
     private Writer() {}
   }
