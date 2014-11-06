@@ -86,6 +86,7 @@ function draw() {
                                                             chart.interactiveLayer.renderPosition(e.pointXValue)
                                                             period.push(e.pointXValue);
                                                             period.sort(sortAscending);
+
                                                             if (period.length == 2) {appendStartAndEnd(period)}
                                                         }});
     //clear start and end points
@@ -94,6 +95,8 @@ function draw() {
                                                                         period = [];
                                                                         document.getElementById('from').innerHTML = '';
                                                                       });
+
+
 
     document.getElementById('threshold').value = wholeData.threshold.value;
     return chart;
@@ -104,13 +107,27 @@ function appendStartAndEnd(period) {
   document.getElementById('from').innerHTML = "From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]);
 }
 
-//Un-tested. 
+function postData(params, threshold) {
+  $.post(window.location.href, {'params': JSON.stringify(params), 'threshold':threshold}, function(data) {
+    drawAndSetData(data)
+  }, "json")
+}
+
 document.getElementById('sendPeriod').addEventListener('click', function() {
   var threshold = document.getElementById('threshold').value;
   setPeriodParams();
-  $.post(window.location.href, {'params': JSON.stringify(wholeData.params), 'threshold': threshold}, function(data) {
-    drawAndSetData(data)
-  }, "json")
+  postData(wholeData.params, threshold);
+})
+
+document.getElementById('trendForecast').addEventListener('click', function() {
+  wholeData.params.stop_lower = 14 * -86400;
+  var days = document.getElementById('trendDays').value;
+  if (!isNaN(parseInt(days))) {
+    wholeData.params.stop_lower = days * -86400;
+  }
+  wholeData.params.stop_upper = null;
+  console.log(wholeData.params)
+  postData(wholeData.params, wholeData.threshold.value);
 })
 
 function drawAndSetData(data) {
