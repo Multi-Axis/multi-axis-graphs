@@ -87,22 +87,27 @@ func graphViewHTML(w http.ResponseWriter) {
 // tells habbix to re-sync database after parameter update
 func updateFuture(id int) {
 	fmt.Printf("\nStarting sync...")
-	out, err := exec.Command("ubuntu-bin/habbix", "sync-db", "-i", strconv.Itoa(id)).CombinedOutput()
+	out, err := exec.Command("habbix", "sync-db", "-i", strconv.Itoa(id)).CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s", out)
 	fmt.Printf("\nDB Synced.")
 }
+//  ./habbix execute -p '{ "pre_filter" : "DailyMin" }' 2
 
 // gets future data from habbix without changing stored parameters
 func getFutureNoUpdate(params string, id int) string {
-	fmt.Printf("%s", params)
-	out, err := exec.Command("ubuntu-bin/habbix", "execute", "-p", params,  strconv.Itoa(id)).Output()
+	fmt.Printf("params=%s,id=%d\n", params, id)
+	fmt.Printf(fmt.Sprintf("'%s'\n",params))
+	cmd := exec.Command("habbix", "execute", "-p", fmt.Sprintf("'%s'",params), strconv.Itoa(id))
+	fmt.Println(cmd.Args)
+	out, err := cmd.CombinedOutput()
+	var newJSON = string(out)
+	fmt.Printf("%s",newJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var newJSON = string(out)
 	return newJSON
 }
 
