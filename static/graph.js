@@ -108,7 +108,7 @@ function appendStartAndEnd(period) {
 }
 
 function postData(params, threshold) {
-  $.post(window.location.href, {'params': JSON.stringify(params), 'threshold':threshold}, function(data) {
+  $.get(window.location.href, {'params': JSON.stringify(params), 'threshold':threshold}, function(data) {
     drawAndSetData(data)
   }, "json")
 }
