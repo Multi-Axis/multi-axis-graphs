@@ -8,64 +8,117 @@
 <body>
 
    <i>Dashboard mockup</i>
-
    <section>
-      <h1>Current issues or predicted issues</h1>
-
-      <!-- Host names come here -->
-      <div class="hosts">
-         betonimylly</br>
-         tuulimylly</br>
-         kahvimylly</br>
-      </div>
-
-
+       <h1>Servers with current or estimated issues</h1>
+   <div>
       <!-- Example of a load table -->
-      <h2>CPU Load</h2>
+      <h2>CPU Load:</h2>
       <table class="overview">
          <thead>
             <tr>
+               <th>Server name</th>
                <th>Thres.</th>
-               <th>Past 24h</th>
+               <th>Past 7d</th>
                <th>Next 24h</th>
                <th>Next 6d</th>
-               <th>Data</th>
             </tr>
          </thead>
          <tbody>
-            <tr>
-               <td><span>70</span></td>
-               <td><span class=high>65</span></td>
-               <td><span class=high>68</span></td>
-               <td><span class=warn>72</span></td>
-               <td><span class=critical>87</span></td>
+{{range .Danger }}
+             <tr>
+               <td><span>{{ .Name }}</span></td>
+               <td><span>{{ .Cpu.Threshold }}</span></td>
+               <td><span class={{ .Cpu.Color_past_7d }}>{{ .Cpu.Max_past_7d }}</span></td>
+               <td><span class={{ .Cpu.Color_next_24h }}>{{ .Cpu.Max_next_24h }}</span></td>
+               <td><span class={{ .Cpu.Color_next_7d }}>{{ .Cpu.Max_next_7d }}</span></td>
             </tr>
-            <tr>
-               <td>70</td>
-               <td>65</td>
-               <td>68</td>
-               <td>72</td>
-               <td>68</td>
-            </tr>
-            <tr>
-               <td>70</td>
-               <td>65</td>
-               <td>68</td>
-               <td>72</td>
-               <td>68</td>
-            </tr>
+{{end}}
          </tbody>
       </table>
-   </section>
-   <section>
-{{range .}}
-        {{ . }}<br>
+   </div>
+   <div>
+      <!-- Example of a load table -->
+      <h2>Memory Usage:</h2>
+      <table class="overview">
+         <thead>
+            <tr>
+               <th>Server name</th>
+               <th>Thres.</th>
+               <th>Past 7d</th>
+               <th>Next 24h</th>
+               <th>Next 6d</th>
+            </tr>
+         </thead>
+         <tbody>
+{{range .Danger }}
+             <tr>
+               <td><span>{{ .Name }}</span></td>
+               <td><span>{{ .Mem.Threshold }}</span></td>
+               <td><span class=high>{{ .Mem.Max_past_7d }}</span></td>
+               <td><span class=high>{{ .Mem.Max_next_24h }}</span></td>
+               <td><span class=warn>{{ .Mem.Max_next_7d }}</span></td>
+            </tr>
 {{end}}
-   </section>
-   <h1>Insufficient data to estimate next 7 days</h1>
-   ...
+         </tbody>
+      </table>
+   </div>
+               </section>
+   <section>
+       <h1>Servers with no estimated issues</h1>
+   <div>
+      <!-- Example of a load table -->
+      <h2>CPU Load:</h2>
+      <table class="overview">
+         <thead>
+            <tr>
+               <th>Server name</th>
+               <th>Thres.</th>
+               <th>Past 7d</th>
+               <th>Next 24h</th>
+               <th>Next 6d</th>
+            </tr>
+         </thead>
+         <tbody>
+{{range .Normal }}
+             <tr>
+               <td><span>{{ .Name }}</span></td>
+               <td><span>{{ .Cpu.Threshold }}</span></td>
+               <td><span class={{ .Cpu.Color_past_7d }}>{{ .Cpu.Max_past_7d }}</span></td>
+               <td><span class={{ .Cpu.Color_next_24h }}>{{ .Cpu.Max_next_24h }}</span></td>
+               <td><span class={{ .Cpu.Color_next_7d }}>{{ .Cpu.Max_next_7d }}</span></td>
+            </tr>
+{{end}}
+         </tbody>
+      </table>
+   </div>
+   <div>
+      <!-- Example of a load table -->
+      <h2>Memory Usage:</h2>
+      <table class="overview">
+         <thead>
+            <tr>
+               <th>Server name</th>
+               <th>Thres.</th>
+               <th>Past 7d</th>
+               <th>Next 24h</th>
+               <th>Next 6d</th>
+            </tr>
+         </thead>
+         <tbody>
+{{range .Normal }}
+             <tr>
+               <td><span>{{ .Name }}</span></td>
+               <td><span>{{ .Mem.Threshold }}</span></td>
+               <td><span class=high>{{ .Mem.Max_past_7d }}</span></td>
+               <td><span class=high>{{ .Mem.Max_next_24h }}</span></td>
+               <td><span class=warn>{{ .Mem.Max_next_7d }}</span></td>
+            </tr>
+{{end}}
+         </tbody>
+      </table>
+   </div>
 
-   <h1>All good :)</h1>
-   ...
+               </section>
+...
 </body>
 </html>

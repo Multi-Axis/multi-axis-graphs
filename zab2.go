@@ -67,15 +67,102 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /* /dashboard */
+type Dashboard struct {
+    Danger []Host
+    Normal []Host
+}
+
+
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-        var futureIds []Item
-        futureIds = getFutureItems(w)
-        for i := range futureIds {
-            fmt.Println(futureIds[i].name)
-            fmt.Println(futureIds[i].id)
+        var hosts []Host
+        hosts = getHosts(w)
+        
+
+        //Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
+        var danger []Host
+        var normal []Host
+
+        for i := range hosts {
+            //CPU
+            if (hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold<0) {
+                hosts[i].Cpu.Color_past_7d="critical"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.5) {
+                hosts[i].Cpu.Color_past_7d="warn"
+                hosts[i].Condition="issue"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.8) {
+                hosts[i].Cpu.Color_past_7d="high"
+                hosts[i].Condition="issue"
+            }            
+            if (hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold<0) {
+                hosts[i].Cpu.Color_next_24h="critical"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.5) {
+                hosts[i].Cpu.Color_next_24h="warn"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.8) {
+                hosts[i].Cpu.Color_next_24h="high"
+                hosts[i].Condition="issue"
+            }            
+            if (hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold<0) {
+                hosts[i].Cpu.Color_next_7d="critical"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.5) {
+                hosts[i].Cpu.Color_next_7d="warn"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.8) {
+                hosts[i].Cpu.Color_next_7d="high"
+                hosts[i].Condition="issue"
+            }                    
+
+            //MEM
+            if (hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold<0) {
+                hosts[i].Mem.Color_past_7d="critical"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.5) {
+                hosts[i].Mem.Color_past_7d="warn"
+                hosts[i].Condition="issue"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.8) {
+                hosts[i].Mem.Color_past_7d="high"
+                hosts[i].Condition="issue"
+            }            
+            if (hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold<0) {
+                hosts[i].Mem.Color_next_24h="critical"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.5) {
+                hosts[i].Mem.Color_next_24h="warn"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.8) {
+                hosts[i].Mem.Color_next_24h="high"
+                hosts[i].Condition="issue"
+            }            
+            if (hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold<0) {
+                hosts[i].Mem.Color_next_7d="critical"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.5) {
+                hosts[i].Mem.Color_next_7d="warn"
+                hosts[i].Condition="issue"
+            } else if (hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.8) {
+                hosts[i].Mem.Color_next_7d="high"
+                hosts[i].Condition="issue"
+            }
+
+            //
+            if (hosts[i].Condition=="issue") { 
+                danger = append(danger, hosts[i])
+            } else {
+                normal = append(normal, hosts[i])
+            }
         }
+
+        dashboard := Dashboard{danger, normal}
+        fmt.Println("test")
+//        fmt.Println(dashboard.Host[4].Cpu.Color_next_7d)
+
         t, _ := template.ParseFiles("templates/dashboard.html")
-	t.Execute(w, futureIds)
+	t.Execute(w, dashboard)
 }
 
 /* }}} */
@@ -167,6 +254,97 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int) {
 	w.Write([]byte(output))
 }
 
+//Get items id and names from item_future and items
+
+type Item struct {
+    Id int
+    Name string
+    ItemId int
+    Threshold float32
+    ThresholdLow string
+    Max_past_7d float32
+    Max_next_24h float32
+    Max_next_7d float32
+    Color_past_7d string
+    Color_next_24h string
+    Color_next_7d string
+}
+
+type Host struct {
+    Name string 
+    Cpu Item
+    Mem Item
+    Condition string 
+}
+
+func getHosts(w http.ResponseWriter) []Host {
+    rows, err := db.Query("SELECT hostid, name from hosts where hostid in (10101, 10102, 10103, 10104, 10105)")
+    if err != nil {
+            log.Fatal(err)
+    }
+    defer rows.Close()
+    var hosts []Host
+    for rows.Next() {
+        var hostid int
+        var name string
+        var host Host
+        var cpu Item
+        var mem Item
+        if err := rows.Scan(&hostid, &name); err != nil {
+                log.Fatal(err)
+        }
+        cpu = getItem(w, hostid, 2)
+        mem = getItem(w, hostid, 4)
+        
+        host.Name = name
+        host.Cpu = cpu
+        host.Mem = mem
+        hosts = append(hosts, host)
+    }
+    return hosts
+}
+func getItem(w http.ResponseWriter, hostid, ifid int) Item {
+    rows, err := db.Query("SELECT if.id, i.name, i.itemid, max(t.value) as threshold, t.lower, max(h.value) as max_past_7d, max(f1.value) as max_next_24h, max(f2.value) as max_next_7d FROM hosts ho, item_future if, items i, threshold t, history h, future f1, future f2 WHERE ho.hostid=i.hostid and if.itemid = i.itemid and i.itemid = h.itemid and if.id=t.itemid and h.clock > EXTRACT(EPOCH FROM current_timestamp) - 7*86400 and if.id = f1.itemid and f1.clock > EXTRACT(EPOCH FROM current_timestamp) and f1.clock < EXTRACT(EPOCH FROM current_timestamp) + 86400 and if.id = f2.itemid and f2.clock > EXTRACT(EPOCH FROM current_timestamp) and f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400 AND if.id=$1 and ho.hostid = $2 GROUP by if.id, i.name, i.itemid, t.lower;", ifid, hostid)
+    if err != nil {
+            log.Fatal(err)
+    }
+    defer rows.Close()
+
+    var results Item
+    
+    for rows.Next() {
+        var res Item
+        var id int
+        var name string
+        var itemid int
+        var threshold float32
+        var lower string
+        var max_past_7d float32
+        var max_next_24h float32
+        var max_next_7d float32
+        if err := rows.Scan(&id, &name, &itemid, &threshold, &lower, &max_past_7d, &max_next_24h, &max_next_7d); err != nil {
+                log.Fatal(err)
+        }
+        res.Id = id
+        res.Name = name
+        res.ItemId = itemid
+        res.Threshold = threshold
+        res.ThresholdLow = lower
+        res.Max_past_7d = max_past_7d
+        res.Max_next_24h = max_next_24h
+        res.Max_next_7d = max_next_7d
+        return res;
+//        results = append(results, res)
+
+    }
+    if err := rows.Err(); err != nil {
+            log.Fatal(err)
+    }
+    
+    return results
+
+
+}
 
 func getFutureIds(w http.ResponseWriter) []int {
     rows, err := db.Query("select id FROM item_future")
@@ -192,14 +370,9 @@ func getFutureIds(w http.ResponseWriter) []int {
 
 }
 
-//Get items id and names from item_future and items
 
-type Item struct {
-    id int
-    name string
-}
 func getFutureItems(w http.ResponseWriter) []Item {
-    rows, err := db.Query("select a.id, b.name FROM item_future a, items b where a.itemid = b.itemid")
+    rows, err := db.Query("select a.id, b.name, b.itemid FROM item_future a, items b where a.itemid = b.itemid")
     if err != nil {
             log.Fatal(err)
     }
@@ -211,11 +384,13 @@ func getFutureItems(w http.ResponseWriter) []Item {
         var res Item
         var id int
         var name string
-        if err := rows.Scan(&id, &name); err != nil {
+        var itemid int
+        if err := rows.Scan(&id, &name, &itemid); err != nil {
                 log.Fatal(err)
         }
-        res.name = name
-        res.id = id
+        res.Name = name
+        res.Id = id
+        res.ItemId = itemid
         results = append(results, res)
     }
     if err := rows.Err(); err != nil {
@@ -225,6 +400,7 @@ func getFutureItems(w http.ResponseWriter) []Item {
     return results
 
 }
+
 
 /*}}}*/
 

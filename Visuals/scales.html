@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Scaled scatterplot, resized to be bigger!</title>
+      <script type="text/javascript" src="Lib/d3.v3.min.js"></script>
+		<style type="text/css">
+			.axis path,
+			.axis line {
+				fill: none;
+				stroke: black;
+				shape-rendering: crispEdges;
+			}
+			
+			.axis text {
+				font-family: sans-serif;
+				font-size: 11px;
+			}
+
+		</style>
+	</head>
+	<body>
+<script type="text/javascript">
+
+    //Width and height
+        var w = 800;
+        var h = 400;
+        var padding = 50;
+        var barPadding = 2;
+        var dataset = [ 105, 10, 15, 20, 25, 4, 3, 2, 1, 13, 12, 11, 105, 10, 15, 20, 25, 4, 3, 2, 1, 13, 12, 11];
+
+    //Create scale functions
+
+        var yScale = d3.scale.linear()
+            .domain([0, d3.max(dataset)])
+            .range([h-padding, padding]);
+
+        var xScale = d3.scale.ordinal()
+            .domain(d3.range(dataset.length))
+            .rangeRoundBands([0, w-2*padding], 0.05);
+
+    //Define Y axis
+        var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("left")
+            .ticks(5);
+
+    //Define X axis
+        var xAxis = d3.svg.axis()
+            .scale(xScale)
+            .orient("bottom")
+    //        .ticks(5)
+    ;
+    //Create SVG element
+        var svg = d3.select("body")
+                                .append("svg")
+                                .attr("width", w)
+                                .attr("height", h);
+
+        svg.selectAll("rect")
+            .data(dataset)
+            .enter()
+            .append("rect")
+            .attr("x", function(d, i) {
+                 return xScale(i);
+            })
+            .attr("y", function(d) {
+                         return yScale(d);
+            })
+            .attr("width", xScale.rangeBand())
+            .attr("height", function(d) {
+                        return h - padding - yScale(d);
+           });
+
+    //Labels
+
+        svg.selectAll("text")
+           .data(dataset)
+           .enter()
+           .append("text")
+           .text(function(d) {
+                        return d;
+           })
+           .attr("x", function(d, i) {
+                return xScale(i);
+           })
+           .attr("y", function(d) {
+                        return yScale(d);
+           })
+           .attr("font-family", "sans-serif")
+           .attr("font-size", "11px")
+           .attr("fill", "red");
+
+            //Create X axis
+            svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(0," + (h - padding) + ")")
+                    .call(xAxis);
+
+            //Create Y axis
+            svg.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(" + padding + ",0)")
+                    .call(yAxis);    
+		</script>
+	</body>
+</html>
