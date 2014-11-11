@@ -265,13 +265,13 @@ func getItemFutureIdByHostMetric(host string, metric string) int {
 	AND hosts.hostid = items.hostid
 	AND metric.name = $2
 	AND items.key_ = metric.key_
-	AND item_future.itemid = items.itemid;`, &host, &metric).Scan(&fid)
-	// TODO this is broken
+	AND item_future.itemid = items.itemid;`, host, metric).Scan(&fid)
 
 	if err != nil {
 		fmt.Println(err)
 		return -1
 	}
+   fmt.Println(fid)
 	return fid
 }
 
@@ -371,6 +371,10 @@ func getHosts(w http.ResponseWriter) []Host {
 	return hosts
 }
 func getItem(ifid int) (error, Item) {
+
+   if ifid < 0 {
+      return fmt.Errorf("Item does not exist"), Item{}
+   }
 
 	var res Item
 	var vtype int
