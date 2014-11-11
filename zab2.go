@@ -28,18 +28,18 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 	if len(r.Header["Accept"]) > 0 {
 		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
 	}
-	
+
 	parts := strings.Split(r.URL.Path, "/")
-	
+
 	if len(parts) < 4 && !wantsJson {
 		http.NotFound(w, r)
 		return
 	}
 	host := parts[len(parts)-2]
 	metric := parts[len(parts)-1]
-	
+
 	var id = getItemFutureIdByHostMetric(host, metric)
-	if id < 0  {
+	if id < 0 {
 		http.NotFound(w, r)
 		return
 	}
@@ -67,6 +67,7 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		graphViewHTML(w)
 	}
 }
+
 /* }}} */
 
 /* {{{ /static -------------------------------------------------------------- */
@@ -85,6 +86,7 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 	b, _ := ioutil.ReadFile(path)
 	w.Write(b)
 }
+
 /* }}} */
 
 /* {{{ /dashboard ----------------------------------------------------------- */
@@ -96,11 +98,11 @@ type Dashboard struct {
 // normal = 0
 // issua = 1
 func getCondition(value float32, threshold float32) (int, string) {
-	if value - threshold < 0 {
+	if value-threshold < 0 {
 		return 1, "critical"
-	} else if value < threshold * 0.5 {
+	} else if value < threshold*0.5 {
 		return 1, "warn"
-	} else if value < threshold * 0.8 {
+	} else if value < threshold*0.8 {
 		return 1, "high"
 	} else {
 		return 0, "normal" // Huh?
@@ -124,29 +126,40 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 		// cpu
 		condx, hosts[i].Cpu.Color_past_7d =
 			getCondition(hosts[i].Cpu.Max_past_7d, hosts[i].Cpu.Threshold)
-		if condx > cond { cond = condx }
+		if condx > cond {
+			cond = condx
+		}
 
 		condx, hosts[i].Cpu.Color_next_24h =
 			getCondition(hosts[i].Cpu.Max_next_24h, hosts[i].Cpu.Threshold)
-		if condx > cond { cond = condx }
+		if condx > cond {
+			cond = condx
+		}
 
 		condx, hosts[i].Cpu.Color_next_7d =
 			getCondition(hosts[i].Cpu.Max_next_7d, hosts[i].Cpu.Threshold)
-		if condx > cond { cond = condx }
+		if condx > cond {
+			cond = condx
+		}
 
 		// mem
 		condx, hosts[i].Mem.Color_past_7d =
 			getCondition(hosts[i].Mem.Max_past_7d, hosts[i].Mem.Threshold)
-		if condx > cond { cond = condx }
+		if condx > cond {
+			cond = condx
+		}
 
 		condx, hosts[i].Mem.Color_next_24h =
 			getCondition(hosts[i].Mem.Max_next_24h, hosts[i].Mem.Threshold)
-		if condx > cond { cond = condx }
+		if condx > cond {
+			cond = condx
+		}
 
 		condx, hosts[i].Mem.Color_next_7d =
 			getCondition(hosts[i].Mem.Max_next_7d, hosts[i].Mem.Threshold)
-		if condx > cond { cond = condx }
-
+		if condx > cond {
+			cond = condx
+		}
 
 		if cond == 0 {
 			hosts[i].Condition = "normal"
@@ -165,6 +178,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	t.ExecuteTemplate(w, "dashboard", dashboard)
 }
+
 /* }}} */
 
 /* {{{ Templates ------------------------------------------------------------ */
@@ -172,8 +186,8 @@ func graphViewHTML(w http.ResponseWriter) {
 	t, _ := template.ParseFiles("templates/graphview.html")
 	t.Execute(w, "testi")
 }
-/* }}} */
 
+/* }}} */
 
 /* {{{ interfacing habbix --------------------------------------------------- */
 
@@ -191,12 +205,12 @@ func updateFuture(id int) {
 // gets future data from habbix without changing stored parameters
 func getFutureNoUpdate(params string, id int) string {
 	fmt.Printf("params=%s,id=%d\n", params, id)
-	fmt.Printf(fmt.Sprintf("'%s'\n",params))
+	fmt.Printf(fmt.Sprintf("'%s'\n", params))
 	cmd := exec.Command("habbix", "execute", "--outcombine", "-p", params, strconv.Itoa(id))
 	fmt.Println(cmd.Args)
 	out, err := cmd.CombinedOutput()
 	var newJSON = string(out)
-	fmt.Printf("%s",newJSON)
+	fmt.Printf("%s", newJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -246,20 +260,22 @@ func getItemFutureIdByHostMetric(host string, metric string) int {
 	WHERE hosts.name = $1
 	AND metric.name = $2
 	AND items.key_ = metric.key_ AND item_future.itemid = items.itemid`, host,
-	metric).Scan(&fid)
-	if err != nil { return -1 }
+		metric).Scan(&fid)
+	if err != nil {
+		return -1
+	}
 	return fid
 }
 
 /* Deliver graph JSON data based on an item_future.id */
 func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams string) {
-	var itemId 		int	// unique id of item
-	var host 		string // name of host server (?)
-	var params 		string // current parameters used by forecast calculation
-	var details 	string // forecast-specific details
-	var metric 		string // name of forecast metric
-	var threshold	float32 // value of current treshold
-	var lower 		bool // true if treshold is lower limit rather than upper
+	var itemId int        // unique id of item
+	var host string       // name of host server (?)
+	var params string     // current parameters used by forecast calculation
+	var details string    // forecast-specific details
+	var metric string     // name of forecast metric
+	var threshold float32 // value of current treshold
+	var lower bool        // true if treshold is lower limit rather than upper
 
 	db.QueryRow(`SELECT item_future.itemid, items.name, host, params, details
 	FROM item_future
@@ -274,8 +290,8 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	(SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q
 	ORDER BY clock`, itemId)
 	history := parseValueJSON(rows)
-	var future string;
-	if (len(noUpdateParams) > 0) {
+	var future string
+	if len(noUpdateParams) > 0 {
 		future = getFutureNoUpdate(noUpdateParams, ifId)
 	} else {
 		rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
@@ -289,6 +305,7 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 
 	w.Write([]byte(output))
 }
+
 /* }}} */
 
 /* {{{ Get items id and names from item_future and items -------------------- */
@@ -338,7 +355,9 @@ func getHosts(w http.ResponseWriter) []Host {
 	return hosts
 }
 func getItem(w http.ResponseWriter, hostid, ifid int) Item {
-	rows, err := db.Query(`SELECT
+	var res Item
+
+	row := db.QueryRow(`SELECT
 		if.id, i.name, i.itemid, max(t.value) as threshold,
 		t.lower, max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
 		max(f2.value) as max_next_7d
@@ -356,44 +375,11 @@ func getItem(w http.ResponseWriter, hostid, ifid int) Item {
 	AND f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400
 	AND if.id = $1 AND ho.hostid = $2
 	GROUP by if.id, i.name, i.itemid, t.lower`, ifid, hostid)
-	if err != nil {
+
+	if err := row.Scan(&res.Id, &res.Name, &res.ItemId, &res.Threshold, &res.ThresholdLow, &res.Max_past_7d, &res.Max_next_24h, &res.Max_next_7d); err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
-
-	var results Item
-
-	for rows.Next() {
-		var res Item
-		var id int
-		var name string
-		var itemid int
-		var threshold float32
-		var lower string
-		var max_past_7d float32
-		var max_next_24h float32
-		var max_next_7d float32
-		if err := rows.Scan(&id, &name, &itemid, &threshold, &lower, &max_past_7d, &max_next_24h, &max_next_7d); err != nil {
-			log.Fatal(err)
-		}
-		res.Id = id
-		res.Name = name
-		res.ItemId = itemid
-		res.Threshold = threshold
-		res.ThresholdLow = lower
-		res.Max_past_7d = max_past_7d
-		res.Max_next_24h = max_next_24h
-		res.Max_next_7d = max_next_7d
-		return res
-		//        results = append(results, res)
-
-	}
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return results
-
+	return res
 }
 
 func getFutureIds(w http.ResponseWriter) []int {
@@ -466,4 +452,5 @@ func main() {
 	http.HandleFunc("/item/", itemHandler)
 	http.ListenAndServe(":8080", nil)
 }
+
 /* }}} */
