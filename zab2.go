@@ -18,9 +18,7 @@ import (
 //	Makes constant new db connections unnecessary.
 var db *sql.DB
 
-/* {{{ Handlers --------------------------------------------------------- */
-
-// handles requests/updates for specific items
+/* {{{ /item ---------------------------------------------------------------- */
 func itemHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, _ := strconv.Atoi(parts[len(parts)-1])
@@ -52,7 +50,9 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		graphViewHTML(w)
 	}
 }
+/* }}} */
 
+/* {{{ /static -------------------------------------------------------------- */
 // handles graph drawing thingy requests, css files, that sort of thing.
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path
@@ -67,115 +67,114 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 	b, _ := ioutil.ReadFile(path)
 	w.Write(b)
 }
-
-/* /dashboard */
-type Dashboard struct {
-    Danger []Host
-    Normal []Host
-}
-
-
-func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-        var hosts []Host
-        hosts = getHosts(w)
-        
-
-        //Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
-        var danger []Host
-        var normal []Host
-
-        for i := range hosts {
-            //CPU
-            if (hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold<0) {
-                hosts[i].Cpu.Color_past_7d="critical"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.5) {
-                hosts[i].Cpu.Color_past_7d="warn"
-                hosts[i].Condition="issue"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.8) {
-                hosts[i].Cpu.Color_past_7d="high"
-                hosts[i].Condition="issue"
-            }            
-            if (hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold<0) {
-                hosts[i].Cpu.Color_next_24h="critical"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.5) {
-                hosts[i].Cpu.Color_next_24h="warn"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.8) {
-                hosts[i].Cpu.Color_next_24h="high"
-                hosts[i].Condition="issue"
-            }            
-            if (hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold<0) {
-                hosts[i].Cpu.Color_next_7d="critical"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.5) {
-                hosts[i].Cpu.Color_next_7d="warn"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold<hosts[i].Cpu.Threshold*0.8) {
-                hosts[i].Cpu.Color_next_7d="high"
-                hosts[i].Condition="issue"
-            }                    
-
-            //MEM
-            if (hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold<0) {
-                hosts[i].Mem.Color_past_7d="critical"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.5) {
-                hosts[i].Mem.Color_past_7d="warn"
-                hosts[i].Condition="issue"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.8) {
-                hosts[i].Mem.Color_past_7d="high"
-                hosts[i].Condition="issue"
-            }            
-            if (hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold<0) {
-                hosts[i].Mem.Color_next_24h="critical"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.5) {
-                hosts[i].Mem.Color_next_24h="warn"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.8) {
-                hosts[i].Mem.Color_next_24h="high"
-                hosts[i].Condition="issue"
-            }            
-            if (hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold<0) {
-                hosts[i].Mem.Color_next_7d="critical"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.5) {
-                hosts[i].Mem.Color_next_7d="warn"
-                hosts[i].Condition="issue"
-            } else if (hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold<hosts[i].Mem.Threshold*0.8) {
-                hosts[i].Mem.Color_next_7d="high"
-                hosts[i].Condition="issue"
-            }
-
-            //
-            if (hosts[i].Condition=="issue") { 
-                danger = append(danger, hosts[i])
-            } else {
-                normal = append(normal, hosts[i])
-            }
-        }
-
-        dashboard := Dashboard{danger, normal}
-        fmt.Println("test")
-//        fmt.Println(dashboard.Host[4].Cpu.Color_next_7d)
-
-        t, _ := template.ParseFiles("templates/dashboard.html")
-	t.Execute(w, dashboard)
-}
-
 /* }}} */
 
-/* {{{ Templates ---------------------------------------------------------------- */
+/* {{{ /dashboard ----------------------------------------------------------- */
+type Dashboard struct {
+	Danger []Host
+	Normal []Host
+}
+
+func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+	var hosts []Host
+	hosts = getHosts(w)
+
+	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
+	var danger []Host
+	var normal []Host
+
+	for i := range hosts {
+		//CPU
+		if hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold < 0 {
+			hosts[i].Cpu.Color_past_7d = "critical"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.5 {
+			hosts[i].Cpu.Color_past_7d = "warn"
+			hosts[i].Condition = "issue"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.8 {
+			hosts[i].Cpu.Color_past_7d = "high"
+			hosts[i].Condition = "issue"
+		}
+		if hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold < 0 {
+			hosts[i].Cpu.Color_next_24h = "critical"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.5 {
+			hosts[i].Cpu.Color_next_24h = "warn"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.8 {
+			hosts[i].Cpu.Color_next_24h = "high"
+			hosts[i].Condition = "issue"
+		}
+		if hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold < 0 {
+			hosts[i].Cpu.Color_next_7d = "critical"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.5 {
+			hosts[i].Cpu.Color_next_7d = "warn"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.8 {
+			hosts[i].Cpu.Color_next_7d = "high"
+			hosts[i].Condition = "issue"
+		}
+
+		//MEM
+		if hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold < 0 {
+			hosts[i].Mem.Color_past_7d = "critical"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.5 {
+			hosts[i].Mem.Color_past_7d = "warn"
+			hosts[i].Condition = "issue"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.8 {
+			hosts[i].Mem.Color_past_7d = "high"
+			hosts[i].Condition = "issue"
+		}
+		if hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold < 0 {
+			hosts[i].Mem.Color_next_24h = "critical"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.5 {
+			hosts[i].Mem.Color_next_24h = "warn"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.8 {
+			hosts[i].Mem.Color_next_24h = "high"
+			hosts[i].Condition = "issue"
+		}
+		if hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold < 0 {
+			hosts[i].Mem.Color_next_7d = "critical"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.5 {
+			hosts[i].Mem.Color_next_7d = "warn"
+			hosts[i].Condition = "issue"
+		} else if hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.8 {
+			hosts[i].Mem.Color_next_7d = "high"
+			hosts[i].Condition = "issue"
+		}
+
+		//
+		if hosts[i].Condition == "issue" {
+			danger = append(danger, hosts[i])
+		} else {
+			normal = append(normal, hosts[i])
+		}
+	}
+
+	dashboard := Dashboard{danger, normal}
+	fmt.Println("test")
+	//        fmt.Println(dashboard.Host[4].Cpu.Color_next_7d)
+
+	t, _ := template.ParseFiles("templates/dashboard.html")
+	t.Execute(w, dashboard)
+}
+/* }}} */
+
+/* {{{ Templates ------------------------------------------------------------ */
 func graphViewHTML(w http.ResponseWriter) {
 	t, _ := template.ParseFiles("templates/graphview.html")
 	t.Execute(w, "testi")
 }
-
 /* }}} */
+
+/* {{{ interfacing habbix --------------------------------------------------- */
 
 // tells habbix to re-sync database after parameter update
 func updateFuture(id int) {
@@ -187,7 +186,6 @@ func updateFuture(id int) {
 	fmt.Printf("%s", out)
 	fmt.Printf("\nDB Synced.")
 }
-//  ./habbix execute -p '{ "pre_filter" : "DailyMin" }' 2
 
 // gets future data from habbix without changing stored parameters
 func getFutureNoUpdate(params string, id int) string {
@@ -203,8 +201,9 @@ func getFutureNoUpdate(params string, id int) string {
 	}
 	return newJSON
 }
+/* }}} */
 
-/* {{{ Querying graph JSON ------------------------------------------------------ */
+/* {{{ Querying graph JSON -------------------------------------------------- */
 type ClockValue struct {
 	Clock int64   `json:"time"`
 	Value float32 `json:"val"`
@@ -276,158 +275,171 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 
 	w.Write([]byte(output))
 }
+/* }}} */
 
-//Get items id and names from item_future and items
+/* {{{ Get items id and names from item_future and items -------------------- */
 
+// dashboard item
 type Item struct {
-    Id int
-    Name string
-    ItemId int
-    Threshold float32
-    ThresholdLow string
-    Max_past_7d float32
-    Max_next_24h float32
-    Max_next_7d float32
-    Color_past_7d string
-    Color_next_24h string
-    Color_next_7d string
+	Id             int
+	Name           string
+	ItemId         int
+	Threshold      float32
+	ThresholdLow   string
+	Max_past_7d    float32
+	Max_next_24h   float32
+	Max_next_7d    float32
+	Color_past_7d  string
+	Color_next_24h string
+	Color_next_7d  string
 }
 
 type Host struct {
-    Name string 
-    Cpu Item
-    Mem Item
-    Condition string 
+	Name      string
+	Cpu       Item
+	Mem       Item
+	Condition string
 }
 
 func getHosts(w http.ResponseWriter) []Host {
-    rows, err := db.Query("SELECT hostid, name from hosts where hostid in (10101, 10102, 10103, 10104, 10105)")
-    if err != nil {
-            log.Fatal(err)
-    }
-    defer rows.Close()
-    var hosts []Host
-    for rows.Next() {
-        var hostid int
-        var name string
-        var host Host
-        var cpu Item
-        var mem Item
-        if err := rows.Scan(&hostid, &name); err != nil {
-                log.Fatal(err)
-        }
-        cpu = getItem(w, hostid, 2)
-        mem = getItem(w, hostid, 4)
-        
-        host.Name = name
-        host.Cpu = cpu
-        host.Mem = mem
-        hosts = append(hosts, host)
-    }
-    return hosts
+	rows, err := db.Query(`SELECT hostid, name
+	FROM hosts WHERE hostid in (10101, 10102, 10103, 10104, 10105)`) // TODO hey! no hardcode here
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var hosts []Host
+	var hostid int
+	var host Host
+
+	for rows.Next() {
+		if err := rows.Scan(&hostid, &host.Name); err != nil {
+			log.Fatal(err)
+		}
+		host.Cpu = getItem(w, hostid, 2)
+		host.Mem = getItem(w, hostid, 4)
+		hosts = append(hosts, host)
+	}
+	return hosts
 }
 func getItem(w http.ResponseWriter, hostid, ifid int) Item {
-    rows, err := db.Query("SELECT if.id, i.name, i.itemid, max(t.value) as threshold, t.lower, max(h.value) as max_past_7d, max(f1.value) as max_next_24h, max(f2.value) as max_next_7d FROM hosts ho, item_future if, items i, threshold t, history h, future f1, future f2 WHERE ho.hostid=i.hostid and if.itemid = i.itemid and i.itemid = h.itemid and if.id=t.itemid and h.clock > EXTRACT(EPOCH FROM current_timestamp) - 7*86400 and if.id = f1.itemid and f1.clock > EXTRACT(EPOCH FROM current_timestamp) and f1.clock < EXTRACT(EPOCH FROM current_timestamp) + 86400 and if.id = f2.itemid and f2.clock > EXTRACT(EPOCH FROM current_timestamp) and f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400 AND if.id=$1 and ho.hostid = $2 GROUP by if.id, i.name, i.itemid, t.lower;", ifid, hostid)
-    if err != nil {
-            log.Fatal(err)
-    }
-    defer rows.Close()
+	rows, err := db.Query(`SELECT
+		if.id, i.name, i.itemid, max(t.value) as threshold,
+		t.lower, max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
+		max(f2.value) as max_next_7d
+	FROM hosts ho, item_future if, items i, threshold t, history h, future f1, future f2
+	WHERE ho.hostid=i.hostid
+	AND if.itemid = i.itemid
+	AND i.itemid = h.itemid
+	AND if.id=t.itemid
+	AND h.clock > EXTRACT(EPOCH FROM current_timestamp) - 7*86400
+	AND if.id = f1.itemid
+	AND f1.clock > EXTRACT(EPOCH FROM current_timestamp)
+	AND f1.clock < EXTRACT(EPOCH FROM current_timestamp) + 86400
+	AND if.id = f2.itemid
+	AND f2.clock > EXTRACT(EPOCH FROM current_timestamp)
+	AND f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400
+	AND if.id = $1 AND ho.hostid = $2
+	GROUP by if.id, i.name, i.itemid, t.lower`, ifid, hostid)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-    var results Item
-    
-    for rows.Next() {
-        var res Item
-        var id int
-        var name string
-        var itemid int
-        var threshold float32
-        var lower string
-        var max_past_7d float32
-        var max_next_24h float32
-        var max_next_7d float32
-        if err := rows.Scan(&id, &name, &itemid, &threshold, &lower, &max_past_7d, &max_next_24h, &max_next_7d); err != nil {
-                log.Fatal(err)
-        }
-        res.Id = id
-        res.Name = name
-        res.ItemId = itemid
-        res.Threshold = threshold
-        res.ThresholdLow = lower
-        res.Max_past_7d = max_past_7d
-        res.Max_next_24h = max_next_24h
-        res.Max_next_7d = max_next_7d
-        return res;
-//        results = append(results, res)
+	var results Item
 
-    }
-    if err := rows.Err(); err != nil {
-            log.Fatal(err)
-    }
-    
-    return results
+	for rows.Next() {
+		var res Item
+		var id int
+		var name string
+		var itemid int
+		var threshold float32
+		var lower string
+		var max_past_7d float32
+		var max_next_24h float32
+		var max_next_7d float32
+		if err := rows.Scan(&id, &name, &itemid, &threshold, &lower, &max_past_7d, &max_next_24h, &max_next_7d); err != nil {
+			log.Fatal(err)
+		}
+		res.Id = id
+		res.Name = name
+		res.ItemId = itemid
+		res.Threshold = threshold
+		res.ThresholdLow = lower
+		res.Max_past_7d = max_past_7d
+		res.Max_next_24h = max_next_24h
+		res.Max_next_7d = max_next_7d
+		return res
+		//        results = append(results, res)
 
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return results
 
 }
 
 func getFutureIds(w http.ResponseWriter) []int {
-    rows, err := db.Query("select id FROM item_future")
-    if err != nil {
-            log.Fatal(err)
-    }
-    defer rows.Close()
+	rows, err := db.Query("select id FROM item_future")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-    var results []int
-    
-    for rows.Next() {
-        var id int
-        if err := rows.Scan(&id); err != nil {
-                log.Fatal(err)
-        }
-        results = append(results, id)
-    }
-    if err := rows.Err(); err != nil {
-            log.Fatal(err)
-    }
-    
-    return results
+	var results []int
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, id)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return results
 
 }
-
 
 func getFutureItems(w http.ResponseWriter) []Item {
-    rows, err := db.Query("select a.id, b.name, b.itemid FROM item_future a, items b where a.itemid = b.itemid")
-    if err != nil {
-            log.Fatal(err)
-    }
-    defer rows.Close()
+	rows, err := db.Query("select a.id, b.name, b.itemid FROM item_future a, items b where a.itemid = b.itemid")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-    var results []Item
-    
-    for rows.Next() {
-        var res Item
-        var id int
-        var name string
-        var itemid int
-        if err := rows.Scan(&id, &name, &itemid); err != nil {
-                log.Fatal(err)
-        }
-        res.Name = name
-        res.Id = id
-        res.ItemId = itemid
-        results = append(results, res)
-    }
-    if err := rows.Err(); err != nil {
-            log.Fatal(err)
-    }
-    
-    return results
+	var results []Item
+
+	for rows.Next() {
+		var res Item
+		var id int
+		var name string
+		var itemid int
+		if err := rows.Scan(&id, &name, &itemid); err != nil {
+			log.Fatal(err)
+		}
+		res.Name = name
+		res.Id = id
+		res.ItemId = itemid
+		results = append(results, res)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return results
 
 }
-
 
 /*}}}*/
 
-/* {{{ main routing etc. -------------------------------------------- */
+/* {{{ main() --------------------------------------------------------------- */
+
 // initializes db connection and uses standard http.HandleFunc for routing
 func main() {
 	var err error
@@ -440,5 +452,4 @@ func main() {
 	http.HandleFunc("/item/", itemHandler)
 	http.ListenAndServe(":8080", nil)
 }
-
 /* }}} */
