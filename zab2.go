@@ -23,6 +23,7 @@ var db *sql.DB
 
 // handles requests/updates for specific items
 func itemHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("itemHandler")
 
 	var wantsJson bool
 	if len(r.Header["Accept"]) > 0 {
@@ -35,6 +36,7 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+
 	host := parts[len(parts)-2]
 	metric := parts[len(parts)-1]
 
@@ -110,7 +112,7 @@ func getCondition(value float32, threshold float32) (int, string) {
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-
+	fmt.Println("dashboardHandler")
 	var hosts []Host
 	hosts = getHosts(w)
 
@@ -255,13 +257,16 @@ func parseValueJSON(rows *sql.Rows) string {
 
 func getItemFutureIdByHostMetric(host string, metric string) int {
 	var fid int
-	err := db.QueryRow(`SELECT item_future.id
-	FROM hosts, metric, items, item_future
-	WHERE hosts.name = $1
-	AND metric.name = $2
-	AND items.key_ = metric.key_ AND item_future.itemid = items.itemid`, host,
-		metric).Scan(&fid)
+
+	fmt.Println(host, " :: ", metric)
+
+	err := db.QueryRow(`SELECT item_future.id FROM hosts, metric, items, item_future WHERE
+	hosts.name = $1 AND metric.name = $2 AND items.key_ = metric.key_
+	AND item_future.itemid = items.itemid;`, &host, &metric).Scan(&fid)
+	// TODO this is broken
+
 	if err != nil {
+		fmt.Println(err)
 		return -1
 	}
 	return fid
@@ -333,7 +338,7 @@ type Host struct {
 }
 
 func getHosts(w http.ResponseWriter) []Host {
-	rows, err := db.Query(`SELECT hostid, name
+	rows, err := db.Query(`SELECT name
 	FROM hosts WHERE hostid in (10101, 10102, 10103, 10104, 10105)`) // TODO hey! no hardcode here
 	if err != nil {
 		log.Fatal(err)
@@ -341,45 +346,68 @@ func getHosts(w http.ResponseWriter) []Host {
 	defer rows.Close()
 
 	var hosts []Host
-	var hostid int
 	var host Host
 
 	for rows.Next() {
-		if err := rows.Scan(&hostid, &host.Name); err != nil {
+		if err := rows.Scan(&host.Name); err != nil {
 			log.Fatal(err)
 		}
-		host.Cpu = getItem(w, hostid, 2)
-		host.Mem = getItem(w, hostid, 4)
+		err, host.Cpu = getItem(getItemFutureIdByHostMetric(host.Name, "cpu"))
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		err, host.Mem = getItem(getItemFutureIdByHostMetric(host.Name, "mem"))
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Println("host parsed: ", host.Name)
 		hosts = append(hosts, host)
 	}
 	return hosts
 }
-func getItem(w http.ResponseWriter, hostid, ifid int) Item {
-	var res Item
+func getItem(ifid int) (error, Item) {
 
-	row := db.QueryRow(`SELECT
-		if.id, i.name, i.itemid, max(t.value) as threshold,
-		t.lower, max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
-		max(f2.value) as max_next_7d
-	FROM hosts ho, item_future if, items i, threshold t, history h, future f1, future f2
-	WHERE ho.hostid=i.hostid
-	AND if.itemid = i.itemid
-	AND i.itemid = h.itemid
-	AND if.id=t.itemid
-	AND h.clock > EXTRACT(EPOCH FROM current_timestamp) - 7*86400
-	AND if.id = f1.itemid
+	var res Item
+	var vtype int
+
+	row := db.QueryRow(`
+		SELECT i.value_type, if.id, i.name, i.itemid
+		FROM item_future if
+		INNER JOIN items i on i.itemid = if.itemid
+		WHERE if.id = $1`, ifid)
+
+	if err := row.Scan(&vtype, &res.Id, &res.Name, &res.ItemId); err != nil {
+		return fmt.Errorf("fetching info failed (%g): %s", ifid, err), Item{}
+	}
+
+	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
+		ifid).Scan(&res.Threshold, &res.ThresholdLow)
+
+	postfix := "" // vtype == 0
+	if vtype == 3 {
+		postfix = "_uint"
+	}
+
+	row = db.QueryRow(`
+	SELECT max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
+			max(f2.value) as max_next_7d
+	FROM history`+postfix+` h, future`+postfix+` f1, future`+postfix+` f2
+	WHERE h.itemid  = $1
+	AND   f1.itemid = $2
+	AND   f2.itemid = f1.itemid
+	AND h.clock  > EXTRACT(EPOCH FROM current_timestamp) - 7*86400
 	AND f1.clock > EXTRACT(EPOCH FROM current_timestamp)
 	AND f1.clock < EXTRACT(EPOCH FROM current_timestamp) + 86400
-	AND if.id = f2.itemid
 	AND f2.clock > EXTRACT(EPOCH FROM current_timestamp)
-	AND f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400
-	AND if.id = $1 AND ho.hostid = $2
-	GROUP by if.id, i.name, i.itemid, t.lower`, ifid, hostid)
+	AND f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400`, res.ItemId, ifid)
 
-	if err := row.Scan(&res.Id, &res.Name, &res.ItemId, &res.Threshold, &res.ThresholdLow, &res.Max_past_7d, &res.Max_next_24h, &res.Max_next_7d); err != nil {
-		log.Fatal(err)
+	if err := row.Scan(&res.Max_past_7d, &res.Max_next_24h, &res.Max_next_7d); err != nil {
+		log.Fatal("Could not find item_future ", ifid, " ", err)
 	}
-	return res
+
+	return nil, res
 }
 
 func getFutureIds(w http.ResponseWriter) []int {
