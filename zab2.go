@@ -19,6 +19,8 @@ import (
 var db *sql.DB
 
 /* {{{ /item ---------------------------------------------------------------- */
+
+// handles requests/updates for specific items
 func itemHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, _ := strconv.Atoi(parts[len(parts)-1])
@@ -53,6 +55,7 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 /* }}} */
 
 /* {{{ /static -------------------------------------------------------------- */
+
 // handles graph drawing thingy requests, css files, that sort of thing.
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path
@@ -131,10 +134,10 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 		if cond == 0 {
 			hosts[i].Condition = "normal"
-			danger = append(danger, hosts[i])
+			normal = append(normal, hosts[i])
 		} else {
 			hosts[i].Condition = "issue"
-			normal = append(normal, hosts[i])
+			danger = append(danger, hosts[i])
 		}
 	}
 	dashboard := Dashboard{danger, normal}
@@ -151,6 +154,7 @@ func graphViewHTML(w http.ResponseWriter) {
 	t.Execute(w, "testi")
 }
 /* }}} */
+
 
 /* {{{ interfacing habbix --------------------------------------------------- */
 
