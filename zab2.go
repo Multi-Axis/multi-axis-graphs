@@ -22,13 +22,27 @@ var db *sql.DB
 
 // handles requests/updates for specific items
 func itemHandler(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	id, _ := strconv.Atoi(parts[len(parts)-1])
 
 	var wantsJson bool
 	if len(r.Header["Accept"]) > 0 {
 		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
 	}
+	
+	parts := strings.Split(r.URL.Path, "/")
+	
+	if len(parts) < 4 && !wantsJson {
+		http.NotFound(w, r)
+		return
+	}
+	host := parts[len(parts)-2]
+	metric := parts[len(parts)-1]
+	
+	var id = getItemFutureIdByHostMetric(host, metric)
+	if id < 0  {
+		http.NotFound(w, r)
+		return
+	}
+
 	if r.Method == "POST" {
 		r.ParseForm()
 		params := r.FormValue("params")
@@ -183,6 +197,7 @@ func getFutureNoUpdate(params string, id int) string {
 	}
 	return newJSON
 }
+
 /* }}} */
 
 /* {{{ Querying graph JSON -------------------------------------------------- */
@@ -221,12 +236,13 @@ func parseValueJSON(rows *sql.Rows) string {
 
 func getItemFutureIdByHostMetric(host string, metric string) int {
 	var fid int
-	db.QueryRow(`SELECT item_future.id
+	err := db.QueryRow(`SELECT item_future.id
 	FROM hosts, metric, items, item_future
 	WHERE hosts.name = $1
 	AND metric.name = $2
 	AND items.key_ = metric.key_ AND item_future.itemid = items.itemid`, host,
 	metric).Scan(&fid)
+	if err != nil { return -1 }
 	return fid
 }
 
