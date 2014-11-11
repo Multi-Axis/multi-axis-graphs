@@ -33,7 +33,7 @@
             <svg style="height:500px; width:100%"></svg>
         </div>
            
-        <input id="sendPeriod" type="submit" value="Update"/>
+        <input id="sendPeriod" type="submit" value="Update forecast with periods"/>
 
         <button id="clearPeriods">Clear</button>
 
@@ -48,7 +48,9 @@
         
 
         <p id="from"></p>
-
+        <p>Trend forecast (default is 2 weeks):</p>
+        <button id="trendForecast">Update forecast with trend</button>
+        <textarea id="trendDays" rows="1" cols="4"></textarea>
         <script src="/static/graph.js"></script>
     </body>
 </html>
