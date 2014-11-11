@@ -3,8 +3,10 @@ var period = [];
 var chart;
 var wholeData;
 
-$.getJSON(window.location.href, function(data) {
-  drawAndSetData(data);
+$(function(){
+  $.getJSON(window.location.href, function(data) {
+    drawAndSetData(data);
+  })
 })
 
 function setData(data) {
