@@ -215,6 +215,17 @@ func parseValueJSON(rows *sql.Rows) string {
 	return buffer.String()
 }
 
+func getItemFutureIdByHostMetric(host string, metric string) int {
+	var fid int
+	db.QueryRow(`SELECT item_future.id
+	FROM hosts, metric, items, item_future
+	WHERE hosts.name = $1
+	AND metric.name = $2
+	AND items.key_ = metric.key_ AND item_future.itemid = items.itemid`, host,
+	metric).Scan(&fid)
+	return fid
+}
+
 /* Deliver graph JSON data based on an item_future.id */
 func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams string) {
 	var itemId 		int	// unique id of item
