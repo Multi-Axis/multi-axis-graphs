@@ -10,7 +10,8 @@ object (dubbed as an *Event*):
 
     { "value_type" : 0               // items.value_type (usually 0 or 3)
     , "clocks" : [<epochs>]          // list of epoch times (x values)
-    , "values" : [...]               // y values
+    , "values" : [<values>]          // y values
+    , "last"   : [<epoch>,<value>]   // (time, value) of last tick in history
     , "draw_future" : [<epochs>]     // bounds within which to extrapolate future with model
     , "params" : { ... }             // Extra parameters, forecast-unit specific
     }
