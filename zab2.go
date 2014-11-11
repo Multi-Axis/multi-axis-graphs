@@ -75,6 +75,20 @@ type Dashboard struct {
 	Normal []Host
 }
 
+// normal = 0
+// issua = 1
+func getCondition(value float32, threshold float32) (int, string) {
+	if value - threshold < 0 {
+		return 1, "critical"
+	} else if value < threshold * 0.5 {
+		return 1, "warn"
+	} else if value < threshold * 0.8 {
+		return 1, "high"
+	} else {
+		return 0, "normal" // Huh?
+	}
+}
+
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	var hosts []Host
 	hosts = getHosts(w)
@@ -83,84 +97,48 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	var danger []Host
 	var normal []Host
 
+	cond := 0
 	for i := range hosts {
-		//CPU
-		if hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold < 0 {
-			hosts[i].Cpu.Color_past_7d = "critical"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.5 {
-			hosts[i].Cpu.Color_past_7d = "warn"
-			hosts[i].Condition = "issue"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Cpu.Max_past_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.8 {
-			hosts[i].Cpu.Color_past_7d = "high"
-			hosts[i].Condition = "issue"
-		}
-		if hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold < 0 {
-			hosts[i].Cpu.Color_next_24h = "critical"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.5 {
-			hosts[i].Cpu.Color_next_24h = "warn"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Cpu.Max_next_24h-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.8 {
-			hosts[i].Cpu.Color_next_24h = "high"
-			hosts[i].Condition = "issue"
-		}
-		if hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold < 0 {
-			hosts[i].Cpu.Color_next_7d = "critical"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.5 {
-			hosts[i].Cpu.Color_next_7d = "warn"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Cpu.Max_next_7d-hosts[i].Cpu.Threshold < hosts[i].Cpu.Threshold*0.8 {
-			hosts[i].Cpu.Color_next_7d = "high"
-			hosts[i].Condition = "issue"
-		}
 
-		//MEM
-		if hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold < 0 {
-			hosts[i].Mem.Color_past_7d = "critical"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.5 {
-			hosts[i].Mem.Color_past_7d = "warn"
-			hosts[i].Condition = "issue"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Mem.Max_past_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.8 {
-			hosts[i].Mem.Color_past_7d = "high"
-			hosts[i].Condition = "issue"
-		}
-		if hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold < 0 {
-			hosts[i].Mem.Color_next_24h = "critical"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.5 {
-			hosts[i].Mem.Color_next_24h = "warn"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Mem.Max_next_24h-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.8 {
-			hosts[i].Mem.Color_next_24h = "high"
-			hosts[i].Condition = "issue"
-		}
-		if hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold < 0 {
-			hosts[i].Mem.Color_next_7d = "critical"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.5 {
-			hosts[i].Mem.Color_next_7d = "warn"
-			hosts[i].Condition = "issue"
-		} else if hosts[i].Mem.Max_next_7d-hosts[i].Mem.Threshold < hosts[i].Mem.Threshold*0.8 {
-			hosts[i].Mem.Color_next_7d = "high"
-			hosts[i].Condition = "issue"
-		}
+		var condx int
 
-		//
-		if hosts[i].Condition == "issue" {
+		// cpu
+		condx, hosts[i].Cpu.Color_past_7d =
+			getCondition(hosts[i].Cpu.Max_past_7d, hosts[i].Cpu.Threshold)
+		if condx > cond { cond = condx }
+
+		condx, hosts[i].Cpu.Color_next_24h =
+			getCondition(hosts[i].Cpu.Max_next_24h, hosts[i].Cpu.Threshold)
+		if condx > cond { cond = condx }
+
+		condx, hosts[i].Cpu.Color_next_7d =
+			getCondition(hosts[i].Cpu.Max_next_7d, hosts[i].Cpu.Threshold)
+		if condx > cond { cond = condx }
+
+		// mem
+		condx, hosts[i].Mem.Color_past_7d =
+			getCondition(hosts[i].Mem.Max_past_7d, hosts[i].Mem.Threshold)
+		if condx > cond { cond = condx }
+
+		condx, hosts[i].Mem.Color_next_24h =
+			getCondition(hosts[i].Mem.Max_next_24h, hosts[i].Mem.Threshold)
+		if condx > cond { cond = condx }
+
+		condx, hosts[i].Mem.Color_next_7d =
+			getCondition(hosts[i].Mem.Max_next_7d, hosts[i].Mem.Threshold)
+		if condx > cond { cond = condx }
+
+
+		if cond == 0 {
+			hosts[i].Condition = "normal"
 			danger = append(danger, hosts[i])
 		} else {
+			hosts[i].Condition = "issue"
 			normal = append(normal, hosts[i])
 		}
 	}
-
 	dashboard := Dashboard{danger, normal}
-	fmt.Println("test")
-	//        fmt.Println(dashboard.Host[4].Cpu.Color_next_7d)
+	//fmt.Println(dashboard)
 
 	t, _ := template.ParseFiles("templates/dashboard.html")
 	t.Execute(w, dashboard)
