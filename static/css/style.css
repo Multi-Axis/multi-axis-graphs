@@ -34,3 +34,7 @@
 .overview th:nth-child(3) {
    border-right:1px solid black;
 }
+.no_issues, .estimated_issues {
+   display: inline-block;
+   margin-left: 30px;
+}

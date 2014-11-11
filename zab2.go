@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
 )
 
 //	Makes constant new db connections unnecessary.
@@ -89,7 +90,7 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 /* {{{ /dashboard ----------------------------------------------------------- */
 type Dashboard struct {
 	Danger []Host
-	Normal []Host
+	Normal []Host 
 }
 
 // normal = 0
@@ -107,6 +108,7 @@ func getCondition(value float32, threshold float32) (int, string) {
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+
 	var hosts []Host
 	hosts = getHosts(w)
 
@@ -156,9 +158,12 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	dashboard := Dashboard{danger, normal}
 	//fmt.Println(dashboard)
-
-	t, _ := template.ParseFiles("templates/dashboard.html")
-	t.Execute(w, dashboard)
+    t, err := template.ParseFiles("templates/dashboard.tmpl", "templates/metric_table.tmpl", "templates/metric_table_end.tmpl",
+    							"templates/mem_usage.tmpl", "templates/cpu_load.tmpl")
+    	if err != nil {
+		log.Fatal(err)
+	}
+	t.ExecuteTemplate(w, "dashboard", dashboard)
 }
 /* }}} */
 

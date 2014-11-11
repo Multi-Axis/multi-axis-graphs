@@ -1,0 +1,11 @@
+{{define "cpu_load"}}
+<tbody>
+	<tr>
+		<td><span><a href="/item/{{.Name}}/cpu">{{ .Name }}</a></span></td>
+		<td><span>{{ .Cpu.Threshold }}</span></td>
+		<td><span class={{ .Cpu.Color_past_7d }}>{{ .Cpu.Max_past_7d }}</span></td>
+		<td><span class={{ .Cpu.Color_next_24h }}>{{ .Cpu.Max_next_24h }}</span></td>
+		<td><span class={{ .Cpu.Color_next_7d }}>{{ .Cpu.Max_next_7d }}</span></td>
+	</tr>
+</tbody>
+{{end}}

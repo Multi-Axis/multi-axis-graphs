@@ -1,0 +1,53 @@
+{{define "dashboard"}}
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Dashboard - MOCKUP</title>
+   <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+   <i>Dashboard</i>
+
+   <h1>Servers with current or estimated issues</h1>
+   <div class="estimated_issues">
+      <!-- Example of a load table -->
+      <h3>CPU Load:</h3>
+         {{template "metric_table"}}
+         {{range .Danger}}
+            {{template "cpu_load" .}}
+         {{end}}
+         {{template "metric_table_end"}}
+   </div>
+   <div class="estimated_issues">
+      <!-- Example of a load table -->
+      <h3>Memory Usage:</h3>
+         {{template "metric_table"}}
+         {{range .Danger}}
+            {{template "mem_usage" .}}
+         {{end}}
+         {{template "metric_table_end"}}
+   </div>
+   
+   <h1>Servers with no estimated issues</h1>
+   <div class="no_issues">
+      <!-- Example of a load table -->
+      <h3>CPU Load:</h3>
+         {{template "metric_table"}}
+         {{range .Normal }}
+            {{template "cpu_load" .}}
+         {{end}}
+         {{template "metric_table_end"}}
+   </div>
+   <div class="no_issues">
+      <!-- Example of a load table -->
+      <h3>Memory Usage:</h3>
+         {{template "metric_table"}}
+         {{range .Normal }}
+            {{template "mem_usage" .}}
+         {{end}}
+         {{template "metric_table_end"}}
+   </div>
+...
+</body>
+</html>
+{{end}}
