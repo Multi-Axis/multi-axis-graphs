@@ -109,16 +109,18 @@ function appendStartAndEnd(period) {
   document.getElementById('from').innerHTML = "From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]);
 }
 
-function postData(params, threshold) {
-  $.get(window.location.href, {'params': JSON.stringify(params), 'threshold':threshold}, function(data) {
+function postData(params, threshold, doPost) {
+  f=doPost ? $.post : $.get;
+  f(window.location.href, {'params': JSON.stringify(params), 'threshold':threshold}, function(data) {
     drawAndSetData(data)
   }, "json")
 }
 
 document.getElementById('sendPeriod').addEventListener('click', function() {
   var threshold = document.getElementById('threshold').value;
+  console.log(threshold)
   setPeriodParams();
-  postData(wholeData.params, threshold);
+  postData(wholeData.params, threshold, true);
 })
 
 document.getElementById('trendForecast').addEventListener('click', function() {
