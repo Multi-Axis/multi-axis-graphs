@@ -491,7 +491,7 @@ func main() {
 		log.Fatal(err)
 	}
 	http.HandleFunc("/static/", staticHandler)
-	http.HandleFunc("/", dashboardHandler)
+	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
 	http.ListenAndServe(":8080", nil)
 }
