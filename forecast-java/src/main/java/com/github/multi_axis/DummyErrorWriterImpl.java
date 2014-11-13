@@ -8,7 +8,7 @@ import com.github.multi_axis.Errors;
 
 import static javax.json.Json.createObjectBuilder;
 
-public final class ErrorWriterImpl {
+public final class DummyErrorWriterImpl {
 
   public static final F<Errors,JsonObject>
     write = err  -> writeError(err);
@@ -19,6 +19,6 @@ public final class ErrorWriterImpl {
       return createObjectBuilder().add("error","error").build(); }
 
 
-  private ErrorWriterImpl() {}
+  private DummyErrorWriterImpl() {}
 
 }
