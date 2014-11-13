@@ -31,6 +31,9 @@ import com.github.multi_axis.Zab.Zab3;
 
 import static com.github.multi_axis.AltFun.altFun;
 import static com.github.multi_axis.Tagged.tag;
+import static com.github.multi_axis.Zab.zab0;
+import static com.github.multi_axis.Zab.zab3;
+
 
 //TODO Write Matcher interfaces and add runMatch methods.
 
@@ -99,46 +102,32 @@ public abstract class Conf {
     //-------------------------------------------------
     //  The various actual writers. Add your own here.
 
-    public static final Writer<Tagged<Zab0,Stream<TimedValue<BigDecimal>>>>
+    public static final Writer<Alt<Nothing,Zab0,Stream<TimedValue<BigDecimal>>>>
       zab0Writer 
-        = Writer.<Zab0, Stream<TimedValue<BigDecimal>>>
-            taggedWriter(Zab0WriterImpl.write);
+        = writer(zab0, Zab0WriterImpl.write);
 
-    public static final Writer<Tagged<Zab3,Stream<TimedValue<BigDecimal>>>>
+    public static final Writer<Alt<Nothing,Zab3,Stream<TimedValue<BigDecimal>>>>
       zab3Writer 
-        = Writer.<Zab3, Stream<TimedValue<BigDecimal>>>
-            taggedWriter(Zab3WriterImpl.write);
+        = writer(zab3, Zab3WriterImpl.write);
 
 
     //-----------------------------------------------
     //  Construction methods for derivative writers.
 
-    //TODO FIXME I now think this doesn't belong here.
-    public static final <A> Writer<Validation<Errors,A>>
-      errorWriter(Writer<A> wa) {
-        return writer(vea  -> 
-                        vea.validation(
-                          (err  -> ErrorWriterImpl.write.f(err)),
-                          (a    -> wa.write(a)))); }
-              
-
+    // TODO THINK Obsolete?
     public static final <FT,IN> Writer<Alt<Nothing,FT,IN>>
       altWriter(final FT ftag, final Writer<Tagged<FT,IN>> w) {
-        return writer(altFun( 
-                        ftag,
-                        (IN in)  -> w.write(tag(ftag,in))
-                      ).fun); }
+        return writer(altFun( ftag,
+                              (IN in)  -> w.write(tag(ftag,in)))); }
 
     public static final <OTHERS,PREVFT,PREVIN,FT,IN> 
       Writer<Alt<Alt<OTHERS,PREVFT,PREVIN>,FT,IN>>
         altWriter(final Writer<Alt<OTHERS,PREVFT,PREVIN>> prevw,
                   final FT ftag,
-                  final Writer<Tagged<FT,IN>> w) {
-          return  writer(alt  ->
-                    alt.match(
-                      prevs  -> prevw.write(prevs),
-                      ftag,
-                      val  -> w.write(tag(ftag,val)))); }
+                  final Writer<Alt<Nothing,FT,IN>> w) {
+          return  writer(altFun(prevw.write(),
+                                ftag,
+                                in  -> w.write().fun.f(altVal(in)))); }
 
 
     // TODO THINK These will be obsolete?
@@ -180,18 +169,17 @@ public abstract class Conf {
 
 
                           
-
     //-------------------------------------------------------------------------
     //  Private
     //-------------------------------------------------------------------------
 
     private static final <IN> Writer<IN>
-      writer(AltFun<IN,JsonObject> w) { return new Writer<IN>(w); }
+      writer(final AltFun<IN,JsonObject> w) { return new Writer<IN>(w); }
 
 
-    private static final <FT,IN> Writer<Tagged<FT,IN>> 
-      taggedWriter(F<IN,JsonObject> w) {
-        return writer(tagged  -> w.f(tagged.val)); }
+    private static final <FT,IN> Writer<Alt<Nothing,FT,IN>> 
+      writer(final FT ftag, final F<IN,JsonObject> w) {
+        return writer(altFun(ftag,w)); }
 
     private Writer(AltFun<IN,JsonObject> write) {
       this.write = write; }

@@ -20,7 +20,7 @@ public abstract class Alt<OTHERS,TAG,VAL> {
       return new Other<OTHERS,TAG,VAL>(others); }
 
   public static <OTHERS,TAG,VAL> Alt<OTHERS,TAG,VAL>
-    val(TAG tag, VAL val) {
+    altVal(TAG tag, VAL val) {
       return new Val<OTHERS,TAG,VAL>(val); }
 
   private static final class Other<OTHERS,TAG,VAL> 
@@ -38,7 +38,7 @@ public abstract class Alt<OTHERS,TAG,VAL> {
       this.other = other; }
   }
 
-  private static final class Val<OTHERS,TAG,VAL>
+  private static final class AltVal<OTHERS,TAG,VAL>
     extends Alt<OTHERS,TAG,VAL> {
 
     private VAL val;
@@ -49,7 +49,7 @@ public abstract class Alt<OTHERS,TAG,VAL> {
             F<VAL,R>    fun) {
         return fun.f(val); }
 
-    public Val(final VAL val) {
+    public AltVal(final VAL val) {
       this.val = val; }
   }
 
