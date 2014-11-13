@@ -13,6 +13,9 @@ import fj.data.Validation;
 
 import javax.json.JsonObject;
 
+import com.github.multi_axis.Tagged;
+import com.github.multi_axis.Alt;
+import com.github.multi_axis.Nothing;
 import com.github.multi_axis.Alts2;
 import com.github.multi_axis.Alts2.Alts2Matcher;
 import com.github.multi_axis.Alts3;
@@ -25,6 +28,9 @@ import com.github.multi_axis.ZabReaderImpl;
 import com.github.multi_axis.Zab;
 import com.github.multi_axis.Zab.Zab0;
 import com.github.multi_axis.Zab.Zab3;
+
+import static com.github.multi_axis.AltFun.altFun;
+import static com.github.multi_axis.Tagged.tag;
 
 //TODO Write Matcher interfaces and add runMatch methods.
 
@@ -74,16 +80,16 @@ public abstract class Conf {
 
   public static class Writer<IN> {
 
-    private F<IN, JsonObject> write;
+    private AltFun<IN, JsonObject> write;
 
     //-------------------------------------------------------------------------
     //  Instance methods.
     //-------------------------------------------------------------------------
 
     public final JsonObject
-      write(IN in) { return write.f(in); }
+      write(IN in) { return write.fun.f(in); }
 
-    public final F<IN,JsonObject>
+    public final AltFun<IN,JsonObject>
       write() { return write; }
 
     //-------------------------------------------------------------------------
@@ -107,6 +113,7 @@ public abstract class Conf {
     //-----------------------------------------------
     //  Construction methods for derivative writers.
 
+    //TODO FIXME I now think this doesn't belong here.
     public static final <A> Writer<Validation<Errors,A>>
       errorWriter(Writer<A> wa) {
         return writer(vea  -> 
@@ -114,6 +121,27 @@ public abstract class Conf {
                           (err  -> ErrorWriterImpl.write.f(err)),
                           (a    -> wa.write(a)))); }
               
+
+    public static final <FT,IN> Writer<Alt<Nothing,FT,IN>>
+      altWriter(final FT ftag, final Writer<Tagged<FT,IN>> w) {
+        return writer(altFun( 
+                        ftag,
+                        (IN in)  -> w.write(tag(ftag,in))
+                      ).fun); }
+
+    public static final <OTHERS,PREVFT,PREVIN,FT,IN> 
+      Writer<Alt<Alt<OTHERS,PREVFT,PREVIN>,FT,IN>>
+        altWriter(final Writer<Alt<OTHERS,PREVFT,PREVIN>> prevw,
+                  final FT ftag,
+                  final Writer<Tagged<FT,IN>> w) {
+          return  writer(alt  ->
+                    alt.match(
+                      prevs  -> prevw.write(prevs),
+                      ftag,
+                      val  -> w.write(tag(ftag,val)))); }
+
+
+    // TODO THINK These will be obsolete?
 
     public static final <A,B> Writer<Alts2<A,B>>
       writerAlts2(Writer<A> wa, Writer<B> wb) {
@@ -151,19 +179,21 @@ public abstract class Conf {
             public JsonObject caseAlt5(E e) { return we.write(e); } } ) ); }
 
 
+                          
+
     //-------------------------------------------------------------------------
     //  Private
     //-------------------------------------------------------------------------
 
     private static final <IN> Writer<IN>
-      writer(F<IN,JsonObject> w) { return new Writer<IN>(w); }
+      writer(AltFun<IN,JsonObject> w) { return new Writer<IN>(w); }
 
 
     private static final <FT,IN> Writer<Tagged<FT,IN>> 
       taggedWriter(F<IN,JsonObject> w) {
         return writer(tagged  -> w.f(tagged.val)); }
 
-    private Writer(F<IN,JsonObject> write) {
+    private Writer(AltFun<IN,JsonObject> write) {
       this.write = write; }
 
     private Writer() {}

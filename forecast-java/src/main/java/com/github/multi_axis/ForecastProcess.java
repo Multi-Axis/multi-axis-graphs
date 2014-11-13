@@ -26,6 +26,11 @@ import static com.github.multi_axis.JsonUtils.writeJsonObject;
 public final class ForecastProcess {
 
 
+
+  private ForecastProcess() {}
+
+  /* //TODO THINK Obsolete?
+
   public static <FT,IN,OUT> IO<Unit> 
     forecast( InputStream                 inStream,
               OutputStream                outStream,
@@ -68,8 +73,7 @@ public final class ForecastProcess {
                                       (x  -> tag(x.tag, funcB.f(x.val))))))),
           jsonObject  ->
             writeJsonObject(outStream,jsonObject)); }
-   
-
-  private ForecastProcess() {}
+  
+  */ 
 
 }

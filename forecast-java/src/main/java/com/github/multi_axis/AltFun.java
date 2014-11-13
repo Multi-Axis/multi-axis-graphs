@@ -1,5 +1,7 @@
 package com.github.multi_axis;
 
+import fj.F;
+
 public final class AltFun<A,R> {
 
   // private?
@@ -25,6 +27,6 @@ public final class AltFun<A,R> {
                       tag,
                       val      -> fun.f(val))); }
 
-  private AltFun<A,R>(final F<A,R> fun) {
+  private AltFun(final F<A,R> fun) {
     this.fun = fun; }
 }

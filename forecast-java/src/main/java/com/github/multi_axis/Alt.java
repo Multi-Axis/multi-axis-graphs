@@ -1,5 +1,7 @@
 package com.github.multi_axis;
 
+import fj.F;
+
 //  - TODO THINK Recall -- what is the role for this and is it actually
 //    necessary?
 //    - This vs. plain 'Alt', that is.
@@ -15,7 +17,7 @@ public abstract class Alt<OTHERS,TAG,VAL> {
 
   public static <OTHERS,TAG,VAL> Alt<OTHERS,TAG,VAL>
     other(OTHERS others) {
-      return new Other<OTHERS,TAG,VAL>(other); }
+      return new Other<OTHERS,TAG,VAL>(others); }
 
   public static <OTHERS,TAG,VAL> Alt<OTHERS,TAG,VAL>
     val(TAG tag, VAL val) {
@@ -47,7 +49,7 @@ public abstract class Alt<OTHERS,TAG,VAL> {
             F<VAL,R>    fun) {
         return fun.f(val); }
 
-    public Val(VAL val) {
+    public Val(final VAL val) {
       this.val = val; }
   }
 
