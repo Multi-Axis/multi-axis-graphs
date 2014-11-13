@@ -196,7 +196,7 @@ func graphViewHTML(w http.ResponseWriter) {
 // tells habbix to re-sync database after parameter update
 func updateFuture(id int) {
 	fmt.Printf("\nStarting sync...")
-	out, err := exec.Command("habbix", "sync-db", "-i", strconv.Itoa(id)).CombinedOutput()
+	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id)).CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -260,8 +260,11 @@ func getItemFutureIdByHostMetric(host string, metric string) int {
 
 	fmt.Println(host, " :: ", metric)
 
-	err := db.QueryRow(`SELECT item_future.id FROM hosts, metric, items, item_future WHERE
-	hosts.name = $1 AND metric.name = $2 AND items.key_ = metric.key_
+	err := db.QueryRow(`SELECT item_future.id FROM hosts, metric, items, item_future
+	WHERE hosts.name = $1
+	AND hosts.hostid = items.hostid
+	AND metric.name = $2
+	AND items.key_ = metric.key_
 	AND item_future.itemid = items.itemid;`, &host, &metric).Scan(&fid)
 	// TODO this is broken
 
@@ -362,7 +365,7 @@ func getHosts(w http.ResponseWriter) []Host {
 			fmt.Println(err)
 			continue
 		}
-		fmt.Println("host parsed: ", host.Name)
+		fmt.Println("host parsed: ", host.Name, host.Mem, host.Cpu)
 		hosts = append(hosts, host)
 	}
 	return hosts
@@ -384,6 +387,7 @@ func getItem(ifid int) (error, Item) {
 
 	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
 		ifid).Scan(&res.Threshold, &res.ThresholdLow)
+	fmt.Println(ifid, res.Threshold);
 
 	postfix := "" // vtype == 0
 	if vtype == 3 {
