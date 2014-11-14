@@ -31,3 +31,10 @@ These `(clocks, values)` are inserted to the future of the original item.
 
 stderr is ignored.
 
+## Add predictions to habbix
+
+(todo)
+
+## Run predictions
+
+`habbix execute -p '{...}' <n>`
