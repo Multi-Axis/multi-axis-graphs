@@ -6,6 +6,9 @@ This server (written in Go) handles passing data to and from [html/javascript fr
 
 Using `deploy.sh` to deploy the server is recommended. Compiling  requires [this postgres driver](https://github.com/lib/pq). 
 
-URL:s ending with `[ip]:8080/dashboard` will lead to dashboard. `[ip]:8080/static/` is used to deliver javascript and css files. `[ip]:8080/item/:server/:item` (for example, item/ohtu1/cpu) leads to specific graphs for items, and is also currently (somewhat stupidly) used to deliver JSON files which has some "amusing" side effects with client-side web caching. Incorrect URL:s will result in 404 errors.
+* URL:s ending with `[ip]:8080/dashboard` will lead to dashboard. 
+* `[ip]:8080/static/` is used to deliver javascript and css files.
+* `[ip]:8080/item/:server/:item` (for example, item/ohtu1/cpu) leads to specific graphs for items, and is also currently (somewhat stupidly) used to deliver JSON files which has some "amusing" side effects with client-side web caching. 
+* Incorrect URL:s will result in 404 errors.
 
 The server is *probably* protected against typical sql injection attacks, but will happily send all kinds of wacky stuff from front end's "Model details" field to the forecast models, so be warned.
