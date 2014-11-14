@@ -11,6 +11,13 @@ Using `deploy.sh` to deploy the server is recommended. Compiling  requires [this
 * `[ip]:8080/item/:server/:item` (for example *item/ohtu1/cpu*) leads to specific graphs for items, and is also currently (somewhat stupidly) used to deliver JSON files which has some "amusing" side effects with client-side web caching. 
 * Incorrect URL:s will result in 404 errors.
 
-The server is *probably* protected against typical sql injection attacks, but will happily send all kinds of wacky stuff from front end's *"Model details"* field to the forecast models, so be warned.
 
-Currently most errors are handled elegantly by `log.Fatal(err)`, e.g. server dies on purpose if something goes wrong. This includes problems with the database or Habbix...
+
+
+
+###Known issues and whatnot.
+
+* `/dashboard` is used instead of `/` because using the latter occasionally had `itemHandler` to also call for `dashboardHandler` (!?)
+* dashboard's sql query is a tad slow.
+* The server is *probably* protected against typical sql injection attacks, but will happily send all kinds of wacky stuff from front end's *"Model details"* field to the forecast models, so be warned.
+* Currently most errors are handled elegantly by `log.Fatal(err)`, e.g. server dies on purpose if something goes wrong. This includes problems with the database or Habbix...
