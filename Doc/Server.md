@@ -1,8 +1,8 @@
 # Backend server
 
-This server (written in Go) handles passing data to and from [html/javascript front end](https://github.com/Multi-Axis/multi-axis-graphs/wiki/Server-view-front-end-notes) and dashboard to the [Habbix back end](https://github.com/Multi-Axis/multi-axis-graphs/blob/master/Doc/Habbix.md) and the [multi-axis database](https://github.com/Multi-Axis/multi-axis-graphs/blob/master/Doc/DatabaseAndData.md).
+This server (written in Go) handles passing data to and from html/javascript [front end](https://github.com/Multi-Axis/multi-axis-graphs/wiki/Server-view-front-end-notes) and dashboard to the [Habbix back end](https://github.com/Multi-Axis/multi-axis-graphs/blob/master/Doc/Habbix.md) and the [multi-axis database](https://github.com/Multi-Axis/multi-axis-graphs/blob/master/Doc/DatabaseAndData.md).
 
-[Source code.](https://github.com/Multi-Axis/multi-axis-graphs/blob/master/zab2.go)
+Server [source code.](https://github.com/Multi-Axis/multi-axis-graphs/blob/master/zab2.go)
 
 Using `deploy.sh` to deploy the server is recommended. Compiling  requires [this postgres driver](https://github.com/lib/pq). 
 
@@ -12,3 +12,5 @@ Using `deploy.sh` to deploy the server is recommended. Compiling  requires [this
 * Incorrect URL:s will result in 404 errors.
 
 The server is *probably* protected against typical sql injection attacks, but will happily send all kinds of wacky stuff from front end's "Model details" field to the forecast models, so be warned.
+
+Currently most errors are handled elegantly by `log.Fatal(err)`, e.g. server dies on purpose if something goes wrong.
