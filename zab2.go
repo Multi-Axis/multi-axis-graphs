@@ -295,20 +295,16 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 
 	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`, ifId).Scan(&threshold, &lower)
 
-	postfix := "" // vtype == 0
-	if vtype == 3 {
-		postfix = "_uint"
-		fmt.Println("uints")
-	}
-	rows, _ := db.Query(`SELECT * FROM
-	(SELECT DISTINCT ON (clock / 10800) clock, value FROM history`+postfix+` WHERE itemid = $1) q
-	ORDER BY clock`, itemId)
+	// rows, _ := db.Query(`SELECT * FROM
+	// (SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q
+	// ORDER BY clock`, itemId)
+	rows, _ := db.Query(`SELECT clock, value_avg FROM trend WHERE itemid = $1 ORDER BY clock`, itemId)
 	history := parseValueJSON(rows)
 	var future string
 	if len(noUpdateParams) > 0 {
 		future = getFutureNoUpdate(noUpdateParams, ifId)
 	} else {
-		rows, _ = db.Query(`SELECT clock, value FROM future`+postfix+` WHERE itemid = $1 ORDER BY clock`, ifId)
+		rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 		future = parseValueJSON(rows)
 	}
 	output := fmt.Sprintf(
@@ -399,16 +395,10 @@ func getItem(ifid int) (error, Item) {
 		ifid).Scan(&res.Threshold, &res.ThresholdLow)
 	fmt.Println(ifid, res.Threshold);
 
-	postfix := "" // vtype == 0
-	if vtype == 3 {
-		postfix = "_uint"
-		fmt.Println("uints")
-	}
-
 	row = db.QueryRow(`
 	SELECT max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
 			max(f2.value) as max_next_7d
-	FROM history`+postfix+` h, future`+postfix+` f1, future`+postfix+` f2
+	FROM history h, future f1, future f2
 	WHERE h.itemid  = $1
 	AND   f1.itemid = $2
 	AND   f2.itemid = f1.itemid
