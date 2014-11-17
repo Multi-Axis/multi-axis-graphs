@@ -95,6 +95,10 @@ public abstract class Conf {
     public final AltFun<IN,JsonObject>
       write() { return write; }
 
+    public final <FT,A> Writer<Alt<IN,FT,A>> 
+      extend(final FT ftag, final Writer<Alt<Nothing,FT,A>> w) {
+        return writer(this,ftag,w); }
+
     //-------------------------------------------------------------------------
     //  Static writers and writer construction methods
     //-------------------------------------------------------------------------
@@ -114,17 +118,11 @@ public abstract class Conf {
     //-----------------------------------------------
     //  Construction methods for derivative writers.
 
-    // TODO THINK Obsolete?
-    public static final <FT,IN> Writer<Alt<Nothing,FT,IN>>
-      altWriter(final FT ftag, final Writer<Tagged<FT,IN>> w) {
-        return writer(altFun( ftag,
-                              (IN in)  -> w.write(tag(ftag,in)))); }
-
     public static final <OTHERS,PREVFT,PREVIN,FT,IN> 
       Writer<Alt<Alt<OTHERS,PREVFT,PREVIN>,FT,IN>>
-        altWriter(final Writer<Alt<OTHERS,PREVFT,PREVIN>> prevw,
-                  final FT ftag,
-                  final Writer<Alt<Nothing,FT,IN>> w) {
+        writer(final Writer<Alt<OTHERS,PREVFT,PREVIN>> prevw,
+               final FT ftag,
+               final Writer<Alt<Nothing,FT,IN>> w) {
           return  writer(altFun(prevw.write(),
                                 ftag,
                                 in  -> w.write().fun.f(altVal(in)))); }
@@ -176,104 +174,13 @@ public abstract class Conf {
     private static final <IN> Writer<IN>
       writer(final AltFun<IN,JsonObject> w) { return new Writer<IN>(w); }
 
-
     private static final <FT,IN> Writer<Alt<Nothing,FT,IN>> 
       writer(final FT ftag, final F<IN,JsonObject> w) {
         return writer(altFun(ftag,w)); }
 
     private Writer(AltFun<IN,JsonObject> write) {
       this.write = write; }
-
-    private Writer() {}
   }
 
   private Conf() {}
 }
-/*
-public abstract class Conf<ROLE, ROLEPARAMS, FT> {
-
-  public abstract class Role {
-    public static final class FType extends Role {}
-    public static final class Read extends Role {}
-    public static final class Write extends Role {}
-
-    private Role() {}
-  }
-
-  public abstract class NA {} // Empty role params for FType
-
-  public abstract class ReadP<OUT,READER> {} // Role params for Read
-
-  public abstract class WriteP<IN,WRITER> {} // Role params for Write
-
-  //TODO THINK What in these? Are these useful?
-
-  private abstract class Reader<OUT,READER,FT>
-    extends Conf<Read, ReadP<OUT,READER>, FT> {}
-
-  private abstract class Writer<IN,READER,FT>
-    extends Conf<Write, WriteP<IN,WRITER>, FT> {}
-    
-
-
-  public interface ForecastTypeMatcher<R> {
-    public R caseZab0();
-    public R caseZab3();
-  }
-
-  public static abstract class ForecastType<FT> extends Conf<FType,FT> {
-
-    //TODO THINK Will I ultimately need this at all?
-    public abstract <R> R runMatch(ForecastTypeMatcher<R> m);
-
-    //TODO THINK I don't think I can sensibly have Conf<Read,Foo> have a member with
-    //  a concrete ReaderImpl (or whatever) in it. I should however be able to
-    //  define a method that takes specifically Conf<Read,Foo> and returns the
-    //  appropriate ReaderImpl, no?
-    //  - Or can I?
-    private Conf<Read,FT> reader 
-
-    //TODO THINK Should the zab0() etc methods actually return the subtype?
-    //  - Or might I use F-boundedness, if something like that is indeed
-    //    necessary?
-
-    public static final class Zab0 extends ForecastType<Zab0> {
-      public static final ForecastType<Zab0>
-        zab0() { return new Zab0(); }
-      public <R> R
-        runMatch(ForecasTypeMatcher<R> m) { m.caseZab0() }
-      private Zab0() {}
-    }
-
-    public static final class Zab3 extends ForecastType<Zab3> {
-      public static final ForecastType<Zab3>
-        zab3() { return new Zab3(); }
-      public <R> R
-        runMatch(ForecasTypeMatcher<R> m) { m.caseZab3() }
-      private Zab3() {}
-    }
-
-    private ForecastType() {}
-  }
-
-  //TODO THINK OkReader is something that has to be sealed somehow, no?
-
-  public static abstract class OkReader<FT,OUT,R> {
-
-
-
-    private OkReader() {}
-  }
-
-
-  private static final ForecastTypeMatcher<OkReader<FT,OUT,R>>
-    readerMatcher = new ForecastTypeMatcher<OkReader<FT,OUT,R>> {
-      public OkReader<caseZab0 //TODO THINK STOP PRESS -- Component<ROLE,FT> ?
-
-  public static <FT,OUT,R> OkReader<FT,OUT,R> 
-    reader(ForecastType<FT> t) {
-
-  private ForecastSetup() {}
-
-}
-*/
