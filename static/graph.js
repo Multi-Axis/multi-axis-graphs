@@ -4,11 +4,24 @@ var chart;
 var wholeData;
 
 $(function(){
-  $.getJSON(window.location.href, function(data) {
+  $.getJSON("/api/" + getCurrentFutid(), function(data) {
     drawAndSetData(data);
   })
 })
 
+function postData(params, threshold, doPost) {
+  f=doPost ? $.post : $.get;
+  f("/api/" + getCurrentFutid(), {
+      'params': JSON.stringify(params),
+      'threshold':threshold
+  }, function(data) {
+    drawAndSetData(data)
+  }, "json")
+}
+
+function getCurrentFutid() {
+  return $("h1").data("futid")
+}
 function setData(data) {
   chartData = [
     {
@@ -101,19 +114,13 @@ function draw() {
 
 
     document.getElementById('threshold').value = wholeData.threshold.value;
+    $("#threshold_lower").prop('checked', wholeData.threshold.lower);
     return chart;
   });
 }
 
 function appendStartAndEnd(period) {
   document.getElementById('from').innerHTML = "From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]);
-}
-
-function postData(params, threshold, doPost) {
-  f=doPost ? $.post : $.get;
-  f(window.location.href, {'params': JSON.stringify(params), 'threshold':threshold}, function(data) {
-    drawAndSetData(data)
-  }, "json")
 }
 
 document.getElementById('sendPeriod').addEventListener('click', function() {

@@ -46,13 +46,16 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 
 /* }}} */
 
+/* {{{ /api */
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	id, err := strconv.Atoi(r.FormValue("futureId"))
+	parts := strings.Split(r.URL.Path, "/")
+	id, err := strconv.Atoi(parts[len(parts)-1])
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, "invalid futid", 400)
+		return
 	}
-	
+
+	r.ParseForm()
 	params := r.FormValue("params")
 	
 	if r.Method == "POST" {
@@ -70,6 +73,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	deliverItemByItemFutureId(w, id, params)
 }
+/* }}} */
 
 /* {{{ /static -------------------------------------------------------------- */
 
@@ -316,12 +320,21 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 		future = parseValueJSON(rows)
 	}
 	output := fmt.Sprintf(
-		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s, "threshold":%s, "history":%s, "future":%s }`,
+		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s,
+		"threshold":%s, "history":%s, "future":%s }`,
 		host, params, metric, details,
-		fmt.Sprintf(`{ "value":%f }`, threshold),
+		fmt.Sprintf(`{ "value":%f, "lower":%s }`, threshold, boolToJson(lower)),
 		history, future)
 
 	w.Write([]byte(output))
+}
+
+func boolToJson(b bool) string {
+	if b {
+		return "true"
+	} else {
+		return "false"
+	}
 }
 
 /* }}} */

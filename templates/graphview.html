@@ -1,5 +1,5 @@
 {{ define "head" }}
-   <h1>Multi-Axis</h1>
+   <title>Multi-Axis</title>
    <link rel="stylesheet" href="/static/css/nv.d3.css" type="text/css">
    <script src="http://d3js.org/d3.v3.min.js"></script>
    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
@@ -15,13 +15,14 @@
 {{ end }}
 
 {{ define "body" }}
-   <H1>Graph demo v0.2 (now with forecasting!)</H1>
-   <h2 id="itemhost"></h2>
+   <h1 data-futid="{{ . }}">ItemFutureId = {{ . }}</h1>
 
    <a href="/item/ohtu1/cpu">cpu load</a>
    <a href="/item/ohtu1/mem">available memory</a>
    <a href="/item/ohtu1/swap">Free swap space</a>
+
    <br/>
+
    <div id="chart">
       <svg style="height:500px; width:100%"></svg>
    </div>
@@ -32,7 +33,8 @@
 
    <p>
       Current threshold
-      <textarea id="threshold" rows="1" cols="7"></textarea>
+      <input type="number" id="threshold" name="threshold" />
+      <input type="checkbox" name="threshold_lower" id="threshold_lower" />
    </p>
    <p>
       Model details
