@@ -41,7 +41,7 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	graphViewHTML(w, id)
+	layout(w, itemTmpl, strconv.Itoa(id))
 }
 
 /* }}} */
@@ -171,21 +171,30 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	dashboard := Dashboard{danger, normal}
-	//fmt.Println(dashboard)
-    t, err := template.ParseFiles("templates/dashboard.tmpl", "templates/metric_table.tmpl", "templates/metric_table_end.tmpl",
-    							"templates/mem_usage.tmpl", "templates/cpu_load.tmpl")
-    	if err != nil {
-		log.Fatal(err)
-	}
-	t.ExecuteTemplate(w, "dashboard", dashboard)
+	layout(w, dashboardTmpl, dashboard)
 }
 
 /* }}} */
 
 /* {{{ Templates ------------------------------------------------------------ */
-func graphViewHTML(w http.ResponseWriter, id int) {
-	t, _ := template.ParseFiles("templates/graphview.html")
-	t.Execute(w, strconv.Itoa(id))
+
+var dashboardTmpl = template.Must(template.New("dashboard").ParseFiles(
+	"templates/default-layout.tmpl",
+	"templates/dashboard.tmpl",
+	"templates/mem_usage.tmpl",
+	"templates/cpu_load.tmpl",
+	"templates/metric_table.tmpl",
+	"templates/metric_table_end.tmpl"))
+
+var itemTmpl = template.Must(template.New("item").ParseFiles(
+	"templates/default-layout.tmpl",
+	"templates/graphview.html"))
+
+func layout(w http.ResponseWriter, t *template.Template, data interface{}) {
+	err := t.ExecuteTemplate(w, "default-layout", data)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 /* }}} */

@@ -1,13 +1,7 @@
-{{define "dashboard"}}
-<html lang="en">
-<head>
-   <meta charset="UTF-8">
-   <title>Dashboard - MOCKUP</title>
-   <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-   <i>Dashboard</i>
-
+{{ define "head" }}
+   <h1>Dashboard</h1>
+{{ end }}
+{{ define "body" }}
    <h1>Servers with current or estimated issues</h1>
    <div class="estimated_issues">
       <!-- Example of a load table -->
@@ -47,7 +41,4 @@
          {{end}}
          {{template "metric_table_end"}}
    </div>
-...
-</body>
-</html>
-{{end}}
+{{ end }}

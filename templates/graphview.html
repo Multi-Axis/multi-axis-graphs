@@ -1,54 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Multi-Axis</title>
-        <link rel="stylesheet" href="/static/css/nv.d3.css" type="text/css">
-        <script src="http://d3js.org/d3.v3.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <script src="/static/nv.d3.js"></script>
-        <script src="/static/src/tooltip.js"></script>
-        <script src="/static/src/utils.js"></script>
-        <script src="/static/src/interactiveLayer.js"></script>
-        <script src="/static/src/models/legend.js"></script>
-        <script src="/static/src/models/axis.js"></script>
-        <script src="/static/src/models/scatter.js"></script>
-        <script src="/static/src/models/line.js"></script>
-        <script src="/static/src/models/lineChart.js"></script>
+{{ define "head" }}
+   <h1>Multi-Axis</h1>
+   <link rel="stylesheet" href="/static/css/nv.d3.css" type="text/css">
+   <script src="http://d3js.org/d3.v3.min.js"></script>
+   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+   <script src="/static/nv.d3.js"></script>
+   <script src="/static/src/tooltip.js"></script>
+   <script src="/static/src/utils.js"></script>
+   <script src="/static/src/interactiveLayer.js"></script>
+   <script src="/static/src/models/legend.js"></script>
+   <script src="/static/src/models/axis.js"></script>
+   <script src="/static/src/models/scatter.js"></script>
+   <script src="/static/src/models/line.js"></script>
+   <script src="/static/src/models/lineChart.js"></script>
+{{ end }}
 
+{{ define "body" }}
+   <H1>Graph demo v0.2 (now with forecasting!)</H1>
+   <h2 id="itemhost"></h2>
 
-    </head>
+   <a href="/item/ohtu1/cpu">cpu load</a>
+   <a href="/item/ohtu1/mem">available memory</a>
+   <a href="/item/ohtu1/swap">Free swap space</a>
+   <br/>
+   <div id="chart">
+      <svg style="height:500px; width:100%"></svg>
+   </div>
+     
+   <input id="sendPeriod" type="submit" value="Update forecast with periods"/>
 
-    <body>
-        <H1>Graph demo v0.2 (now with forecasting!)</H1>
-		  <h2 id="itemhost"></h2>
+   <button id="clearPeriods">Clear</button>
 
-        <a href="/item/ohtu1/cpu">cpu load</a>
-        <a href="/item/ohtu1/mem">available memory</a>
-        <a href="/item/ohtu1/swap">Free swap space</a>
-        <br/>
-        <div id="chart">
-            <svg style="height:500px; width:100%"></svg>
-        </div>
-           
-        <input id="sendPeriod" type="submit" value="Update forecast with periods"/>
+   <p>
+      Current threshold
+      <textarea id="threshold" rows="1" cols="7"></textarea>
+   </p>
+   <p>
+      Model details
+      <textarea id="details"></textarea>
+   </p>
 
-        <button id="clearPeriods">Clear</button>
-
-        <p>
-            Current threshold
-            <textarea id="threshold" rows="1" cols="7"></textarea>
-        </p>
-		  <p>
-			   Model details
-				<textarea id="details"></textarea>
-		  </p>
-        
-
-        <p id="from"></p>
-        <p>Trend forecast (default is 2 weeks):</p>
-        <button id="trendForecast">Update forecast with trend</button>
-        <textarea id="trendDays" rows="1" cols="4"></textarea>
-        <script src="/static/graph.js"></script>
-    </body>
-</html>
+   <p id="from"></p>
+   <p>Trend forecast (default is 2 weeks):</p>
+   <button id="trendForecast">Update forecast with trend</button>
+   <textarea id="trendDays" rows="1" cols="4"></textarea>
+   <script src="/static/graph.js"></script>
+{{ end }}

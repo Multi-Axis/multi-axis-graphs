@@ -1,0 +1,16 @@
+{{ define "default-layout" }}
+<!DOCTYPE html>
+<html lang=en>
+   <head>
+      <meta charset="UTF-8">
+      {{ template "head" }}
+      <link rel="stylesheet" href="/static/css/style.css">
+   </head>
+   <body>
+      {{ template "body" . }}
+   </body>
+   <footer>
+      &copy; Multi-Axis ohtu team
+   </footer>
+</html>
+{{ end }}
