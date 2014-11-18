@@ -42,3 +42,9 @@ Now you can synchronize the history from the remote db and predict the future:
 (That syncs only histories and futures; if you have added new hosts, you will
 need to run habbix `sync-db -s` first.)
 
+## Optimizations
+
+    create index history_idx on history (itemid, clock);
+    create index trend_idx on trend (itemid, clock);
+    alter table trend drop column id;
+    alter table history drop column id;

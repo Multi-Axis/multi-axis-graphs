@@ -5,6 +5,8 @@ A **prediction unit**, or a **forecast unit**, refers to an executable, say
 `$PWD/future_models/my_regression_model.sh`, where $PWD is the working directory
 where `habbix` is run.
 
+### Input
+
 These units are invoked by `habbix sync`. In stdin, the unit receives a JSON
 object (dubbed as an *Event*):
 
@@ -15,6 +17,11 @@ object (dubbed as an *Event*):
     , "draw_future" : [<epochs>]     // bounds within which to extrapolate future with model
     , "params" : { ... }             // Extra parameters, forecast-unit specific
     }
+
+Additionally, the name of the model is passed as the first command line
+parameter.
+
+### Output
 
 In exchange, another JSON object (dubbed *Result*) is expected in the stdout:
 
@@ -33,7 +40,17 @@ stderr is ignored.
 
 ## Add predictions to habbix
 
-(todo)
+`habbix configure -e <file>` registers the file `future_models/<file>` as a
+prediction unit and assigns it a model id.
+
+`habbix models` lists all registered models.
+
+`habbix configure -i itemid -m <model>` 
+
+`habbix sync --syncall` adds default item_futures to every item that does not
+have any with some rndm modelid taken from the model table (after syncing other
+zabbix tables to local db). Obviously adding the futures fails if no model had
+been registered. (the tables are copied though).
 
 ## Run predictions
 
