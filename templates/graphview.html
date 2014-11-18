@@ -12,38 +12,67 @@
    <script src="/static/src/models/scatter.js"></script>
    <script src="/static/src/models/line.js"></script>
    <script src="/static/src/models/lineChart.js"></script>
+   <script src="/static/graph.js"></script>
 {{ end }}
 
 {{ define "body" }}
-   <h1 data-futid="{{ . }}">ItemFutureId = {{ . }}</h1>
 
-   <a href="/item/ohtu1/cpu">cpu load</a>
-   <a href="/item/ohtu1/mem">available memory</a>
-   <a href="/item/ohtu1/swap">Free swap space</a>
-
-   <br/>
+   <p>
+      <b data-futid="{{ . }}" id="itemhost"></b>
+      <a href="cpu" class="btn">cpu load</a>
+      <a href="mem" class="btn">available memory</a>
+      <a href="swap" class="btn">Free swap space</a>
+   </p>
 
    <div id="chart">
       <svg style="height:500px; width:100%"></svg>
    </div>
+   <code>ItemFutureId = {{ . }}</code>
      
-   <input id="sendPeriod" type="submit" value="Update forecast with periods"/>
+   <div class="container-fluid">
+    <div class="row">
+      <form role="form" method="post" class="col-md-6">
 
-   <button id="clearPeriods">Clear</button>
+         <div class="form-group">
+            <label>Current threshold</label>
+            <input type="number" id="threshold" name="threshold" class="form-control" />
+         </div>
 
-   <p>
-      Current threshold
-      <input type="number" id="threshold" name="threshold" />
-      <input type="checkbox" name="threshold_lower" id="threshold_lower" />
-   </p>
-   <p>
-      Model details
-      <textarea id="details"></textarea>
-   </p>
+         <div class="checkbox">
+            <label>
+               <input type="checkbox" name="threshold_lower" id="threshold_lower" /> Lower limit
+            </label>
+         </div>
 
-   <p id="from"></p>
-   <p>Trend forecast (default is 2 weeks):</p>
-   <button id="trendForecast">Update forecast with trend</button>
-   <textarea id="trendDays" rows="1" cols="4"></textarea>
-   <script src="/static/graph.js"></script>
+         <div class="form-group">
+            <label>Period</label>
+            <p id="period" class="form-control-static"></p>
+         </div>
+
+         <div class="form-group">
+            <label>Model parameters</label>
+            <textarea class="form-control" id="params"></textarea>
+         </div>
+
+         <div class="form-group">
+            <label>Model details</label>
+            <p class="form-control-static">
+               <code id="details"></code>
+            </p>
+         </div>
+
+         <input id="sendPeriod" type="submit" class="btn btn-primary" value="Update item"/>
+         <button id="clearPeriods" class="btn btn-default">Clear current forecast range</button>
+      </form>
+
+      <form role="form" class="col-md-6">
+         <div class="form-group">
+            <label>Trend forecast (default is 2 weeks)</label>
+            <input type="number" class="form-control" id="trendDays" value="14" />
+         </div>
+         <button id="trendForecast" class="btn btn-primary">Update forecast with trend</button>
+      </form>
+    </div>
+   </div>
+
 {{ end }}

@@ -4,6 +4,24 @@ var chart;
 var wholeData;
 
 $(function(){
+  document.getElementById('sendPeriod').addEventListener('click', function() {
+    var threshold = document.getElementById('threshold').value;
+    console.log(threshold)
+    setPeriodParams();
+    postData(wholeData.params, threshold, true);
+  })
+
+  document.getElementById('trendForecast').addEventListener('click', function() {
+    wholeData.params.stop_lower = 14 * -86400;
+    var days = document.getElementById('trendDays').value;
+    if (!isNaN(parseInt(days))) {
+      wholeData.params.stop_lower = days * -86400;
+    }
+    wholeData.params.stop_upper = null;
+    console.log(wholeData.params)
+    postData(wholeData.params, wholeData.threshold.value);
+  })
+
   $.getJSON("/api/" + getCurrentFutid(), function(data) {
     drawAndSetData(data);
   })
@@ -20,7 +38,7 @@ function postData(params, threshold, doPost) {
 }
 
 function getCurrentFutid() {
-  return $("h1").data("futid")
+  return $("#itemhost").data("futid")
 }
 function setData(data) {
   chartData = [
@@ -34,8 +52,9 @@ function setData(data) {
       color: "green"
     }
   ];
-	$("#details").val(JSON.stringify(data.details));
+	$("#details").text(JSON.stringify(data.details));
 	$("#itemhost").text(data.metric + " @ " + data.host);
+  $("#params").val(JSON.stringify(data.params));
 }
 
 var timeFormat = function(d) {
@@ -120,26 +139,9 @@ function draw() {
 }
 
 function appendStartAndEnd(period) {
-  document.getElementById('from').innerHTML = "From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]);
+  $('#period').text("From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]));
 }
 
-document.getElementById('sendPeriod').addEventListener('click', function() {
-  var threshold = document.getElementById('threshold').value;
-  console.log(threshold)
-  setPeriodParams();
-  postData(wholeData.params, threshold, true);
-})
-
-document.getElementById('trendForecast').addEventListener('click', function() {
-  wholeData.params.stop_lower = 14 * -86400;
-  var days = document.getElementById('trendDays').value;
-  if (!isNaN(parseInt(days))) {
-    wholeData.params.stop_lower = days * -86400;
-  }
-  wholeData.params.stop_upper = null;
-  console.log(wholeData.params)
-  postData(wholeData.params, wholeData.threshold.value);
-})
 
 function drawAndSetData(data) {
   period = [];
