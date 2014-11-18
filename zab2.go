@@ -25,14 +25,9 @@ var db *sql.DB
 func itemHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("itemHandler")
 
-	var wantsJson bool
-	if len(r.Header["Accept"]) > 0 {
-		wantsJson = strings.Contains(r.Header["Accept"][0], "json")
-	}
-
 	parts := strings.Split(r.URL.Path, "/")
 
-	if len(parts) < 4 && !wantsJson {
+	if len(parts) < 4 {
 		http.NotFound(w, r)
 		return
 	}
@@ -46,12 +41,23 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	graphViewHTML(w, id)
+}
+
+/* }}} */
+
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	id, err := strconv.Atoi(r.FormValue("futureId"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	params := r.FormValue("params")
+	
 	if r.Method == "POST" {
-		r.ParseForm()
-		params := r.FormValue("params")
 		threshold := r.FormValue("threshold")
 		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
-
 		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
@@ -62,15 +68,8 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		updateFuture(id)
 	}
-	if wantsJson {
-		params := r.FormValue("params")
-		deliverItemByItemFutureId(w, id, params)
-	} else {
-		graphViewHTML(w)
-	}
+	deliverItemByItemFutureId(w, id, params)
 }
-
-/* }}} */
 
 /* {{{ /static -------------------------------------------------------------- */
 
@@ -184,9 +183,9 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 /* }}} */
 
 /* {{{ Templates ------------------------------------------------------------ */
-func graphViewHTML(w http.ResponseWriter) {
+func graphViewHTML(w http.ResponseWriter, id int) {
 	t, _ := template.ParseFiles("templates/graphview.html")
-	t.Execute(w, "testi")
+	t.Execute(w, strconv.Itoa(id))
 }
 
 /* }}} */
@@ -483,6 +482,7 @@ func main() {
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
+	http.HandleFunc("/api/", apiHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
