@@ -1,6 +1,8 @@
+
 {{ define "head" }}
    <title>Multi-Axis</title>
    <link rel="stylesheet" href="/static/css/nv.d3.css" type="text/css">
+   <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
    <script src="http://d3js.org/d3.v3.min.js"></script>
    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
    <script src="/static/nv.d3.js"></script>
@@ -12,6 +14,7 @@
    <script src="/static/src/models/scatter.js"></script>
    <script src="/static/src/models/line.js"></script>
    <script src="/static/src/models/lineChart.js"></script>
+   <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
    <script src="/static/graph.js"></script>
 {{ end }}
 
@@ -27,6 +30,13 @@
    <div id="chart">
       <svg style="height:500px; width:100%"></svg>
    </div>
+    <div id = "zoomWrap">
+        <label for="zoomRange">Zoom range:</label>
+        <input type="text" id="zoomRange" readonly>
+        <button id="zoom">Zoom</button>
+    </div>
+    
+    <div id="slider"></div>   
    <code>ItemFutureId = {{ . }}</code>
      
    <div class="container-fluid">
@@ -62,9 +72,9 @@
          </div>
 
          <input id="sendPeriod" type="submit" class="btn btn-primary" value="Update item"/>
-         <button id="clearPeriods" class="btn btn-default">Clear current forecast range</button>
+         
       </form>
-
+      <button id="clearPeriods" class="btn btn-default">Clear current forecast range</button>
       <form role="form" class="col-md-6">
          <div class="form-group">
             <label>Trend forecast (default is 2 weeks)</label>

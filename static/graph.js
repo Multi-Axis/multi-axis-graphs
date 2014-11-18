@@ -2,6 +2,9 @@ var chartData;
 var period = [];
 var chart;
 var wholeData;
+var originalChart;
+var zoomRange = [];
+var temp;
 
 $(function(){
   document.getElementById('sendPeriod').addEventListener('click', function() {
@@ -22,6 +25,11 @@ $(function(){
     postData(wholeData.params, wholeData.threshold.value);
   })
 
+  document.getElementById('zoom').addEventListener('click', function() {
+    drawZoomedChart(zoomRange);
+    console.log("CHART",chartData);
+  })  
+
   $.getJSON("/api/" + getCurrentFutid(), function(data) {
     drawAndSetData(data);
   })
@@ -40,6 +48,22 @@ function postData(params, threshold, doPost) {
 function getCurrentFutid() {
   return $("#itemhost").data("futid")
 }
+
+function initSlider(data) {
+    $("#slider").slider({
+      range: true,
+      min: data.history[0].time,
+      max: data.future.slice(-1)[0].time,
+      values: [0, data.future.slice(-1)[0].time],
+      slide: function( event, ui ) {
+        $("#zoomRange").val(timeFormat(ui.values[0]) + " - " + timeFormat(ui.values[1]));
+        zoomRange = ui.values
+      }
+    })
+    zoomRange = $('#slider').slider("values");
+    $("#zoomRange").val(timeFormat($("#slider").slider("values", 0)) + " - " + timeFormat($("#slider").slider("values", 1)));
+}
+
 function setData(data) {
   chartData = [
     {
@@ -60,7 +84,7 @@ function setData(data) {
 var timeFormat = function(d) {
   var date = new Date(0);
   date.setUTCSeconds(d);
-  return d3.time.format('%Y %b %d, %H : %M')(date);
+  return d3.time.format('%Y %b %d, %H:%M')(date);
 };
 
 var sortAscending = function(a, b) {
@@ -93,6 +117,7 @@ function draw() {
     chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
 
     //set domain based on history, future and threshold
+    console.log(wholeData)
     chart.yDomain(getYDomain(chartData[0].values, chartData[1].values, wholeData.threshold.value))
 
     //render the chart
@@ -143,10 +168,30 @@ function appendStartAndEnd(period) {
 }
 
 
+
+
+function drawZoomedChart(data) {
+  console.log(chartData)
+  var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0]})
+  var newFuture = chartData[1].values.filter(function(d) {return d.time < data[1]})
+  var tempChartData = chartData.slice(0);
+  chartData[0].values = newHistory;
+  chartData[1].values = newFuture;
+  // console.log("temp", tempChartData)
+  // console.log("chart", chartData)
+  draw();
+  console.log("hep")
+  chartData = tempChartData.slice(0);
+  // setTimeout(function() { chartData = jQuery.extend(true, {}, tempChartData)}, 1000)
+  // chartData = jQuery.extend(true, {}, tempChartData);
+
+}
+
 function drawAndSetData(data) {
   period = [];
   wholeData = data;
   setData(data);
+  initSlider(data)
   draw();
 }
 
