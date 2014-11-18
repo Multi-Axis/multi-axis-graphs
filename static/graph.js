@@ -172,8 +172,8 @@ function appendStartAndEnd(period) {
 
 function drawZoomedChart(data) {
   console.log(chartData)
-  var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0]})
-  var newFuture = chartData[1].values.filter(function(d) {return d.time < data[1]})
+  var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
+  var newFuture = chartData[1].values.filter(function(d) {return d.time > date[0] && d.time < data[1]})
   var tempChartData = chartData.slice(0);
   chartData[0].values = newHistory;
   chartData[1].values = newFuture;
