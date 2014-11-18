@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"math"
+	"sort"
 
 )
 
@@ -96,21 +98,51 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 
 /* {{{ /dashboard ----------------------------------------------------------- */
 type Dashboard struct {
-	Danger []Host
-	Normal []Host 
+	Hosts []Host
 }
 
+type ByCondition struct { Hosts []Host }
+func (h ByCondition) Len() int {return len(h.Hosts) }
+func (h ByCondition) Swap(i, j int) { h.Hosts[i], h.Hosts[j] = h.Hosts[j], h.Hosts[i] }
+func (h ByCondition) Less(i, j int) bool { return h.Hosts[i].ConditionNum > h.Hosts[j].ConditionNum }
+
 // normal = 0
-// issua = 1
-func getCondition(value float32, threshold float32) (int, string) {
-	if value-threshold < 0 {
-		return 1, "critical"
-	} else if value < threshold*0.5 {
-		return 1, "warn"
-	} else if value < threshold*0.8 {
+// high = 1
+// warn = 2
+// critical = 3
+func getCondition(value float32, threshold float32, lower bool) (float64, string) {
+	if (lower && value < threshold) || (!lower && value > threshold) {
+		return 3, "critical"
+	} else if (lower && value < threshold*0.5) || (!lower && value > threshold*0.5) {
+		return 2, "warn"
+	} else if (lower && value < threshold*0.8) || (!lower && value > threshold*0.8) {
 		return 1, "high"
 	} else {
 		return 0, "normal" // Huh?
+	}
+}
+
+func setCondition(i *Item) float64 {
+	var c1 float64
+	var c2 float64
+	var c3 float64
+	c1, i.Color_past_7d  = getCondition(i.Max_past_7d, i.Threshold, i.ThresholdLow)
+	c2, i.Color_next_24h = getCondition(i.Max_next_24h, i.Threshold, i.ThresholdLow)
+	c3, i.Color_next_7d  = getCondition(i.Max_next_7d, i.Threshold, i.ThresholdLow)
+	c := math.Max(c1, math.Max(c2, c3))
+	i.Condition = showCondition(c)
+	return c
+}
+
+func showCondition(cond float64) string {
+	if cond == 0 {
+		return "normal"
+	} else if cond == 1 {
+		return "high"
+	} else if cond == 2 {
+		return "warn"
+	} else {
+		return "critical"
 	}
 }
 
@@ -120,61 +152,15 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	hosts = getHosts(w)
 
 	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
-	var danger []Host
-	var normal []Host
-
-	cond := 0
 	for i := range hosts {
-
-		var condx int
-
 		// cpu
-		condx, hosts[i].Cpu.Color_past_7d =
-			getCondition(hosts[i].Cpu.Max_past_7d, hosts[i].Cpu.Threshold)
-		if condx > cond {
-			cond = condx
-		}
-
-		condx, hosts[i].Cpu.Color_next_24h =
-			getCondition(hosts[i].Cpu.Max_next_24h, hosts[i].Cpu.Threshold)
-		if condx > cond {
-			cond = condx
-		}
-
-		condx, hosts[i].Cpu.Color_next_7d =
-			getCondition(hosts[i].Cpu.Max_next_7d, hosts[i].Cpu.Threshold)
-		if condx > cond {
-			cond = condx
-		}
-
-		// mem
-		condx, hosts[i].Mem.Color_past_7d =
-			getCondition(hosts[i].Mem.Max_past_7d, hosts[i].Mem.Threshold)
-		if condx > cond {
-			cond = condx
-		}
-
-		condx, hosts[i].Mem.Color_next_24h =
-			getCondition(hosts[i].Mem.Max_next_24h, hosts[i].Mem.Threshold)
-		if condx > cond {
-			cond = condx
-		}
-
-		condx, hosts[i].Mem.Color_next_7d =
-			getCondition(hosts[i].Mem.Max_next_7d, hosts[i].Mem.Threshold)
-		if condx > cond {
-			cond = condx
-		}
-
-		if cond == 0 {
-			hosts[i].Condition = "normal"
-			normal = append(normal, hosts[i])
-		} else {
-			hosts[i].Condition = "issue"
-			danger = append(danger, hosts[i])
-		}
+		c1 := setCondition(&hosts[i].Cpu)
+		c2 := setCondition(&hosts[i].Mem)
+		hosts[i].ConditionNum = math.Max(c1, c2)
+		hosts[i].Condition = showCondition(hosts[i].ConditionNum)
 	}
-	dashboard := Dashboard{danger, normal}
+	sort.Sort(ByCondition{hosts})
+	dashboard := Dashboard{hosts}
 	layout(w, dashboardTmpl, dashboard)
 }
 
@@ -184,11 +170,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 var dashboardTmpl = template.Must(template.New("dashboard").ParseFiles(
 	"templates/default-layout.tmpl",
-	"templates/dashboard.tmpl",
-	"templates/mem_usage.tmpl",
-	"templates/cpu_load.tmpl",
-	"templates/metric_table.tmpl",
-	"templates/metric_table_end.tmpl"))
+	"templates/dashboard.tmpl"))
 
 var itemTmpl = template.Must(template.New("item").ParseFiles(
 	"templates/default-layout.tmpl",
@@ -347,13 +329,14 @@ type Item struct {
 	Name           string
 	ItemId         int
 	Threshold      float32
-	ThresholdLow   string
+	ThresholdLow   bool
 	Max_past_7d    float32
 	Max_next_24h   float32
 	Max_next_7d    float32
 	Color_past_7d  string
 	Color_next_24h string
 	Color_next_7d  string
+	Condition      string
 }
 
 type Host struct {
@@ -361,6 +344,7 @@ type Host struct {
 	Cpu       Item
 	Mem       Item
 	Condition string
+	ConditionNum float64
 }
 
 func getHosts(w http.ResponseWriter) []Host {

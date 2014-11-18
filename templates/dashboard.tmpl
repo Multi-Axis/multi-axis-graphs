@@ -1,44 +1,44 @@
 {{ define "head" }}
    <title>Dashboard</title>
 {{ end }}
+
 {{ define "body" }}
-   <h1>Servers with current or estimated issues</h1>
-   <div class="estimated_issues">
-      <!-- Example of a load table -->
-      <h3>CPU Load:</h3>
-         {{template "metric_table"}}
-         {{range .Danger}}
-            {{template "cpu_load" .}}
-         {{end}}
-         {{template "metric_table_end"}}
-   </div>
-   <div class="estimated_issues">
-      <!-- Example of a load table -->
-      <h3>Memory Usage:</h3>
-         {{template "metric_table"}}
-         {{range .Danger}}
-            {{template "mem_usage" .}}
-         {{end}}
-         {{template "metric_table_end"}}
-   </div>
-   
-   <h1>Servers with no estimated issues</h1>
-   <div class="no_issues">
-      <!-- Example of a load table -->
-      <h3>CPU Load:</h3>
-         {{template "metric_table"}}
-         {{range .Normal }}
-            {{template "cpu_load" .}}
-         {{end}}
-         {{template "metric_table_end"}}
-   </div>
-   <div class="no_issues">
-      <!-- Example of a load table -->
-      <h3>Memory Usage:</h3>
-         {{template "metric_table"}}
-         {{range .Normal }}
-            {{template "mem_usage" .}}
-         {{end}}
-         {{template "metric_table_end"}}
-   </div>
+<table class="table dashboard">
+   <thead>
+      <tr>
+         <th>Host</th>
+         {{template "metric_headers" "CPU Load" }}
+         {{template "metric_headers" "Memory" }}
+      </tr>
+   </thead>
+   <tbody>
+      {{ range .Hosts }}
+         {{ template "host_row" . }}
+      {{ end }}
+   </tbody>
+</table>
+{{ end }}
+
+{{ define "metric_headers" }}
+<th>{{ . }}</th>
+<th>Thres.</th>
+<th>Past 7d</th>
+<th>Next 24h</th>
+<th>Next 6d</th>
+{{ end }}
+
+{{ define "host_row" }}
+<tr>
+   <td class="{{ .Condition }}"><span><b>{{ .Name }}</b></span></td>
+   <td class="{{ .Cpu.Condition }}"><span><a href="/item/{{.Name}}/cpu">CPU</a></span></td>
+   <td class="{{ .Cpu.Condition }}"><span>{{ .Cpu.Threshold }}</span></td>
+   <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_past_7d }}>{{ .Cpu.Max_past_7d }}</span></td>
+   <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_next_24h }}>{{ .Cpu.Max_next_24h }}</span></td>
+   <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_next_7d }}>{{ .Cpu.Max_next_7d }}</span></td>
+   <td class="{{ .Mem.Condition }}"><span><a href="/item/{{.Name}}/mem">Mem</a></span></td>
+   <td class="{{ .Mem.Condition }}"><span>{{ .Mem.Threshold }}</span></td>
+   <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_past_7d }}>{{ .Mem.Max_past_7d }}</span></td>
+   <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_next_24h }}>{{ .Mem.Max_next_24h }}</span></td>
+   <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_next_7d }}>{{ .Mem.Max_next_7d }}</span></td>
+</tr>
 {{ end }}

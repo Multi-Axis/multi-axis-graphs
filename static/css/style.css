@@ -1,44 +1,17 @@
-.hosts {
-   float:left;
-   font-size:200%;
-   margin-top:3em;
+.dashboard td:nth-child(1), .dashboard th:nth-child(1),
+.dashboard td:nth-child(6), .dashboard th:nth-child(6) {
+   border-right:2px solid #ddd;
 }
-.overview {
-   border: 1px solid black;
-   border-spacing:0;
-}
-.overview tr {
-   height:3em;
-}
-.overview th {
-   padding:0 0.5em;
-}
-.overview td {
-   text-align:center;
-}
-.overview td span {
-   padding:0.5em 1em;
-   border:1px solid gray;
-   border-radius:3px;
-   text-align:center;
-}
-.overview .high {
+.high {
    background:yellow;
 }
-.overview .warn {
+.warn {
    background:orange;
 }
-.overview .critical {
-   background:red;
+.critical {
+   background:#f2dede;
 }
-.overview td:nth-child(3),
-.overview th:nth-child(3) {
-   border-right:1px solid black;
-}
-.overview table {
-   border: 1px solid black;
-}
-.no_issues, .estimated_issues {
-   display: inline-block;
-   margin-right: 40px;
+
+span.critical {
+   color:red;
 }
