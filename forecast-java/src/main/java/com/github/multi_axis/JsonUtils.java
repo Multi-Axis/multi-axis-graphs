@@ -71,6 +71,42 @@ public abstract class JsonUtils {
               reader.close();
               return fail(miscJsonError(e)); } } }; }
 
+  public static final Validation<Errors,JsonObject>
+    getJsonObject(final JsonObject jsonObj, String fieldName) {
+      try {
+        return  fromNull(jsonObj.getJsonObject(fieldName))
+                  .map(x  -> Validation.<Errors,JsonObject>success(x))
+                  .orSome(fail(noJsonField(fieldName))); }
+      catch (ClassCastException e) {
+        return fail(notJsonObject(e)); } }
+
+  public static final Validation<Errors,JsonArray>
+    getJsonArray(final JsonObject jsonObj, String fieldName) {
+      try {
+        return  fromNull(jsonObj.getJsonArray(fieldName))
+                  .map(x  -> Validation.<Errors,JsonArray>success(x))
+                  .orSome(fail(noJsonField(fieldName))); }
+      catch (ClassCastException e) {
+        return fail(notJsonArray(e)); } }
+
+  public static final Validation<Errors,JsonString>
+    getJsonString(final JsonObject jsonObj, String fieldName) {
+      try {
+        return  fromNull(jsonObj.getJsonString(fieldName))
+                  .map(x  -> Validation.<Errors,JsonString>success(x))
+                  .orSome(fail(noJsonField(fieldName))); }
+      catch (ClassCastException e) {
+        return fail(notJsonString(e)); } }
+
+  public static final Validation<Errors,JsonNumber>
+    getJsonNumber(final JsonObject jsonObj, String fieldName) {
+      try {
+        return  fromNull(jsonObj.getJsonNumber(fieldName))
+                  .map(x  -> Validation.<Errors,JsonNumber>success(x))
+                  .orSome(fail(noJsonField(fieldName))); }
+      catch (ClassCastException e) {
+        return fail(notJsonNumber(e)); } }
+
 
   public static final IO<Unit>
     writeJsonObject(final OutputStream out, final JsonObject json) {

@@ -1,27 +1,31 @@
 package com.github.multi_axis;
 
+public final class Zab {
 
+  public static Zab zab(final Type type, final Long start, final Long end,
+                        final List<String> filters) {
+    return new Zab(type,start,end,filters); }
 
-public abstract class Zab {
+  public final Type   type;
+  public final Bounds fcastBounds;
+  public final List<String> filters;
 
-  public interface ZabMatcher<R> {
-    public R caseZab0();
-    public R caseZab3();
+  public Enum Type { zab0, zab3 }
+
+  public static class Bounds {
+    public final Long start;
+    public final Long end;
+    public Bounds(final Long start, final Long end) {
+      this.start = start;
+      this.end = end; }
   }
 
-  public abstract <R> R runMatch(ZabMatcher<R> m);
-  
-  public static final class Zab0 extends Zab { 
-    public <R> R runMatch(ZabMatcher<R> m) { return m.caseZab0(); }
-    public Zab0() {}
-  }
-  public static final class Zab3 extends Zab {
-    public <R> R runMatch(ZabMatcher<R> m) { return m.caseZab3(); }
-    public Zab3() {}
-  }
+  public static Bounds bounds(final Long start, final Long end) {
+    return new Bounds(start,end); }
 
-  public static final Zab0 zab0 = new Zab0();
-  public static final Zab3 zab3 = new Zab3();
-
-  private Zab() {}
+  public Zab( final Type type, final Long start, final Long end,
+              final List<String> filters) {
+    this.type = type;
+    this.fcastBounds = bounds(start,end);
+    this.filters = filters; }
 }

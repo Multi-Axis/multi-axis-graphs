@@ -20,11 +20,11 @@ import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_EVEN;
 
 import static fj.Ord.longOrd;
-import static fj.data.Stream.iterateWhile;
 
 import static com.github.multi_axis.TimedValue.timedVal;
 import static com.github.multi_axis.Time.date;
 import static com.github.multi_axis.Time.dateOrd;
+import static com.github.multi_axis.Utils.*;
 
 
 public abstract class ForecastFunctions {
@@ -48,9 +48,6 @@ public abstract class ForecastFunctions {
 
       final Option<Long> firstO =  minimum(longOrd,clocks);
       final Option<Long> lastO  =  maximum(longOrd,clocks);
-
-      final Long daySecs = Long.valueOf(24 * 60 * 60);
-      final Long weekSecs = Long.valueOf(7 * 24 * 60 * 60);
 
       final Stream<BigDecimal>
         outTimes =
@@ -95,13 +92,6 @@ public abstract class ForecastFunctions {
                   (Option<A> minO, A a)  ->
                     minO.map( min  -> ord.min.f(min).f(a)),
                   as.toOption()); }
-  
-  public static Stream<Long>
-    range(Long from, Long to, Long step) {
-      return  iterateWhile( (Long i)  -> add(i,step),
-                            (Long i)  -> !longOrd.isGreaterThan(i,to),
-                            from); }
-
 
   
   //TODO FIXME This will fail given insufficient / insufficiently variant data!
