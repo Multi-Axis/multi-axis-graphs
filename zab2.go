@@ -99,6 +99,7 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 /* {{{ /dashboard ----------------------------------------------------------- */
 type Dashboard struct {
 	Hosts []Host
+	ErrorHosts []ErrorHost
 }
 
 type ByCondition struct { Hosts []Host }
@@ -148,8 +149,7 @@ func showCondition(cond float64) string {
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("dashboardHandler")
-	var hosts []Host
-	hosts = getHosts(w)
+	hosts, error_hosts := getHosts(w)
 
 	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
 	for i := range hosts {
@@ -160,7 +160,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 		hosts[i].Condition = showCondition(hosts[i].ConditionNum)
 	}
 	sort.Sort(ByCondition{hosts})
-	dashboard := Dashboard{hosts}
+	dashboard := Dashboard{hosts, error_hosts}
 	layout(w, dashboardTmpl, dashboard)
 }
 
@@ -349,7 +349,7 @@ type ErrorHost struct {
 	Err 	error
 }
 
-func getHosts(w http.ResponseWriter) []Host {
+func getHosts(w http.ResponseWriter) ([]Host, []ErrorHost) {
 	rows, err := db.Query(`SELECT name FROM hosts WHERE hostid IN
 		(SELECT DISTINCT hosts_groups.hostid FROM hosts_groups INNER
 		JOIN items ON hosts_groups.hostid = items.hostid
@@ -379,7 +379,7 @@ func getHosts(w http.ResponseWriter) []Host {
 		}
 		hosts = append(hosts, host)
 	}
-	return hosts
+	return hosts, error_hosts
 }
 func getItem(ifid int) (error, Item) {
 
