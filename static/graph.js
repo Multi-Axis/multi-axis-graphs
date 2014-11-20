@@ -2,6 +2,9 @@ var chartData;
 var period = [];
 var chart;
 var wholeData;
+var originalChart;
+var zoomRange = [];
+var temp;
 
 $(function(){
   document.getElementById('sendPeriod').addEventListener('click', function() {
@@ -38,8 +41,27 @@ function postData(params, threshold, doPost) {
 }
 
 function getCurrentFutid() {
-  return $("#itemhost").data("futid")
+  return $("#itemhost").data("futid");
 }
+
+function initSlider(data) {
+    $("#slider").slider({
+      range: true,
+      min: data.history[0].time,
+      max: data.future.slice(-1)[0].time,
+      values: [0, data.future.slice(-1)[0].time],
+      slide: function( event, ui ) {
+        $("#zoomRange").val(timeFormat(ui.values[0]) + " - " + timeFormat(ui.values[1]));
+        zoomRange = ui.values
+      },
+      stop: function(event, ui) {
+        drawZoomedChart(zoomRange);
+      }
+    })
+    zoomRange = $('#slider').slider("values");
+    $("#zoomRange").val(timeFormat($("#slider").slider("values", 0)) + " - " + timeFormat($("#slider").slider("values", 1)));
+}
+
 function setData(data) {
   chartData = [
     {
@@ -60,7 +82,7 @@ function setData(data) {
 var timeFormat = function(d) {
   var date = new Date(0);
   date.setUTCSeconds(d);
-  return d3.time.format('%Y %b %d, %H : %M')(date);
+  return d3.time.format('%Y %b %d, %H:%M')(date);
 };
 
 var sortAscending = function(a, b) {
@@ -93,7 +115,7 @@ function draw() {
     chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
 
     //set domain based on history, future and threshold
-    chart.yDomain(getYDomain(chartData[0].values, chartData[1].values, wholeData.threshold.value))
+    chart.yDomain(getYDomain(chartData, wholeData.threshold.value))
 
     //render the chart
     d3.select('#chart svg').datum(chartData).call(chart);
@@ -143,10 +165,32 @@ function appendStartAndEnd(period) {
 }
 
 
+
+
+function drawZoomedChart(data) {
+  console.log(chartData)
+  var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
+  var newFuture = chartData[1].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
+  var tempChartData = JSON.parse(JSON.stringify(chartData));
+  if (newHistory.length == 0) {
+    chartData[0] = chartData[1];
+    chartData.pop();
+  } else {
+    chartData[0].values = newHistory;
+  }
+  if (newFuture.length == 0) {
+    chartData.pop();
+  } 
+  draw();
+  //the draw above needs this time to draw before chartData is returned back to its original state
+  setTimeout(function() { chartData = tempChartData }, 1000)
+}
+
 function drawAndSetData(data) {
   period = [];
   wholeData = data;
   setData(data);
+  initSlider(data)
   draw();
 }
 
@@ -157,16 +201,18 @@ function setPeriodParams() {
   }
 }
 
-function getYDomain(history, future, threshold) {
+function getYDomain(chartData, threshold) {
   if (threshold !== undefined) {
     var domain = [];
-    var historyMax = Array.max(history);
-    var futureMax = Array.max(future);
-    var historyMin = Array.min(history);
-    var futureMin =Array.min(future)
-    domain.push(Math.min(threshold,Math.min(historyMin,futureMin)) - 1);
-    domain.push(Math.max(threshold,Math.max(historyMax,futureMax)) * 1.3);
-    return domain;
+    //we don't always know how many data objects there are in the chart
+    for (i = 0; i < chartData.length; i++) {
+      domain.push(Math.min(threshold, Array.min(chartData[i].values)));
+      domain.push(Math.max(threshold, Array.max(chartData[i].values)));
+    }
+    domain.sort(sortAscending);
+    //After sorting all the potential domain max and min the real domain
+    //is in the first and last position in the array.
+    return [domain.slice(0)[0]-1, domain.slice(-1)[0]*1.3];
   } else {
     return undefined;
   }
