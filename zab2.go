@@ -252,8 +252,6 @@ func parseValueJSON(rows *sql.Rows) string {
 func getItemFutureIdByHostMetric(host string, metric string) int {
 	var fid int
 
-	fmt.Println(host, " :: ", metric)
-
 	err := db.QueryRow(`SELECT item_future.id FROM hosts, metric, items, item_future
 	WHERE hosts.name = $1
 	AND hosts.hostid = items.hostid
@@ -265,7 +263,6 @@ func getItemFutureIdByHostMetric(host string, metric string) int {
 		fmt.Println(err)
 		return -1
 	}
-   fmt.Println(fid)
 	return fid
 }
 
@@ -347,15 +344,23 @@ type Host struct {
 	ConditionNum float64
 }
 
+type ErrorHost struct {
+	Name	string
+	Err 	error
+}
+
 func getHosts(w http.ResponseWriter) []Host {
-	rows, err := db.Query(`SELECT name
-	FROM hosts WHERE hostid in (10101, 10102, 10103, 10104, 10105)`) // TODO hey! no hardcode here
+	rows, err := db.Query(`SELECT name FROM hosts WHERE hostid IN
+		(SELECT DISTINCT hosts_groups.hostid FROM hosts_groups INNER
+		JOIN items ON hosts_groups.hostid = items.hostid
+		WHERE hosts_groups.groupid > 1)`) // >1 discards templates
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
 	var hosts []Host
+	var error_hosts []ErrorHost
 	var host Host
 
 	for rows.Next() {
@@ -364,15 +369,14 @@ func getHosts(w http.ResponseWriter) []Host {
 		}
 		err, host.Cpu = getItem(getItemFutureIdByHostMetric(host.Name, "cpu"))
 		if err != nil {
-			fmt.Println(err)
+			error_hosts = append(error_hosts, ErrorHost{host.Name, err})
 			continue
 		}
 		err, host.Mem = getItem(getItemFutureIdByHostMetric(host.Name, "mem"))
 		if err != nil {
-			fmt.Println(err)
+			error_hosts = append(error_hosts, ErrorHost{host.Name, err})
 			continue
 		}
-		fmt.Println("host parsed: ", host.Name, host.Mem, host.Cpu)
 		hosts = append(hosts, host)
 	}
 	return hosts
@@ -398,7 +402,6 @@ func getItem(ifid int) (error, Item) {
 
 	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
 		ifid).Scan(&res.Threshold, &res.ThresholdLow)
-	fmt.Println(ifid, res.Threshold);
 
 	row = db.QueryRow(`
 	SELECT max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
