@@ -62,14 +62,15 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	
 	if r.Method == "POST" {
 		threshold := r.FormValue("threshold")
+		lower := r.FormValue("threshold_lower")
 		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
 		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
-		res, _ := db.Exec(`UPDATE threshold SET value = $1 WHERE itemid = $2`, threshold, id)
+		res, _ := db.Exec(`UPDATE threshold SET lower = $1, value = $2 WHERE itemid = $3`, lower, threshold, id)
 		affected, _ := res.RowsAffected()
 		if affected == 0 {
-			db.Exec(`INSERT INTO threshold VALUES (default, $1, true, $2)`, id, threshold)
+			db.Exec(`INSERT INTO threshold VALUES (default, $1, $2, $3)`, id, lower, threshold)
 		}
 		updateFuture(id)
 	}
