@@ -9,10 +9,12 @@
       <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
    </head>
    <body>
-      {{ template "body" . }}
+      <main id=main>
+         {{ template "body" . }}
+      </main>
    </body>
-   <footer>
-      <img src="/static/logo_multiaxis.png" height=40 />
+   <footer id=footer>
+      <img class=logo src="/static/logo_multiaxis.png" />
       &copy; Multi-Axis ohtu team
    </footer>
 </html>
