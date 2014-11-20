@@ -19,7 +19,7 @@
 {{ end }}
 
 {{ define "body" }}
-
+    <i><a href="/dashboard" class="btn">Dashboard</a></i>
    <p>
       <b data-futid="{{ . }}" id="itemhost"></b>
       <a href="cpu" class="btn">cpu load</a>
@@ -40,19 +40,24 @@
      
    <div class="container-fluid">
     <div class="row">
-      <form role="form" method="post" class="col-md-6">
+      <form role="form" action="/api/{{ . }}" method="post" class="col-md-6">
 
          <div class="form-group">
             <label>Current threshold</label>
             <input type="number" step="any" id="threshold" name="threshold" class="form-control" />
          </div>
 
+         <div class="form-group">
          <div class="checkbox">
+            <b>Threshold:</b>
             <label>
-               <input type="checkbox" name="threshold_lower" id="threshold_lower" /> Lower limit
+              <input type="radio" name="threshold_type" id="threshold_lower" value="t"/> Low
             </label>
+            <label>
+              <input type="radio" name="threshold_type" id="threshold_higher" value="f"/> High
+            </label>  
          </div>
-
+         </div>
          <div class="form-group">
             <label>Period</label>
             <p id="period" class="form-control-static"></p>
@@ -60,7 +65,7 @@
 
          <div class="form-group">
             <label>Model parameters</label>
-            <textarea class="form-control" id="params"></textarea>
+            <textarea class="form-control" name="params" id="params"></textarea>
          </div>
 
          <div class="form-group">

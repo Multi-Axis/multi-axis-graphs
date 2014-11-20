@@ -7,12 +7,12 @@ var zoomRange = [];
 var temp;
 
 $(function(){
-  document.getElementById('sendPeriod').addEventListener('click', function() {
-    var threshold = document.getElementById('threshold').value;
-    console.log(threshold)
-    setPeriodParams();
-    postData(wholeData.params, threshold, true);
-  })
+  // document.getElementById('sendPeriod').addEventListener('click', function() {
+  //   var threshold = document.getElementById('threshold').value;
+  //   console.log(threshold)
+  //   setPeriodParams();
+  //   postData(wholeData.params, threshold, true);
+  // })
 
   document.getElementById('trendForecast').addEventListener('click', function() {
     wholeData.params.stop_lower = 14 * -86400;
@@ -45,6 +45,7 @@ function getCurrentFutid() {
 }
 
 function initSlider(data) {
+  console.log(wholeData)
     $("#slider").slider({
       range: true,
       min: data.history[0].time,
@@ -77,12 +78,14 @@ function setData(data) {
 	$("#details").text(JSON.stringify(data.details));
 	$("#itemhost").text(data.metric + " @ " + data.host);
   $("#params").val(JSON.stringify(data.params));
+  $("#threshold_lower").prop('checked', data.threshold.lower);
+  $("#threshold_higher").prop('checked', !data.threshold.lower);
 }
 
 var timeFormat = function(d) {
   var date = new Date(0);
   date.setUTCSeconds(d);
-  return d3.time.format('%Y %b %d, %H:%M')(date);
+  return d3.time.format('%Y %b %d')(date);
 };
 
 var sortAscending = function(a, b) {

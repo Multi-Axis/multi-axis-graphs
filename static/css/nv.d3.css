@@ -219,7 +219,7 @@ svg .title {
   fill: none;
   stroke: #000;
   stroke-opacity: .75;
-  shape-rendering: crispEdges;
+  shape-rendering: auto;
 }
 
 .nvd3 .nv-axis path.domain {
@@ -227,13 +227,13 @@ svg .title {
 }
 
 .nvd3 .nv-axis.nv-x path.domain {
-  stroke-opacity: 0;
+  stroke-opacity: .75;
 }
 
 .nvd3 .nv-axis line {
   fill: none;
   stroke: #e5e5e5;
-  shape-rendering: crispEdges;
+  shape-rendering: auto;
 }
 
 .nvd3 .nv-axis .zero line,

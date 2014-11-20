@@ -11,7 +11,7 @@ nv.models.lineChart = function() {
     , legend = nv.models.legend()
     , interactiveLayer = nv.interactiveGuideline()
     ;
-  var margin = {top: 30, right: 20, bottom: 50, left: 60}
+  var margin = {top: 30, right: 35, bottom: 50, left: 60}
     , color = nv.utils.defaultColor()
     , width = null
     , height = null
@@ -211,7 +211,7 @@ nv.models.lineChart = function() {
       if (showXAxis) {
         xAxis
           .scale(x)
-          .ticks( availableWidth / 150 )
+          .ticks( availableWidth / 250 )
           .tickSize(-availableHeight, 0);
 
         g.select('.nv-x.nv-axis')
