@@ -85,7 +85,7 @@ function setData(data) {
 var timeFormat = function(d) {
   var date = new Date(0);
   date.setUTCSeconds(d);
-  return d3.time.format('%Y %b %d')(date);
+  return d3.time.format('%Y %b %d, %H:%M')(date);
 };
 
 var sortAscending = function(a, b) {
@@ -123,9 +123,7 @@ function draw() {
     //render the chart
     d3.select('#chart svg').datum(chartData).call(chart);
 
-    //Clear the previous threshold line and render the given threshold
-    chart.interactiveLayer.clearThresholdLineAndText();
-    chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.value));
+    renderThreshold(chart);
 
     //if the period comes from db it should be rendered
     if (!$.isEmptyObject(wholeData) && wholeData.params.stop_lower != undefined && wholeData.params.stop_upper != undefined) {
@@ -137,7 +135,10 @@ function draw() {
     }
     
     //Update the chart when window resizes.
-    nv.utils.windowResize(function() { chart.update() });
+    nv.utils.windowResize(function() { 
+      chart.update();
+      renderThreshold(chart);
+    });
 
     //draw a line when chart is clicked
     chart.interactiveLayer.dispatch.on('elementClick', function(e) {
@@ -158,20 +159,23 @@ function draw() {
 
 
     document.getElementById('threshold').value = wholeData.threshold.value;
-    $("#threshold_lower").prop('checked', wholeData.threshold.lower);
     return chart;
   });
 }
 
+//Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
   $('#period').text("From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]));
 }
 
-
+function renderThreshold(chart) {
+  chart.interactiveLayer.clearThresholdLineAndText();
+  chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.value));
+}
 
 
 function drawZoomedChart(data) {
-  console.log(chartData)
+  console.log(chart)
   var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
   var newFuture = chartData[1].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
   var tempChartData = JSON.parse(JSON.stringify(chartData));
