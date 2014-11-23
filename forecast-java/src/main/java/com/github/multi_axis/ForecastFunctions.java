@@ -111,17 +111,54 @@ public abstract class ForecastFunctions {
   public static Stream<TimedValue<BigDecimal>>
     dailyMaximums(Stream<TimedValue<BigDecimal>> data) {
       return
-        data
-          .foldLeft(
-            (TreeMap<LocalDate,TimedValue<BigDecimal>>  dmaxs,
-             TimedValue<BigDecimal>                     tval)  ->
-                dmaxs.update( 
-                  date(tval.clock),
-                  oldtval  -> 
-                    timedVal(tval.clock, oldtval.value.max(tval.value)),
-                  tval),
-            TreeMap.empty(dateOrd)
-          ).values().toStream(); }
+        toStream(
+          data
+            .foldLeft(
+              (TreeMap<LocalDate,TimedValue<BigDecimal>>  dmaxs,
+              TimedValue<BigDecimal>                     tval)  ->
+                  dmaxs.update( 
+                    date(tval.clock),
+                    oldtval  -> 
+                      timedVal(tval.clock, oldtval.value.max(tval.value)),
+                    tval),
+              TreeMap.empty(dateOrd)
+            ).values()); }
+
+  public static Stream<TimedValue<BigDecimal>>
+    dailyMinimums(Stream<TimedValue<BigDecimal>> data) {
+      return
+        toStream(
+          data
+            .foldLeft(
+              (TreeMap<LocalDate,TimedValue<BigDecimal>>  dmins,
+               TimedValue<BigDecimal>                     tval)  ->
+                  dmins.update( 
+                    date(tval.clock),
+                    oldtval  -> 
+                      timedVal(tval.clock, oldtval.value.min(tval.value)),
+                    tval),
+              TreeMap.empty(dateOrd)
+            ).values()); }
+
+  public static Stream<TimedValue<BigDecimal>>
+    dailyAverages(Stream<TimedValue<BigDecimal>> data) {
+
+      final TreeMap<LocalDate
+      return
+        toStream(
+          data
+            .foldLeft(
+              (TreeMap< LocalDate,
+                        P2<Long,Stream<BigDecimal>>>  dvals,
+               TimedValue<BigDecimal>                 tval)  ->
+                  dvals.update( 
+                    date(tval.clock),
+                    cAndVs  ->  p(cAndVs._1(),
+                                  cAndVs._2().cons(tval.value)),
+                    p(epochSecs(date(tval.clock)),list(tval.value))),
+              TreeMap.empty(dateOrd)
+            ).map(cAndVs  -> timedVal(cAndVs._1(),mean(cAndVs._2())))
+            .values()); }
 
   public static F<BigDecimal,BigDecimal>
     simpleLeastSquares(Stream<BigDecimal> as, Stream<BigDecimal> bs) {

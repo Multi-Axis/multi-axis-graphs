@@ -11,12 +11,12 @@ import static com.github.multi_axis.JsonUtils.readJsonObject;
 import static com.github.multi_axis.JsonUtils.writeJsonObject;
 import static com.github.multi_axis.Errors.*;
 
-public final class ForecastApp {
+public final class ForecastProcesses {
 
   private final TreeMap<String,ForecastProcess> processes;
   private final F<Errors,JsonObject>            writeError;
 
-  public <META,DATA,RESULT> ForecastApp
+  public <META,DATA,RESULT> ForecastProcesses
     with( final String                                        processName,
           final Conf.Reader<META,DATA>                        reader,
           final F<META,Validation<Errors,List<F<DATA,DATA>>>  getFilters,
@@ -41,11 +41,14 @@ public final class ForecastApp {
                     readJsonObject(inStream).map(proc.run));
 
       return  resultV.validation(
-                err      -> writeJsonObject(writeError(err)),
-                result   -> writeJsonObject(result)); }
+                err      -> writeJsonObject(outStream, writeError(err)),
+                result   -> writeJsonObject(outStream, result)); }
 
+  public static ForecastProcesses
+    forecastProcesses(final F<Errors,JsonObject> writeError) {
+      return new ForecastProcesses(writeError); }
 
-  private ForecastApp(final F<Errors,JsonObject> writeError) {
+  private ForecastProcesses(final F<Errors,JsonObject> writeError) {
     this.processes = TreeMap.empty(Ord.stringOrd);
     this.writeError = writeError; }
 

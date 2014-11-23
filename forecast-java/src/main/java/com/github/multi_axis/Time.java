@@ -14,8 +14,13 @@ import static fj.Ord.ord;
 public abstract class Time {
 
   public static LocalDate 
-    date(long epochseconds) {
+    date(final long epochseconds) {
       return new LocalDate(epochseconds * 1000); }
+
+  public static Long
+    epochSecs(final LocalDate date) {
+      return
+        Long.valueOf((date.toDateTimeAtStartOfDay().getMillis()) / 1000); }
 
   public static final Ord<LocalDate> 
     dateOrd = 

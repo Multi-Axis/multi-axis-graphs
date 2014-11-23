@@ -23,6 +23,7 @@ public abstract class Errors {
     public R caseNoJsonField(String name);
     public R caseNoSuchForecastProcess(String name);
     public R caseBadBounds();
+    public R caseNoSuchFilter(String name);
   }
 
   public static final Errors miscJsonError(final JsonException e) {
@@ -66,6 +67,9 @@ public abstract class Errors {
 
   public static final Errors badBounds() {
     return new BadBounds(); }
+
+  public static final Errors noSuchFilter(final String name) {
+    return new NoSuchFilter(name); }
 
 
   public abstract <R> R runMatch(ErrorMatcher<R> m);
@@ -207,7 +211,18 @@ public abstract class Errors {
 
     public final <R> R runMatch(final ErrorMatcher<R> m) {
       return m.caseBadBounds(); }
+  }
 
+  private static final class NoSuchFilter extends Errors {
+
+    private final String name;
+
+    public NoSuchFilter(final String name) {
+      this.name = name; }
+
+    public final <R> R runMatch(final ErrorMatcher<R> m) {
+      return m.caseNoSuchFilter(name); }
+  }
 
   private Errors() {}
 }

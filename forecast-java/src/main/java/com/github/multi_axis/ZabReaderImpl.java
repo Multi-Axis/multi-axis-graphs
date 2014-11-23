@@ -58,8 +58,8 @@ public abstract class ZabReaderImpl {
       read = json  -> zabFromJson(json);
 
 
-  // NOTE that 'filters' is written to use List, i.e. assuming the json format
-  // will change.
+  // NOTE that the 'filters' part is written to use List, i.e. assuming the
+  // json format will change into something that may have many filters.
   private static final  
     Validation<Errors, Data<Zab,Stream<TimedValue<BigDecimal>>>>
       zabFromJson(final JsonObject json) {
@@ -82,10 +82,9 @@ public abstract class ZabReaderImpl {
           (check  ? success(bounds.head()) 
                   : fail(badBounds())).bind(                  start  ->
           success(bounds.tail().head()).map(                  end  ->
-          data( zab(zabtype,start,end),
+          data( zab(zabtype,start,end,filters),
                 clocks.zip(values)
                   .map(cvs  -> timedVal(cvs._1(), cvs._2()))))))))))); }
-
 
 
   private static final Validation<Errors,Zab.Type> 

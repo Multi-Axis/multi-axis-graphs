@@ -44,8 +44,6 @@ public final class ForecastProcess {
         .validation(writeError,
                     result  -> writer.write(datas.meta,result)))); }
 
-                    
-
 
   private ForecastProcess(F<JsonObject,JsonObject> run) {
     this.run = run; }
@@ -95,7 +93,6 @@ public final class ForecastProcess {
                                       (x  -> tag(x.tag, funcB.f(x.val))))))),
           jsonObject  ->
             writeJsonObject(outStream,jsonObject)); }
-  
   */ 
 
 }

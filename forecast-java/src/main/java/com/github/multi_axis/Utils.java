@@ -17,6 +17,10 @@ public abstract class Utils {
 
   public static final Long daySecs = Long.valueOf(24 * 60 * 60);
   public static final Long weekSecs = Long.valueOf(7 * 24 * 60 * 60);
+
+  public static final <A> Option<A>
+    first(final A[] arr) {
+      return Array.array(arr).toOption(); }
   
 
   public static Stream<TimedValue<BigDecimal>>
