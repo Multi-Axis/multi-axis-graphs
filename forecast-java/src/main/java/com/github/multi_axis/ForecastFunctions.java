@@ -108,6 +108,7 @@ public abstract class ForecastFunctions {
 
       return simpleLeastSquares(times,vals); }
 
+  //TODO THINK these could perhaps use some code reuse?
   public static Stream<TimedValue<BigDecimal>>
     dailyMaximums(Stream<TimedValue<BigDecimal>> data) {
       return
