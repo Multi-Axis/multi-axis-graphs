@@ -67,12 +67,16 @@ function setData(data) {
   chartData = [
     {
       key: "History",
-      values: data.history
+      values: data.history,
+      type: "line",
+      yAxis: 1
     },
     {
       key: "Future",
       values: data.future,
-      color: "green"
+      color: "green",
+      type: "line",
+      yAxis: 1
     }
   ];
 	$("#details").text(JSON.stringify(data.details));
@@ -100,78 +104,97 @@ Array.max = function(array) {
     return Math.max.apply(Math, array.map(function(x){return x.val;}));
 }
 
+function draw(data) {
+  nv.addGraph(function() {
+    chart = nv.models.multiChart()
+            .margin({top: 30, right: 60, bottom: 50, left: 70})
+            .color(d3.scale.category10().range());
 
+    chart.xAxis.tickFormat(timeFormat);
+    chart.yAxis1
+        .tickFormat(d3.format(',.1f'));
+    chart.yAxis2
+        .tickFormat(d3.format(',.1f'));
 
-function draw() {
-  nv.addGraph(function(data) {
-    //chart configurations
-    chart = nv.models.lineChart()
-                  .margin({left: 100})
-                  .useInteractiveGuideline(true)
-                  .transitionDuration(350)
-                  .showLegend(true)
-                  .showYAxis(true)
-                  .showXAxis(true);
+    console.log(chartData)
+    d3.select('#chart svg')
+        .datum(chartData)
+        .call(chart);
 
-    //set up X and Y-axis
-    chart.xAxis.axisLabel('Time').tickFormat(timeFormat);
-    chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
-
-    //set domain based on history, future and threshold
-    chart.yDomain(getYDomain(chartData, wholeData.threshold.value))
-
-    //render the chart
-    d3.select('#chart svg').datum(chartData).call(chart);
-
-    renderThreshold(chart);
-
-    //if the period comes from db it should be rendered
-    if (!$.isEmptyObject(wholeData) && wholeData.params.stop_lower != undefined && wholeData.params.stop_upper != undefined) {
-      chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
-      chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
-      period.push(wholeData.params.stop_lower);
-      period.push(wholeData.params.stop_upper);
-      appendStartAndEnd(period)
-    }
-    
-    //Update the chart when window resizes.
-    nv.utils.windowResize(function() { 
-      chart.update();
-      renderThreshold(chart);
-    });
-
-    //draw a line when chart is clicked
-    chart.interactiveLayer.dispatch.on('elementClick', function(e) {
-                                                          if (e != undefined && period.length<2) {
-                                                            chart.interactiveLayer.renderPosition(e.pointXValue)
-                                                            period.push(e.pointXValue);
-                                                            period.sort(sortAscending);
-
-                                                            if (period.length == 2) {appendStartAndEnd(period)}
-                                                        }});
-    //clear start and end points
-    document.getElementById('clearPeriods').addEventListener('click', function() {
-                                                                        chart.interactiveLayer.clearPeriodLines();
-                                                                        period = [];
-                                                                        document.getElementById('from').innerHTML = '';
-                                                                      });
-
-
-
-    document.getElementById('threshold').value = wholeData.threshold.value;
     return chart;
   });
 }
+
+// function draw() {
+//   nv.addGraph(function(data) {
+//     //chart configurations
+//     chart = nv.models.lineChart()
+//                   .margin({left: 100})
+//                   .useInteractiveGuideline(true)
+//                   .transitionDuration(350)
+//                   .showLegend(true)
+//                   .showYAxis(true)
+//                   .showXAxis(true);
+
+//     //set up X and Y-axis
+//     chart.xAxis.axisLabel('Time').tickFormat(timeFormat);
+//     chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
+
+//     //set domain based on history, future and threshold
+//     chart.yDomain(getYDomain(chartData, wholeData.threshold.value))
+
+//     //render the chart
+//     d3.select('#chart svg').datum(chartData).call(chart);
+
+//     renderThreshold(chart);
+
+//     //if the period comes from db it should be rendered
+//     if (!$.isEmptyObject(wholeData) && wholeData.params.stop_lower != undefined && wholeData.params.stop_upper != undefined) {
+//       chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
+//       chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
+//       period.push(wholeData.params.stop_lower);
+//       period.push(wholeData.params.stop_upper);
+//       appendStartAndEnd(period)
+//     }
+    
+//     //Update the chart when window resizes.
+//     nv.utils.windowResize(function() { 
+//       chart.update();
+//       renderThreshold(chart);
+//     });
+
+//     //draw a line when chart is clicked
+//     chart.interactiveLayer.dispatch.on('elementClick', function(e) {
+//                                                           if (e != undefined && period.length<2) {
+//                                                             chart.interactiveLayer.renderPosition(e.pointXValue)
+//                                                             period.push(e.pointXValue);
+//                                                             period.sort(sortAscending);
+
+//                                                             if (period.length == 2) {appendStartAndEnd(period)}
+//                                                         }});
+//     //clear start and end points
+//     document.getElementById('clearPeriods').addEventListener('click', function() {
+//                                                                         chart.interactiveLayer.clearPeriodLines();
+//                                                                         period = [];
+//                                                                         document.getElementById('from').innerHTML = '';
+//                                                                       });
+
+
+
+//     document.getElementById('threshold').value = wholeData.threshold.value;
+//     return chart;
+//   });
+// }
 
 //Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
   $('#period').text("From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]));
 }
 
-function renderThreshold(chart) {
-  chart.interactiveLayer.clearThresholdLineAndText();
-  chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.value));
-}
+// function renderThreshold(chart) {
+//   chart.interactiveLayer.clearThresholdLineAndText();
+//   chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.value));
+// }
 
 
 function drawZoomedChart(data) {
@@ -198,7 +221,7 @@ function drawAndSetData(data) {
   wholeData = data;
   setData(data);
   initSlider(data)
-  draw();
+  draw(chartData);
 }
 
 function setPeriodParams() {

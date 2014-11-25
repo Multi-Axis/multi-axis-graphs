@@ -12,7 +12,7 @@ nv.models.axis = function() {
     , height = 60 //only used for tickLabel currently
     , scale = d3.scale.linear()
     , axisLabelText = null
-    , showMaxMin = true //TODO: showMaxMin should be disabled on all ordinal scaled axes
+    , showMaxMin = false //TODO: showMaxMin should be disabled on all ordinal scaled axes
     , highlightZero = true
     , rotateLabels = 0
     , rotateYLabel = true
@@ -179,6 +179,7 @@ nv.models.axis = function() {
             axisMaxMin.exit().remove();
             axisMaxMin
                 .attr('transform', function(d,i) {
+                  console.log("trnslateData", scale(d),d, i)
                   return 'translate(0,' + scale(d) + ')'
                 })
               .select('text')
