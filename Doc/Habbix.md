@@ -10,6 +10,17 @@ We require access to two databases, our own "local" database and the zabbix,
 commands use only the local db. The only exceptions are `sync` (both) and
 `trend` (remote only) commands.
 
+### Crontab
+
+```crontab
+
+# Sync only trends and history
+*/5 * * * * sh -c 'cd /home/ohtu && .cabal/bin/habbix sync -q'
+
+# Sync new hosts too, and add them a default future
+*/30 * * * * sh -c 'cd /home/ohtu && .cabal/bin/habbix sync --syncall -q'
+```
+
 ## Usage
 
 Running `habbix --help`:
