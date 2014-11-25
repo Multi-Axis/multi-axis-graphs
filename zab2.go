@@ -295,7 +295,10 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	// rows, _ := db.Query(`SELECT * FROM
 	// (SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q
 	// ORDER BY clock`, itemId)
-	rows, _ := db.Query(`SELECT clock, value_avg FROM trend WHERE itemid = $1 ORDER BY clock`, itemId)
+	rows, _ := db.Query(`
+	SELECT clock, value_avg FROM trend as trend WHERE itemid = $1 UNION
+	SELECT * FROM (SELECT clock, value FROM history WHERE itemid = $1 ORDER BY clock DESC LIMIT 1) as h
+	ORDER BY clock`, itemId)
 	history := parseValueJSON(rows)
 	var future string
 	if len(noUpdateParams) > 0 {
