@@ -6,7 +6,9 @@ Copy the file `config.default.yaml` to `./config.yaml` and edit the parameters
 in it.
 
 We require access to two databases, our own "local" database and the zabbix,
-"remote", database **Make sure both databases are reachable.**
+"remote", database **Make sure both databases are reachable.** Although most
+commands use only the local db. The only exceptions are `sync` (both) and
+`trend` (remote only) commands.
 
 ## Usage
 
@@ -19,6 +21,7 @@ Running `habbix --help`:
       apps       List available "metric groups" for the Host ID
       items      List available "metrics" in the metric group App ID>
       history    Print history data for <itemid>
+      trends     Print trend data for the REMOTE item
       future     List all item futures
       models     List available future models
       migratedb  Create or update the local DB schema
@@ -60,6 +63,30 @@ Update the future of a specific item_future.id: `habbix sync -i 2`.
 
 Careful with the populate/update outputs when running with --`verbose`! There
 is a lot of sql debug msgs.
+
+### `habbix trend`
+
+This command uses the **remote** database and outputs an sql transaction that
+can be used to insert a data set into some other table. It outputs the
+transaction to stdout. Example:
+
+```shell
+$ habbix trends 23687 \       # replace number with an items.itemid in zabbix db
+     --sql \                  # required. output as a transaction
+     --config myconfig.yaml \ # optional. set some other config that ./config.yaml
+     --asitem 1 --ashost 1    # required. itemid and hostid used in the output (only)
+BEGIN;
+INSERT INTO hosts VALUES (1, 'ohtu1', 0, 1, 'ohtu1');
+INSERT INTO items VALUES (1, 0, 1, 'CPU $2 time', 'system.cpu.util[,idle]', 'The time the CPU has spent doing nothing.', '0');
+INSERT INTO trend VALUES 
+   (1, 1410501600, 94.0244, 98.8033, 99.2991),
+   (1, 1410505200, 98.8481, 99.0174, 99.1656),
+   (1, 1410508800, 98.7310, 99.0362, 99.2322),
+   ...
+COMMIT;
+```
+
+You can pipe the output straight to `psql` or to a file first.
 
 ## Futures
 
