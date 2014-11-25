@@ -153,7 +153,7 @@ function draw() {
     document.getElementById('clearPeriods').addEventListener('click', function() {
                                                                         chart.interactiveLayer.clearPeriodLines();
                                                                         period = [];
-                                                                        document.getElementById('from').innerHTML = '';
+                                                                        document.getElementById('period').innerHTML = '';
                                                                       });
 
 

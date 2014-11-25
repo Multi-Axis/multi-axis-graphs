@@ -22,6 +22,7 @@
     <i><a href="/dashboard" class="btn">Dashboard</a></i>
    <p>
       <b data-futid="{{ . }}" id="itemhost"></b>
+      <code>ItemFutureId = {{ . }}</code>
       <a href="cpu" class="btn">cpu load</a>
       <a href="mem" class="btn">available memory</a>
       <a href="swap" class="btn">Free swap space</a>
@@ -36,7 +37,6 @@
     </div>
     
     <div id="slider"></div>   
-   <code>ItemFutureId = {{ . }}</code>
      
    <div class="container-fluid">
     <div class="row">
@@ -78,13 +78,13 @@
          <input id="sendPeriod" type="submit" class="btn btn-primary" value="Update item"/>
          
       </form>
-      <button id="clearPeriods" class="btn btn-default">Clear current forecast range</button>
       <form role="form" class="col-md-6">
          <div class="form-group">
             <label>Trend forecast (default is 2 weeks)</label>
             <input type="number" step="any" class="form-control" id="trendDays" value="14" />
          </div>
-         <button id="trendForecast" class="btn btn-primary">Update forecast with trend</button>
+         <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update forecast with trend</button>
+         <button id="clearPeriods" class="btn btn-default" onclick='return false;'>Clear current forecast range</button>
       </form>
     </div>
    </div>

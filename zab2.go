@@ -210,7 +210,7 @@ func getFutureNoUpdate(params string, id int) string {
 	fmt.Printf(fmt.Sprintf("'%s'\n", params))
 	cmd := exec.Command("habbix", "execute", "--outcombine", "-p", params, strconv.Itoa(id))
 	fmt.Println(cmd.Args)
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	var newJSON = string(out)
 	fmt.Printf("%s", newJSON)
 	if err != nil {
