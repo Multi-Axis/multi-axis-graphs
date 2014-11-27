@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import fj.F;
+import fj.F2;
 import fj.data.Stream;
 
 import javax.json.JsonObject;
@@ -14,6 +15,7 @@ import com.github.multi_axis.ZabWriterUtils;
 import static javax.json.Json.createObjectBuilder;
 
 import static com.github.multi_axis.ZabWriterUtils.timedValsDetailsJson;
+import static com.github.multi_axis.ZabWriterUtils.formatter;
 import static com.github.multi_axis.Utils.*;
 
 public abstract class ZabWriterImpl {
@@ -26,29 +28,10 @@ public abstract class ZabWriterImpl {
       return  timedValsDetailsJson(
                 plot(result, meta.bounds.start, meta.bounds.end, daySecs),
                 formatter(meta.type),
-                createObjectBuilder.build()); }
+                createObjectBuilder().build()); }
 
 
   private ZabWriterImpl() {}
 
 } 
 
-
-public abstract class Zab0WriterImpl {
-
-  public static final F<Stream<TimedValue<BigDecimal>>,JsonObject>
-    write = vals  -> writeZab0Json(vals);
-
-  public static final JsonObject
-    writeZab0Json(Stream<TimedValue<BigDecimal>> vals) {
-      return  timedValsDetailsJson(
-                vals,
-                zab0ify,
-                createObjectBuilder().build()); }
-
-  private static final F<BigDecimal,BigDecimal> zab0ify =
-    val  -> val.setScale(4, RoundingMode.HALF_EVEN);
-
-
-  private Zab0WriterImpl() {}
-}

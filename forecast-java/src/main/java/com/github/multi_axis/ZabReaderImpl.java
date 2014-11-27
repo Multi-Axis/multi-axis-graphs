@@ -12,6 +12,7 @@ import fj.data.Validation;
 import fj.data.IO;
 import fj.data.IOFunctions;
 import fj.data.Java;
+import fj.data.List;
 
 import javax.json.Json;
 import javax.json.JsonReader;
@@ -26,8 +27,6 @@ import javax.json.stream.JsonParsingException;
 import javax.json.JsonException;
 import java.lang.ClassCastException;
 
-import com.github.multi_axis.Alts2;
-import com.github.multi_axis.Tagged;
 import com.github.multi_axis.TimedValue;
 import com.github.multi_axis.Zab;
 
@@ -36,6 +35,7 @@ import static fj.data.Validation.success;
 import static fj.data.Validation.fail;
 import static fj.data.Java.JUList_List;
 import static fj.data.Option.fromNull;
+import static fj.data.List.list;
 //import static fj.data.IOFunctions.lazy;
 
 import static javax.json.Json.createReader;
@@ -46,15 +46,16 @@ import static javax.json.Json.createArrayBuilder;
 import static com.github.multi_axis.Utils.toStream;
 import static com.github.multi_axis.Errors.*;
 import static com.github.multi_axis.TimedValue.timedVal;
+import static com.github.multi_axis.Zab.zab;
 import static com.github.multi_axis.Zab.Type.*;
-import static com.github.multi_axis.JsonUtils.*
+import static com.github.multi_axis.JsonUtils.*;
 import static com.github.multi_axis.Data.data;
 
 public abstract class ZabReaderImpl {
 
   public static final 
     F<JsonObject,
-      Validation<Errors,Data<Zab,TimedValue<BigDecimal>>>>
+      Validation<Errors,Data<Zab,Stream<TimedValue<BigDecimal>>>>>
       read = json  -> zabFromJson(json);
 
 
@@ -63,28 +64,76 @@ public abstract class ZabReaderImpl {
   private static final  
     Validation<Errors, Data<Zab,Stream<TimedValue<BigDecimal>>>>
       zabFromJson(final JsonObject json) {
-        return
-          getJsonNumber(json, "value_type")
-            .bind(jnum  -> zabType(jnum)).bind(               zabtype  ->
-          getJsonArray(json, "clocks")
-            .bind(arr  -> jsonNumbers(arr))
-            .bind(nums  -> longs(nums)).bind(                 clocks  ->
-          getJsonArray(json, "values")
-            .bind(arr  -> jsonNumbers(arr))
-            .bind(nums  -> bigDecimals(nums)).bind(           values  ->
-          getJsonObject(json, "params")
-            .bind(obj  -> getJsonString(obj, "preFilter"))
-            .map(jstring  -> list(jstring.getString())).bind( filters  ->
-          getJsonArray(json, "draw_future")
-            .bind(arr  -> jsonNumbers(arr))
-            .bind(nums  -> longs(nums)).bind(                 bounds  -> 
-          success((bounds.length() == 2)).bind(               check  ->
-          (check  ? success(bounds.head()) 
-                  : fail(badBounds())).bind(                  start  ->
-          success(bounds.tail().head()).map(                  end  ->
-          data( zab(zabtype,start,end,filters),
+
+        final Validation<Errors,Zab.Type>
+          ztypev =  getJsonNumber(json, "value_type")
+                    .bind((JsonNumber jnum)  -> zabType(jnum));
+
+        final Validation<Errors, Stream<Long>>
+          clocksv =  getJsonArray(json, "clocks")
+                    .bind(arr  -> jsonNumbers(arr))
+                    .bind(nums  -> longs(nums));
+
+        final Validation<Errors, Stream<BigDecimal>>
+          valuesv = getJsonArray(json, "values")
+                    .bind(arr  -> jsonNumbers(arr))
+                    .bind(nums  -> bigDecimals(nums));
+
+        final Validation<Errors, List<String>>
+          filtersv =  getJsonObject(json, "params")
+                      .bind(obj  -> getJsonString(obj, "preFilter"))
+                      .map(jstring  -> list(jstring.getString()));
+
+        final Validation<Errors, Stream<Long>>
+          boundsv = getJsonArray(json, "draw_future")
+                    .bind(arr  -> jsonNumbers(arr))
+                    .bind(nums  -> longs(nums))
+                    .bind(bounds  -> 
+                      (bounds.length() == 2)  
+                        ? success(bounds)
+                        : fail(badBounds()));
+
+        return 
+          ztypev.bind(    ztype  ->
+          clocksv.bind(   clocks  ->
+          valuesv.bind(   values  ->
+          filtersv.bind(  filters  ->
+          boundsv.map(    bounds  ->
+          data( zab(ztype, bounds.index(0), bounds.index(1), filters),
                 clocks.zip(values)
-                  .map(cvs  -> timedVal(cvs._1(), cvs._2()))))))))))); }
+                  .map(cv  -> timedVal(cv._1().longValue(), cv._2()))))))));
+
+        /* 
+        final Validation<Errors, Data<Zab,Stream<TimedValue<BigDecimal>>>>
+          datas =
+            getJsonNumber(json, "value_type")
+              .bind((JsonNumber jnum)  -> zabType(jnum))
+              .bind(                                (Zab.Type zabtype)  ->
+            getJsonArray(json, "clocks")
+              .bind(arr  -> jsonNumbers(arr))
+              .bind(nums  -> longs(nums)).bind(               clocks  ->
+            getJsonArray(json, "values")
+              .bind(arr  -> jsonNumbers(arr))
+              .bind(nums  -> bigDecimals(nums)).bind(         values  ->
+            getJsonObject(json, "params")
+              .bind(obj  -> getJsonString(obj, "preFilter"))
+              .map((JsonString jstring)  ->
+                     list(jstring.getString())).bind(         filters  ->
+            getJsonArray(json, "draw_future")
+              .bind(arr  -> jsonNumbers(arr))
+              .bind(nums  -> longs(nums)).bind(               bounds  -> 
+            success(Boolean.valueOf(bounds.length() == 2))
+              .bind(                                          check  ->
+            (check.booleanValue() ? success(bounds.index(0)) 
+                                  : fail(badBounds())).bind(  start  ->
+            success(bounds.index(1)).map(                     end  ->
+            data( zab(zabtype,start,end,filters),
+                  clocks.zip(values)
+                    .map(cv  -> timedVal(cv._1(), cv._2())))))))))));
+
+        return datas; 
+        */
+      }
 
 
   private static final Validation<Errors,Zab.Type> 

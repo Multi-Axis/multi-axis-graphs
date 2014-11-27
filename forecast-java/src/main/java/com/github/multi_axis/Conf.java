@@ -15,9 +15,6 @@ import com.github.multi_axis.Zab;
 import com.github.multi_axis.ZabReaderImpl;
 import com.github.multi_axis.ZabWriterImpl;
 
-import static com.github.multi_axis.AltFun.altFun;
-import static com.github.multi_axis.Tagged.tag;
-
 //TODO Write Matcher interfaces and add runMatch methods.
 
 public abstract class Conf {
@@ -40,7 +37,7 @@ public abstract class Conf {
     //  Static readers. Add your own here.
     //-------------------------------------------------------------------------
 
-    public static final Reader<Zab,TimedValue<BigDecimal>>
+    public static final Reader<Zab,Stream<TimedValue<BigDecimal>>>
       zabReader = reader(ZabReaderImpl.read);
 
     //-------------------------------------------------------------------------
@@ -48,10 +45,10 @@ public abstract class Conf {
     //-------------------------------------------------------------------------
 
     private static final <META,DATA> Reader<META,DATA> 
-      reader(F<JsonObject, Validation<Errors,Data<META,DATA>> r) {
+      reader(F<JsonObject, Validation<Errors,Data<META,DATA>>> r) {
         return new Reader<META,DATA>(r); }
 
-    private Reader(F<JsonObject, Validation<Errors,Data<META,DATA>> read) {
+    private Reader(F<JsonObject, Validation<Errors,Data<META,DATA>>> read) {
       this.read = read; }
 
     private Reader() {}
@@ -78,7 +75,7 @@ public abstract class Conf {
     //-------------------------------------------------
     //  The various actual writers. Add your own here.
 
-    public static final Writer<Zab,F<Long,BigDecimal>>>>
+    public static final Writer<Zab,F<BigDecimal,BigDecimal>>
       zabWriter = writer(ZabWriterImpl.write);
 
                           

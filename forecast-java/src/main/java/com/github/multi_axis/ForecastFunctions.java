@@ -20,9 +20,12 @@ import static java.math.BigDecimal.ZERO;
 import static java.math.RoundingMode.HALF_EVEN;
 
 import static fj.Ord.longOrd;
+import static fj.data.Stream.stream;
+import static fj.P.p;
 
 import static com.github.multi_axis.TimedValue.timedVal;
 import static com.github.multi_axis.Time.date;
+import static com.github.multi_axis.Time.epochSecs;
 import static com.github.multi_axis.Time.dateOrd;
 import static com.github.multi_axis.Utils.*;
 
@@ -73,12 +76,6 @@ public abstract class ForecastFunctions {
       else { return Stream.<TimedValue<BigDecimal>>nil(); } 
   }
 
-      
-
-  public static Long
-    add(Long a, Long b) {
-      return Long.valueOf(a.longValue() + b.longValue()); }
-
   public static <A> Option<A> 
     maximum(Ord<A> ord, Stream<A> as) {
       return as.foldLeft(
@@ -125,6 +122,10 @@ public abstract class ForecastFunctions {
               TreeMap.empty(dateOrd)
             ).values()); }
 
+  public static F<Stream<TimedValue<BigDecimal>>,
+                  Stream<TimedValue<BigDecimal>>>
+    dailyMaximums = data  -> dailyMaximums(data);
+
   public static Stream<TimedValue<BigDecimal>>
     dailyMinimums(Stream<TimedValue<BigDecimal>> data) {
       return
@@ -141,10 +142,13 @@ public abstract class ForecastFunctions {
               TreeMap.empty(dateOrd)
             ).values()); }
 
+  public static F<Stream<TimedValue<BigDecimal>>,
+                  Stream<TimedValue<BigDecimal>>>
+    dailyMinimums = data  -> dailyMinimums(data);
+
   public static Stream<TimedValue<BigDecimal>>
     dailyAverages(Stream<TimedValue<BigDecimal>> data) {
 
-      final TreeMap<LocalDate
       return
         toStream(
           data
@@ -156,10 +160,14 @@ public abstract class ForecastFunctions {
                     date(tval.clock),
                     cAndVs  ->  p(cAndVs._1(),
                                   cAndVs._2().cons(tval.value)),
-                    p(epochSecs(date(tval.clock)),list(tval.value))),
+                    p(epochSecs(date(tval.clock)),stream(tval.value))),
               TreeMap.empty(dateOrd)
             ).map(cAndVs  -> timedVal(cAndVs._1(),mean(cAndVs._2())))
             .values()); }
+
+  public static F<Stream<TimedValue<BigDecimal>>,
+                  Stream<TimedValue<BigDecimal>>>
+    dailyAverages = data  -> dailyAverages(data);
 
   public static F<BigDecimal,BigDecimal>
     simpleLeastSquares(Stream<BigDecimal> as, Stream<BigDecimal> bs) {

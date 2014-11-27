@@ -5,9 +5,12 @@ import java.io.OutputStream;
 
 import fj.F;
 import fj.Unit;
+import fj.data.List;
 import fj.data.IO;
 import fj.data.IOFunctions;
 import fj.data.Validation;
+
+import javax.json.JsonObject;
 
 import com.github.multi_axis.Errors;
 import com.github.multi_axis.Conf;
@@ -18,12 +21,12 @@ import static com.github.multi_axis.JsonUtils.writeJsonObject;
 
 public final class ForecastProcess {
 
-  private final F<JsonObject,JsonObject> run;
+  public final F<JsonObject,JsonObject> run;
 
   public static <META,DATA,RESULT> ForecastProcess
     forecastProcess(
       final Conf.Reader<META,DATA>                        reader,
-      final F<META,Validation<Errors,List<F<DATA,DATA>>>  getFilters,
+      final F<META,Validation<Errors,List<F<DATA,DATA>>>> getFilters,
       final F<DATA,RESULT>                                model,
       final F<Errors,JsonObject>                          writeError,
       final Conf.Writer<META,RESULT>                      writer) {
@@ -31,11 +34,12 @@ public final class ForecastProcess {
       return new ForecastProcess( json  ->
         reader.read(json).bind( datas  ->
         getFilters.f(datas.meta)
-          .map(filters.foldLeft((data,fun)  -> fun.f(data),
-                                datas.data))
+          .map(filters  -> filters.foldLeft((data,fun)  -> fun.f(data),
+                                            datas.data))
           .map(model)
+          .map(result  -> writer.write(datas.meta,result)))
         .validation(writeError,
-                    result  -> writer.write(datas.meta,result)))); }
+                    x  -> x)); }
 
 
   private ForecastProcess(F<JsonObject,JsonObject> run) {

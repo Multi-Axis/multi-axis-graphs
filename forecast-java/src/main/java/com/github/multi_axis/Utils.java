@@ -1,10 +1,17 @@
 package com.github.multi_axis;
 
+import java.math.BigDecimal;
+
+import fj.F;
 import fj.data.Stream;
 import fj.data.List;
+import fj.data.Array;
+import fj.data.Option;
 
 import static fj.Ord.longOrd;
 import static fj.data.Stream.iterateWhile;
+
+import static com.github.multi_axis.TimedValue.timedVal;
 
 public abstract class Utils {
 
@@ -37,6 +44,9 @@ public abstract class Utils {
                             (Long i)  -> !longOrd.isGreaterThan(i,to),
                             from); }
 
+  public static Long
+    add(Long a, Long b) {
+      return Long.valueOf(a.longValue() + b.longValue()); }
 
 
   private Utils() {}

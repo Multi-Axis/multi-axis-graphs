@@ -23,6 +23,7 @@ import javax.json.JsonObject;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonNumber;
+import javax.json.JsonString;
 
 import javax.json.stream.JsonParsingException;
 import javax.json.JsonException;
@@ -35,6 +36,7 @@ import static fj.data.Validation.success;
 import static fj.data.Validation.fail;
 import static fj.data.Java.JUList_List;
 import static fj.Unit.unit;
+import static fj.data.Option.fromNull;
 //import static fj.data.IOFunctions.lazy;
 
 import static javax.json.Json.createReader;
@@ -72,7 +74,7 @@ public abstract class JsonUtils {
               return fail(miscJsonError(e)); } } }; }
 
   public static final Validation<Errors,JsonObject>
-    getJsonObject(final JsonObject jsonObj, String fieldName) {
+    getJsonObject(final JsonObject jsonObj, final String fieldName) {
       try {
         return  fromNull(jsonObj.getJsonObject(fieldName))
                   .map(x  -> Validation.<Errors,JsonObject>success(x))
@@ -81,7 +83,7 @@ public abstract class JsonUtils {
         return fail(notJsonObject(e)); } }
 
   public static final Validation<Errors,JsonArray>
-    getJsonArray(final JsonObject jsonObj, String fieldName) {
+    getJsonArray(final JsonObject jsonObj, final String fieldName) {
       try {
         return  fromNull(jsonObj.getJsonArray(fieldName))
                   .map(x  -> Validation.<Errors,JsonArray>success(x))
@@ -90,7 +92,7 @@ public abstract class JsonUtils {
         return fail(notJsonArray(e)); } }
 
   public static final Validation<Errors,JsonString>
-    getJsonString(final JsonObject jsonObj, String fieldName) {
+    getJsonString(final JsonObject jsonObj, final String fieldName) {
       try {
         return  fromNull(jsonObj.getJsonString(fieldName))
                   .map(x  -> Validation.<Errors,JsonString>success(x))
@@ -99,7 +101,7 @@ public abstract class JsonUtils {
         return fail(notJsonString(e)); } }
 
   public static final Validation<Errors,JsonNumber>
-    getJsonNumber(final JsonObject jsonObj, String fieldName) {
+    getJsonNumber(final JsonObject jsonObj, final String fieldName) {
       try {
         return  fromNull(jsonObj.getJsonNumber(fieldName))
                   .map(x  -> Validation.<Errors,JsonNumber>success(x))

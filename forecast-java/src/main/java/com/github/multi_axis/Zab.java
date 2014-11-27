@@ -1,5 +1,7 @@
 package com.github.multi_axis;
 
+import fj.data.List;
+
 public final class Zab {
 
   public static Zab zab(final Type type, final Long start, final Long end,
@@ -7,10 +9,10 @@ public final class Zab {
     return new Zab(type,start,end,filters); }
 
   public final Type   type;
-  public final Bounds fcastBounds;
+  public final Bounds bounds;
   public final List<String> filters;
 
-  public Enum Type { zab0, zab3 }
+  public static enum Type { zab0, zab3 }
 
   public static class Bounds {
     public final Long start;
@@ -26,6 +28,6 @@ public final class Zab {
   public Zab( final Type type, final Long start, final Long end,
               final List<String> filters) {
     this.type = type;
-    this.fcastBounds = bounds(start,end);
+    this.bounds = bounds(start,end);
     this.filters = filters; }
 }

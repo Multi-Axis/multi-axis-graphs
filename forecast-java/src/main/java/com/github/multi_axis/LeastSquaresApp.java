@@ -9,11 +9,12 @@ import com.github.multi_axis.DummyErrorWriterImpl;
 
 import static com.github.multi_axis.Utils.first;
 import static com.github.multi_axis.Conf.Reader.zabReader;
-import static com.github.multi_axis.Conf.Reader.zabWriter;
+import static com.github.multi_axis.Conf.Writer.zabWriter;
 import static com.github.multi_axis.ForecastFunctions.timedValsLeastSquares;
+import static com.github.multi_axis.ForecastProcesses.forecastProcesses;
 import static com.github.multi_axis.Filters.filtersFromZab;
 
-public class DailyMaxLeastSquaresApp {
+public class LeastSquaresApp {
 
   private static IO<Unit> 
     run(final String arg) { 

@@ -1,7 +1,7 @@
 package com.github.multi_axis;
 
 import java.math.BigDecimal;
-import java.lang.Long;
+import java.math.RoundingMode;
 
 import fj.F;
 import fj.data.Stream;
@@ -15,6 +15,7 @@ import javax.json.JsonObject;
 
 import com.github.multi_axis.Errors;
 import com.github.multi_axis.TimedValue;
+import com.github.multi_axis.Zab;
 
 import static javax.json.Json.createArrayBuilder;
 import static javax.json.Json.createObjectBuilder;
@@ -42,7 +43,12 @@ public abstract class ZabWriterUtils {
     }
     return b.build();
   }
-
+  
+  public static final F<BigDecimal,BigDecimal>
+    formatter(final Zab.Type ztype) {
+      return  ztype == Zab.Type.zab0  
+                ? val  -> val.setScale(4, RoundingMode.HALF_EVEN)
+                : val  -> val.setScale(0, RoundingMode.HALF_EVEN); }
 
   //TODO THINK should details also be a Validation?
   //  - It should probably be incorporated into the same input as what now is
