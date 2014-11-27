@@ -21,6 +21,12 @@ import (
 //	Makes constant new db connections unnecessary.
 var db *sql.DB
 
+func isJSON(s string) bool {
+    var js map[string]interface{}
+    return json.Unmarshal([]byte(s), &js) == nil
+
+}
+
 /* {{{ /item ---------------------------------------------------------------- */
 
 // handles requests/updates for specific items
@@ -61,6 +67,11 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.FormValue("params")
 	
 	if r.Method == "POST" {
+		if (!isJSON(params)) {
+			http.Error(w, "Invalid params, not json", 400)
+			return
+		}
+
 		threshold := r.FormValue("threshold")
 		lower := r.FormValue("threshold_type")
 		fmt.Printf("type: %s", lower)
@@ -68,10 +79,12 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
-		res, _ := db.Exec(`UPDATE threshold SET lower = $1, value = $2 WHERE itemid = $3`, lower, threshold, id)
-		affected, _ := res.RowsAffected()
-		if affected == 0 {
-			db.Exec(`INSERT INTO threshold VALUES (default, $1, $2, $3)`, id, lower, threshold)
+		res, err := db.Exec(`UPDATE threshold SET lower = $1, value = $2 WHERE itemid = $3`, lower, threshold, id)
+		if err == nil {
+			affected, _ := res.RowsAffected()
+			if affected == 0 {
+				db.Exec(`INSERT INTO threshold VALUES (default, $1, $2, $3)`, id, lower, threshold)
+			}
 		}
 		updateFuture(id)
 		http.Redirect(w, r, r.Header["Referer"][0], 302)
