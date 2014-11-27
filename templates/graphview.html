@@ -19,14 +19,16 @@
 {{ end }}
 
 {{ define "body" }}
-    <i><a href="/dashboard" class="btn">Dashboard</a></i>
-   <p>
+   <div id="header">
+      <a href="/dashboard" class="btn">« Dashboard</a>
+   </div>
+   <div id="subheader">
       <b data-futid="{{ . }}" id="itemhost"></b>
-      <code>ItemFutureId = {{ . }}</code>
       <a href="cpu" class="btn">cpu load</a>
       <a href="mem" class="btn">available memory</a>
       <a href="swap" class="btn">Free swap space</a>
-   </p>
+      <code>ItemFutureId = {{ . }}</code>
+   </div>
 
    <div id="chart">
       <svg style="height:500px; width:100%"></svg>
@@ -68,13 +70,6 @@
             <textarea class="form-control" name="params" id="params"></textarea>
          </div>
 
-         <div class="form-group">
-            <label>Model details</label>
-            <p class="form-control-static">
-               <code id="details"></code>
-            </p>
-         </div>
-
          <input id="sendPeriod" type="submit" class="btn btn-primary" value="Update item"/>
          
       </form>
@@ -85,6 +80,13 @@
          </div>
          <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update forecast with trend</button>
          <button id="clearPeriods" class="btn btn-default" onclick='return false;'>Clear current forecast range</button>
+
+         <div class="form-group" style="margin-top:1em">
+            <label>Model details</label>
+            <p class="form-control-static">
+               <code id="details"></code>
+            </p>
+         </div>
       </form>
     </div>
    </div>

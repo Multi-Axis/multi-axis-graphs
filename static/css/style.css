@@ -11,6 +11,16 @@
 .critical {
    background:#f2dede;
 }
+#header {
+   background:rgb(49,49,49);
+}
+#header a {
+   color:white;
+}
+#subheader {
+   background:rgb(131,255,141);
+   padding-left:0.5em;
+}
 
 span.critical {
    color:red;
@@ -24,12 +34,12 @@ span.critical {
 }
 #zoomWrap {
    margin-left: 100px;
-   width: 90%
 }
 #zoomRange {
    width: 20%;
    border:0;
    color:#f6931f;
+   background:none;
    font-weight:bold;
    width: 270px;
 }
