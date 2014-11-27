@@ -23,11 +23,11 @@ $(function(){
     wholeData.params.stop_upper = null;
     console.log(wholeData.params)
     postData(wholeData.params, wholeData.threshold.value);
-  })
+  });
 
   $.getJSON("/api/" + getCurrentFutid(), function(data) {
     drawAndSetData(data);
-  })
+  });
 })
 
 function postData(params, threshold, doPost) {
@@ -80,6 +80,10 @@ function setData(data) {
   $("#params").val(JSON.stringify(data.params));
   $("#threshold_lower").prop('checked', data.threshold.lower);
   $("#threshold_higher").prop('checked', !data.threshold.lower);
+}
+
+function updateParams() {
+  $("#params").val(JSON.stringify(wholeData.params));
 }
 
 var timeFormat = function(d) {
@@ -165,7 +169,10 @@ function draw() {
 
 //Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
+  wholeData.params.stop_lower = Math.round(period[0]);
+  wholeData.params.stop_upper = Math.round(period[1]);
   $('#period').text("From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]));
+  updateParams();
 }
 
 function renderThreshold(chart) {
@@ -205,6 +212,7 @@ function setPeriodParams() {
   if(period.length == 2) {
     wholeData.params.stop_lower = period[0];
     wholeData.params.stop_upper = period[1];
+    updateParams();
   }
 }
 
