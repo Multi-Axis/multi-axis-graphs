@@ -510,6 +510,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// check that habbix is present
+	_, err = exec.Command("habbix", "--version").CombinedOutput()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
