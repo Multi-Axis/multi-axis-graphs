@@ -82,7 +82,8 @@ public abstract class ZabReaderImpl {
         final Validation<Errors, List<String>>
           filtersv =  getJsonObject(json, "params")
                       .bind(obj  -> getJsonString(obj, "preFilter"))
-                      .map(jstring  -> list(jstring.getString()));
+                      .map(jstring  -> list(jstring.getString()))
+                      .f().bind(err  -> success(List.nil()));
 
         final Validation<Errors, Stream<Long>>
           boundsv = getJsonArray(json, "draw_future")
