@@ -5,6 +5,7 @@ var wholeData;
 var originalChart;
 var zoomRange = [];
 var temp;
+var zoomed;
 
 $(function(){
   // document.getElementById('sendPeriod').addEventListener('click', function() {
@@ -45,7 +46,6 @@ function getCurrentFutid() {
 }
 
 function initSlider(data) {
-  console.log(wholeData)
     $("#slider").slider({
       range: true,
       min: data.history[0].time,
@@ -144,15 +144,22 @@ function draw() {
       renderThreshold(chart);
     });
 
-    //draw a line when chart is clicked
-    chart.interactiveLayer.dispatch.on('elementClick', function(e) {
-                                                          if (e != undefined && period.length<2) {
-                                                            chart.interactiveLayer.renderPosition(e.pointXValue)
-                                                            period.push(e.pointXValue);
-                                                            period.sort(sortAscending);
+    chart.interactiveLayer.dispatch.on('elementMouseup', function(e) {
+      var zoomPeriod = [e.xValue, e.x2Value];
+      zoomPeriod.sort(sortAscending);
+      drawZoomedChart(zoomPeriod);
+      chart.interactiveLayer.clearZoomCurtain();
+    })
 
-                                                            if (period.length == 2) {appendStartAndEnd(period)}
-                                                        }});
+    //draw a line when chart is clicked
+    // chart.interactiveLayer.dispatch.on('elementClick', function(e) {
+    //                                                       if (e != undefined && period.length<2) {
+    //                                                         chart.interactiveLayer.renderPosition(e.pointXValue)
+    //                                                         period.push(e.pointXValue);
+    //                                                         period.sort(sortAscending);
+
+    //                                                         if (period.length == 2) {appendStartAndEnd(period)}
+    //                                                     }});
     //clear start and end points
     document.getElementById('clearPeriods').addEventListener('click', function() {
                                                                         chart.interactiveLayer.clearPeriodLines();
@@ -161,11 +168,13 @@ function draw() {
                                                                       });
 
 
-
+    
     document.getElementById('threshold').value = wholeData.threshold.value;
     return chart;
   });
 }
+
+
 
 //Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
@@ -182,7 +191,6 @@ function renderThreshold(chart) {
 
 
 function drawZoomedChart(data) {
-  console.log(chart)
   var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
   var newFuture = chartData[1].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
   var tempChartData = JSON.parse(JSON.stringify(chartData));
