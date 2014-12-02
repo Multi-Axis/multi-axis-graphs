@@ -15,6 +15,7 @@ import (
 	"strings"
 	"math"
 	"sort"
+	"flag"
 
 )
 
@@ -116,8 +117,11 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 				db.Exec(`INSERT INTO threshold VALUES (default, $1, $2, $3)`, id, lower, threshold)
 			}
 		}
-		updateFuture(id)
-		http.Redirect(w, r, r.Header["Referer"][0], 302)
+		if updateFuture(id) {
+			http.Redirect(w, r, r.Header["Referer"][0], 302)
+		} else { 
+			http.Error(w, "Update failed, check params", 400)
+		}
 
 	} else {
 		deliverItemByItemFutureId(w, id, params)
@@ -237,14 +241,16 @@ func layout(w http.ResponseWriter, t *template.Template, data interface{}) {
 /* {{{ interfacing habbix --------------------------------------------------- */
 
 // tells habbix to re-sync database after parameter update
-func updateFuture(id int) {
+func updateFuture(id int) bool {
 	fmt.Printf("\nStarting sync...")
 	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id)).CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf(err.Error())
+		return false
 	}
 	fmt.Printf("%s", out)
 	fmt.Printf("\nDB Synced.")
+	return true
 }
 
 // gets future data from habbix without changing stored parameters
@@ -544,8 +550,11 @@ func getFutureItems(w http.ResponseWriter) []Item {
 
 // initializes db connection and uses standard http.HandleFunc for routing
 func main() {
+	var database = flag.String("s","multi-axis","what db to connect to")
+	flag.Parse()
+	fmt.Printf("connecting to: %s\n",*database)
 	var err error
-	db, err = sql.Open("postgres", "user=ohtu dbname=multi-axis sslmode=disable")
+	db, err = sql.Open("postgres",fmt.Sprintf("user=ohtu dbname=%s sslmode=disable", *database))
 	if err != nil {
 		log.Fatal(err)
 	}
