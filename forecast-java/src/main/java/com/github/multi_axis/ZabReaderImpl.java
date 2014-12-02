@@ -81,7 +81,7 @@ public abstract class ZabReaderImpl {
 
         final Validation<Errors, List<String>>
           filtersv =  getJsonObject(json, "params")
-                      .bind(obj  -> getJsonString(obj, "preFilter"))
+                      .bind(obj  -> getJsonString(obj, "pre_filter"))
                       .map(jstring  -> list(jstring.getString()))
                       .f().bind(err  -> success(List.nil()));
 
@@ -104,36 +104,6 @@ public abstract class ZabReaderImpl {
                 clocks.zip(values)
                   .map(cv  -> timedVal(cv._1().longValue(), cv._2()))))))));
 
-        /* 
-        final Validation<Errors, Data<Zab,Stream<TimedValue<BigDecimal>>>>
-          datas =
-            getJsonNumber(json, "value_type")
-              .bind((JsonNumber jnum)  -> zabType(jnum))
-              .bind(                                (Zab.Type zabtype)  ->
-            getJsonArray(json, "clocks")
-              .bind(arr  -> jsonNumbers(arr))
-              .bind(nums  -> longs(nums)).bind(               clocks  ->
-            getJsonArray(json, "values")
-              .bind(arr  -> jsonNumbers(arr))
-              .bind(nums  -> bigDecimals(nums)).bind(         values  ->
-            getJsonObject(json, "params")
-              .bind(obj  -> getJsonString(obj, "preFilter"))
-              .map((JsonString jstring)  ->
-                     list(jstring.getString())).bind(         filters  ->
-            getJsonArray(json, "draw_future")
-              .bind(arr  -> jsonNumbers(arr))
-              .bind(nums  -> longs(nums)).bind(               bounds  -> 
-            success(Boolean.valueOf(bounds.length() == 2))
-              .bind(                                          check  ->
-            (check.booleanValue() ? success(bounds.index(0)) 
-                                  : fail(badBounds())).bind(  start  ->
-            success(bounds.index(1)).map(                     end  ->
-            data( zab(zabtype,start,end,filters),
-                  clocks.zip(values)
-                    .map(cv  -> timedVal(cv._1(), cv._2())))))))))));
-
-        return datas; 
-        */
       }
 
 
