@@ -28,17 +28,12 @@
       <a href="mem" class="btn">available memory</a>
       <a href="swap" class="btn">Free swap space</a>
       <code>ItemFutureId = {{ . }}</code>
+      <input id="zoomReset" class="btn btn-primary" type="submit" value="Reset zoom" style="visibility:hidden;"/>
    </div>
 
    <div id="chart">
       <svg style="height:500px; width:100%"></svg>
-   </div>
-    <div id = "zoomWrap">
-        <label for="zoomRange">Zoom range:</label>
-        <input type="text" id="zoomRange" readonly>
-    </div>
-    
-    <div id="slider"></div>   
+   </div>  
      
    <div class="container-fluid">
     <div class="row">

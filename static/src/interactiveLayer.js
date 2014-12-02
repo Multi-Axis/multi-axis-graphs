@@ -10,6 +10,8 @@ nv.interactiveGuideline = function() {
 	"use strict";
 	var tooltip = nv.models.tooltip();
 	//Public settings
+  var zoomStartX;
+  var mousedown;
 	var width = null
 	, height = null
     //Please pass in the bounding chart's top and left margins
@@ -17,9 +19,10 @@ nv.interactiveGuideline = function() {
 	, margin = {left: 0, top: 0}
 	, xScale = d3.scale.linear()
 	, yScale = d3.scale.linear()
-	, dispatch = d3.dispatch('elementMousemove', 'elementMouseout','elementDblclick', 'elementClick')
+	, dispatch = d3.dispatch('elementMousemove', 'elementMouseout','elementDblclick', 'elementClick', 'elementMousedown', 'elementMouseup')
 	, showGuideLine = true
 	, svgContainer = null  
+
     //Must pass in the bounding chart's <svg> container.
     //The mousemove event is attached to this container.
 	;
@@ -32,7 +35,8 @@ nv.interactiveGuideline = function() {
 	function layer(selection) {
 		selection.each(function(data) {
 				var container = d3.select(this);
-				
+				var drag;
+        
 				var availableWidth = (width || 960), availableHeight = (height || 400);
 
 				var wrap = container.selectAll("g.nv-wrap.nv-interactiveLineLayer").data([data]);
@@ -40,6 +44,7 @@ nv.interactiveGuideline = function() {
         wrapEnter.append("g").attr("class", 'nv-text');
 				wrapEnter.append("g").attr("class", "nv-line");				
 				wrapEnter.append("g").attr("class", "nv-guideline")
+        wrapEnter.append("g").attr("class", "nv-zoomCurtain")
 				wrapEnter.append("g").attr("class","nv-interactiveGuideLine");
 				
 				if (!svgContainer) {
@@ -109,12 +114,45 @@ nv.interactiveGuideline = function() {
                             return;
                       }
                       
+                      
                       var pointXValue = xScale.invert(mouseX);
-                      dispatch.elementMousemove({
+                      if (d3.event.type == 'mousemove') {
+                        drag = true;
+                        dispatch.elementMousemove({
                             mouseX: mouseX,
                             mouseY: mouseY,
                             pointXValue: pointXValue
-                      });
+                        });
+                      }
+
+                      if (d3.event.type == 'mousedown') {
+                        drag = false;
+                        mousedown = pointXValue;
+                        zoomStartX = mouseX;
+                        dispatch.elementMousedown({
+                          mouseX: mouseX,
+                          mouseY: mouseY,
+                          pointXValue: pointXValue
+                        })
+                      }
+
+                      if (d3.event.type == 'mouseup') {
+                        zoomStartX = false;
+                        if (drag) {
+                          dispatch.elementMouseup({
+                            mouseX: mouseX,
+                            mouseY: mouseY,
+                            xValue: pointXValue,
+                            x2Value: mousedown
+                          })
+                        } else {
+                          dispatch.elementClick({
+                            pointXValue: pointXValue,
+                            pointXLocation: mouseX
+                          });
+                        }
+
+                      }
 
                       //If user double clicks the layer, fire a elementDblclick dispatch.
                       if (d3.event.type === "dblclick") {
@@ -124,19 +162,16 @@ nv.interactiveGuideline = function() {
                             pointXValue: pointXValue
                         });                     
                       }
-                      if (d3.event.type === 'click') {
-                        dispatch.elementClick({
-                            pointXValue: pointXValue,
-                            pointXLocation: mouseX
-                        });
-                      }
+                      
                 }
 
 				svgContainer
 				      .on("mousemove",mouseHandler, true)
 				      .on("mouseout" ,mouseHandler,true)
               .on("dblclick" ,mouseHandler)
-              .on("click", mouseHandler)
+              // .on("click", mouseHandler)
+              .on("mousedown", mouseHandler)
+              .on("mouseup", mouseHandler)
 				      ;
 
 				 //Draws a vertical guideline at the given X postion.
@@ -157,6 +192,37 @@ nv.interactiveGuideline = function() {
 				 	line.exit().remove();
 
 				}
+
+        layer.renderZoomCurtain = function(x) {
+          if (!zoomStartX) {
+            layer.clearZoomCurtain();
+            return;
+          }
+          layer.clearZoomCurtain();
+          var curtain = wrap.select(".nv-zoomCurtain")
+                            .selectAll("rect")
+                            .data((x != null) ? [nv.utils.NaNtoZero(x)] : [], String);
+          
+          var xPos;
+          if (x > zoomStartX) {
+            xPos = zoomStartX;
+          } else {
+            xPos = x;
+          }
+          curtain.enter()
+                .append("rect")
+                .attr("class", "nv-zoomCurtain")
+                .attr("x", xPos)
+                .attr("y", 0)
+                .attr("width", Math.abs(zoomStartX - x))
+                .attr("height", availableHeight)
+                .attr("opacity", 0.1)   
+        }
+
+        layer.clearZoomCurtain = function() {
+          var curtains = wrap.select(".nv-zoomCurtain").selectAll("rect");
+          curtains.remove();
+        }
 
         layer.clearPeriodLines = function() {
           var line = wrap.select(".nv-guideline").selectAll("line");

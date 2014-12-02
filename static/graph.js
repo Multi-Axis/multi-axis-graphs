@@ -5,14 +5,14 @@ var wholeData;
 var originalChart;
 var zoomRange = [];
 var temp;
+var zoomed;
 
 $(function(){
-  // document.getElementById('sendPeriod').addEventListener('click', function() {
-  //   var threshold = document.getElementById('threshold').value;
-  //   console.log(threshold)
-  //   setPeriodParams();
-  //   postData(wholeData.params, threshold, true);
-  // })
+
+  document.getElementById('zoomReset').addEventListener('click', function() {
+    document.getElementById('zoomReset').style.visibility = 'hidden'
+    draw();
+  })
 
   document.getElementById('trendForecast').addEventListener('click', function() {
     wholeData.params.stop_lower = 14 * -86400;
@@ -42,25 +42,6 @@ function postData(params, threshold, doPost) {
 
 function getCurrentFutid() {
   return $("#itemhost").data("futid");
-}
-
-function initSlider(data) {
-  console.log(wholeData)
-    $("#slider").slider({
-      range: true,
-      min: data.history[0].time,
-      max: data.future.slice(-1)[0].time,
-      values: [0, data.future.slice(-1)[0].time],
-      slide: function( event, ui ) {
-        $("#zoomRange").val(timeFormat(ui.values[0]) + " - " + timeFormat(ui.values[1]));
-        zoomRange = ui.values
-      },
-      stop: function(event, ui) {
-        drawZoomedChart(zoomRange);
-      }
-    })
-    zoomRange = $('#slider').slider("values");
-    $("#zoomRange").val(timeFormat($("#slider").slider("values", 0)) + " - " + timeFormat($("#slider").slider("values", 1)));
 }
 
 function setData(data) {
@@ -130,13 +111,17 @@ function draw() {
     renderThreshold(chart);
 
     //if the period comes from db it should be rendered
-    if (!$.isEmptyObject(wholeData) && wholeData.params.stop_lower != undefined && wholeData.params.stop_upper != undefined) {
-      chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
-      chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
-      period.push(wholeData.params.stop_lower);
-      period.push(wholeData.params.stop_upper);
-      appendStartAndEnd(period)
+    chart.interactiveLayer.clearPeriodLines();
+    chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
+    chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
+    period = [];
+    if (wholeData.params.stop_upper != null) {
+      period.push(wholeData.params.stop_upper)
     }
+    if (wholeData.params.stop_lower != null) {
+      period.push(wholeData.params.stop_lower);
+    }
+    
     
     //Update the chart when window resizes.
     nv.utils.windowResize(function() { 
@@ -144,7 +129,14 @@ function draw() {
       renderThreshold(chart);
     });
 
-    //draw a line when chart is clicked
+    chart.interactiveLayer.dispatch.on('elementMouseup', function(e) {
+      var zoomPeriod = [e.xValue, e.x2Value];
+      zoomPeriod.sort(sortAscending);
+      drawZoomedChart(zoomPeriod);
+      chart.interactiveLayer.clearZoomCurtain();
+    })
+
+    // draw a line when chart is clicked
     chart.interactiveLayer.dispatch.on('elementClick', function(e) {
                                                           if (e != undefined && period.length<2) {
                                                             chart.interactiveLayer.renderPosition(e.pointXValue)
@@ -157,15 +149,19 @@ function draw() {
     document.getElementById('clearPeriods').addEventListener('click', function() {
                                                                         chart.interactiveLayer.clearPeriodLines();
                                                                         period = [];
+                                                                        wholeData.params.stop_lower = null;
+                                                                        wholeData.params.stop_upper = null;
                                                                         document.getElementById('period').innerHTML = '';
                                                                       });
 
-
-
+    // document.getElementById('zoomReset').style.visibility = 'hidden';
+    
     document.getElementById('threshold').value = wholeData.threshold.value;
     return chart;
   });
 }
+
+
 
 //Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
@@ -182,7 +178,6 @@ function renderThreshold(chart) {
 
 
 function drawZoomedChart(data) {
-  console.log(chart)
   var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
   var newFuture = chartData[1].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
   var tempChartData = JSON.parse(JSON.stringify(chartData));
@@ -194,17 +189,19 @@ function drawZoomedChart(data) {
   }
   if (newFuture.length == 0) {
     chartData.pop();
-  } 
+  }
   draw();
+  document.getElementById('zoomReset').style.visibility = 'visible';
   //the draw above needs this time to draw before chartData is returned back to its original state
-  setTimeout(function() { chartData = tempChartData }, 1000)
+  setTimeout(function() {
+    chartData = tempChartData
+  }, 1000)
 }
 
 function drawAndSetData(data) {
   period = [];
   wholeData = data;
   setData(data);
-  initSlider(data)
   draw();
 }
 

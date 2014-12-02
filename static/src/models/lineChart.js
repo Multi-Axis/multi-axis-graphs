@@ -292,7 +292,7 @@ nv.models.lineChart = function() {
                   )();
           // console.log(chart.x()(singlePoint,pointIndex))
           interactiveLayer.renderGuideLine(pointXLocation);
-
+          interactiveLayer.renderZoomCurtain(e.mouseX);
       });
       
       interactiveLayer.dispatch.on("elementMouseout",function(e) {
