@@ -14,6 +14,14 @@ $(function(){
     draw();
   })
 
+  $("#periodFrom").bind('input', function() {
+    updatePeriod($("#periodFrom").val(), 0)
+  })
+
+  $("#periodTo").bind('input', function() {
+    updatePeriod($("#periodTo").val(), 1)
+  })
+
   document.getElementById('trendForecast').addEventListener('click', function() {
     wholeData.params.stop_lower = 14 * -86400;
     var days = document.getElementById('trendDays').value;
@@ -56,6 +64,7 @@ function setData(data) {
       color: "green"
     }
   ];
+  $("#modelSelect").append($("<option></option>").val(1).html("linReg"));
 	$("#details").text(JSON.stringify(data.details));
 	$("#itemhost").text(data.metric + " @ " + data.host);
   $("#params").val(JSON.stringify(data.params));
@@ -121,7 +130,7 @@ function draw() {
     if (wholeData.params.stop_lower != null) {
       period.push(wholeData.params.stop_lower);
     }
-    
+    appendStartAndEnd(period)
     
     //Update the chart when window resizes.
     nv.utils.windowResize(function() { 
@@ -151,10 +160,7 @@ function draw() {
                                                                         period = [];
                                                                         wholeData.params.stop_lower = null;
                                                                         wholeData.params.stop_upper = null;
-                                                                        document.getElementById('period').innerHTML = '';
                                                                       });
-
-    // document.getElementById('zoomReset').style.visibility = 'hidden';
     
     document.getElementById('threshold').value = wholeData.threshold.value;
     return chart;
@@ -167,7 +173,9 @@ function draw() {
 function appendStartAndEnd(period) {
   wholeData.params.stop_lower = Math.round(period[0]);
   wholeData.params.stop_upper = Math.round(period[1]);
-  $('#period').text("From: " + timeFormat(period[0]) + " To: " + timeFormat(period[1]));
+  $("#periodFrom").val(timeFormat(period[0]));
+  $("#periodTo").val(timeFormat(period[1]));
+ 
   updateParams();
 }
 
@@ -210,6 +218,20 @@ function setPeriodParams() {
     wholeData.params.stop_lower = period[0];
     wholeData.params.stop_upper = period[1];
     updateParams();
+  }
+}
+
+function updatePeriod(value, i) {
+
+  var epoch = new Date(value).getTime()/1000;
+  console.log(epoch)
+  if (!isNaN(epoch)) {
+    console.log("ss")
+    period[i] = epoch;
+    console.log(period)
+    chart.interactiveLayer.clearPeriodLines();
+    chart.interactiveLayer.renderPosition(period[0])
+    chart.interactiveLayer.renderPosition(period[1])
   }
 }
 

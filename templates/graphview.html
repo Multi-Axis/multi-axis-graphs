@@ -57,9 +57,15 @@
          </div>
          <div class="form-group">
             <label>Period</label>
-            <p id="period" class="form-control-static"></p>
+            <p>
+               <b>From:</b><input type="text" id="periodFrom" />
+               <b>To:</b><input type="text" id="periodTo" />
+            </p>
          </div>
-
+         <div class="form-group">
+            <label>Forecast model</label>
+            <select id="modelSelect" class="form-control"></select>
+         </div>
          <div class="form-group">
             <label>Model parameters</label>
             <textarea class="form-control" name="params" id="params"></textarea>
