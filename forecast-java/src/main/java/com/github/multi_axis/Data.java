@@ -1,5 +1,12 @@
 package com.github.multi_axis;
 
+/** A Data object contains a data object and a metadata object of the given
+ *  types.
+ *
+ *  @param  <META>    Type of the metadata.
+ *
+ *  @param  <DATA>    Type of the data. */
+
 public final class Data<META,DATA> {
 
   public final META meta;

@@ -8,8 +8,8 @@ import fj.data.IO;
 import com.github.multi_axis.DummyErrorWriterImpl;
 
 import static com.github.multi_axis.Utils.first;
-import static com.github.multi_axis.Conf.Reader.zabReader;
-import static com.github.multi_axis.Conf.Writer.zabWriter;
+import static com.github.multi_axis.Formats.Reader.zabReader;
+import static com.github.multi_axis.Formats.Writer.zabWriter;
 import static com.github.multi_axis.ForecastFunctions.timedValsLeastSquares;
 import static com.github.multi_axis.ForecastProcesses.forecastProcesses;
 import static com.github.multi_axis.Filters.filtersFromZab;
@@ -24,7 +24,7 @@ public class LeastSquaresApp {
           .with("leastSquares",
                 zabReader,
                 filtersFromZab,
-                data  -> timedValsLeastSquares(data),
+                timedValsLeastSquares,
                 zabWriter);
 
       return fcasts.run(arg, System.in, System.out); }
