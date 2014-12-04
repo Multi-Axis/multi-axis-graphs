@@ -20,8 +20,8 @@ import static java.math.RoundingMode.HALF_EVEN;
 import static fj.Ord.longOrd;
 import static fj.data.Stream.stream;
 import static fj.P.p;
-import static fj.Option.none;
-import static fj.Option.some;
+import static fj.data.Option.none;
+import static fj.data.Option.some;
 
 import static com.github.multi_axis.TimedValue.timedVal;
 import static com.github.multi_axis.Time.date;
@@ -122,8 +122,12 @@ public abstract class ForecastFunctions {
                     cAndVs  ->  p(cAndVs._1(),
                                   cAndVs._2().cons(tval.value)),
                     p(epochSecs(date(tval.clock)),stream(tval.value))),
-              TreeMap.empty(dateOrd) // some() below is ugly but should work.
-            ).map(cAndVs  -> timedVal(cAndVs._1(),mean(cAndVs._2().some())))
+              TreeMap.empty(dateOrd) // valueE below is ugly but should work.
+            ).map(cAndVs  ->
+                    timedVal(
+                      cAndVs._1(),
+                      mean(cAndVs._2())
+                        .valueE("No mean value. This shouldn't happen.")))
             .values()); }
 
   public static F<Stream<TimedValue<BigDecimal>>,
@@ -141,14 +145,24 @@ public abstract class ForecastFunctions {
         slopeO = 
           covariance(as,bs).bind( cov  ->
           variance(as).bind(      var  ->
-          var.compareTo(ZERO != 0)
+          (var.compareTo(ZERO) != 0)
             ? some(cov.divide(var,20,HALF_EVEN))
             : none()));
 
-      final BigDecimal
-        intercept = mean(bs).subtract(slope.multiply(mean(as)));
+      final Option<BigDecimal>
+        interceptO = 
+          slopeO.bind(    slope  ->
+          mean(bs).bind(  meanb  ->
+          mean(as).map(   meana  ->
+            meanb.subtract(slope.multiply(meana)))));
 
-      return (x  -> intercept.add(slope.multiply(x))); }
+      final Option<F<BigDecimal,BigDecimal>>
+        result =
+          slopeO.bind(      slope  ->
+          interceptO.map(   intercept  ->
+            x  -> intercept.add(slope.multiply(x))));
+
+      return result; }
 
 
   /** Return the covariance of the values in the two streams. Values are
@@ -168,17 +182,17 @@ public abstract class ForecastFunctions {
       return
         mean(as).bind(  amean  ->
         mean(bs).bind(  bmean  ->
-        asbs.isNotEmpty()
-          ? some( sum(
-                    asbs.map(ab  -> 
-                      ab._1().subtract(amean).multiply(
-                      ab._2().subtract(bmean)))
-                  ).divide(
-                    n.subtract(ONE),20,HALF_EVEN))
-          : none();}
+        n.compareTo(ONE) > 0
+          ? sum(
+              asbs.map(ab  -> 
+                ab._1().subtract(amean).multiply(
+                ab._2().subtract(bmean)))
+            ).map(  
+              x  -> x.divide(n.subtract(ONE),20,HALF_EVEN))
+          : none())); }
 
   /** Return the variance of the values in the stream. */
-  public static BigDecimal variance(Stream<BigDecimal> as) {
+  public static Option<BigDecimal> variance(Stream<BigDecimal> as) {
     return covariance(as,as); }
 
   //TODO FIXME THINK Better number type for this kind of arithmetic?
@@ -186,7 +200,7 @@ public abstract class ForecastFunctions {
   public static Option<BigDecimal>
     mean(final Stream<BigDecimal> as) {
       return  as.isNotEmpty()
-                ? some(sum(as).divide(length(as),20,HALF_EVEN))
+                ? sum(as).map(x  -> x.divide(length(as),20,HALF_EVEN))
                 : none(); }
 
   /** Return the sum of the numbers in the stream. */

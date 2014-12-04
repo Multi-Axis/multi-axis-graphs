@@ -8,6 +8,7 @@ import fj.Unit;
 import fj.data.Stream;
 import fj.data.IO;
 import fj.data.Validation;
+import fj.data.Option;
 
 import javax.json.JsonObject;
 
@@ -110,7 +111,7 @@ public abstract class Formats {
 
     /** A writer for producing JsonObject objects of the format specified at 
      * TODO ADD URL HERE. */
-    public static final Writer<Zab,F<BigDecimal,BigDecimal>>
+    public static final Writer<Zab,Option<F<BigDecimal,BigDecimal>>>
       zabWriter = writer(ZabWriterImpl.write);
 
                           

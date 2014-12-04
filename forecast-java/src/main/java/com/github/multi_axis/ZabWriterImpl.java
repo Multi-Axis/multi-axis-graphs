@@ -6,11 +6,10 @@ import java.math.RoundingMode;
 import fj.F;
 import fj.F2;
 import fj.data.Stream;
+import fj.data.Option;
 
 import javax.json.JsonObject;
-
-import com.github.multi_axis.TimedValue;
-import com.github.multi_axis.ZabWriterUtils;
+import javax.json.JsonObjectBuilder;
 
 import static javax.json.Json.createObjectBuilder;
 
@@ -20,16 +19,24 @@ import static com.github.multi_axis.Utils.*;
 
 public abstract class ZabWriterImpl {
 
-  public static final F2<Zab, F<BigDecimal,BigDecimal>, JsonObject>
+  public static final F2<Zab, Option<F<BigDecimal,BigDecimal>>, JsonObject>
     write = (meta,result)  -> writeZabJson(meta,result);
 
   public static final JsonObject
-    writeZabJson(Zab meta, F<BigDecimal,BigDecimal> result) {
-      return  timedValsDetailsJson(
-                plot(result, meta.bounds.start, meta.bounds.end, daySecs),
-                formatter(meta.type),
-                createObjectBuilder().build()); }
+    writeZabJson(Zab meta, Option<F<BigDecimal,BigDecimal>> result) {
 
+      final JsonObjectBuilder jsonbldr = createObjectBuilder();
+
+      return  
+        timedValsDetailsJson(
+          result.map( fun  -> 
+                        plot(fun, meta.bounds.start, meta.bounds.end, daySecs))
+                .orSome(Stream.nil()),
+          formatter(meta.type),
+          result.map(fun  -> jsonbldr.build())
+                .orSome(jsonbldr
+                          .add("warning", "Not enough data for forecast.")
+                          .build())); }
 
   private ZabWriterImpl() {}
 
