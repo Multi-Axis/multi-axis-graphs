@@ -27,6 +27,10 @@ func isJSON(s string) bool {
 
 }
 
+func Scalefmt(s int, x float32) float32 {
+	return x / float32(s)
+}
+
 /* {{{ /item ---------------------------------------------------------------- */
 
 // handles requests/updates for specific items
@@ -279,9 +283,10 @@ func getItemFutureIdByHostMetric(host string, metric string) int {
 	AND item_future.itemid = items.itemid;`, host, metric).Scan(&fid)
 
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err, host, metric)
 		return -1
 	}
+	fmt.Println(host, metric, fid)
 	return fid
 }
 
@@ -356,6 +361,7 @@ type Item struct {
 	Color_next_24h string
 	Color_next_7d  string
 	Condition      string
+	Scale          int
 }
 
 type Host struct {
@@ -413,12 +419,13 @@ func getItem(ifid int) (error, Item) {
 	var vtype int
 
 	row := db.QueryRow(`
-		SELECT i.value_type, if.id, i.name, i.itemid
+		SELECT i.value_type, if.id, i.name, i.itemid, m.scale
 		FROM item_future if
 		INNER JOIN items i on i.itemid = if.itemid
+		INNER JOIN metric m on m.key_ = i.key_
 		WHERE if.id = $1`, ifid)
 
-	if err := row.Scan(&vtype, &res.Id, &res.Name, &res.ItemId); err != nil {
+	if err := row.Scan(&vtype, &res.Id, &res.Name, &res.ItemId, &res.Scale); err != nil {
 		return fmt.Errorf("fetching info failed (%g): %s", ifid, err), Item{}
 	}
 
@@ -441,6 +448,11 @@ func getItem(ifid int) (error, Item) {
 	if err := row.Scan(&res.Max_past_7d, &res.Max_next_24h, &res.Max_next_7d); err != nil {
 		log.Fatal("Could not find item_future ", ifid, " ", err)
 	}
+
+	res.Threshold = res.Threshold / float32(res.Scale)
+	res.Max_past_7d = res.Max_past_7d / float32(res.Scale)
+	res.Max_next_24h = res.Max_next_24h / float32(res.Scale)
+	res.Max_next_7d = res.Max_next_7d / float32(res.Scale)
 
 	return nil, res
 }
