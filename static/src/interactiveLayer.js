@@ -202,13 +202,8 @@ nv.interactiveGuideline = function() {
           var curtain = wrap.select(".nv-zoomCurtain")
                             .selectAll("rect")
                             .data((x != null) ? [nv.utils.NaNtoZero(x)] : [], String);
-          
-          var xPos;
-          if (x > zoomStartX) {
-            xPos = zoomStartX;
-          } else {
-            xPos = x;
-          }
+
+          var xPos = x > zoomStartX ? zoomStartX : x;
           curtain.enter()
                 .append("rect")
                 .attr("class", "nv-zoomCurtain")
