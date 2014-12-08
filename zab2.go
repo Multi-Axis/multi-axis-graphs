@@ -21,6 +21,7 @@ import (
 
 //	Makes constant new db connections unnecessary.
 var db *sql.DB
+var habbixCfg string
 
 func isJSON(s string) bool {
     var js map[string]interface{}
@@ -46,7 +47,7 @@ type Model struct {
 
 // handles requests/updates for specific items
 func itemHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("itemHandler")
+	fmt.Printf("itemHandler, url:%s\n",r.URL.Path)
 
 	parts := strings.Split(r.URL.Path, "/")
 
@@ -86,6 +87,7 @@ func getModels() []Model {
 
 /* {{{ /api */
 func apiHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("apiHandler, url:%s\n",r.URL.Path)
 	parts := strings.Split(r.URL.Path, "/")
 	id, err := strconv.Atoi(parts[len(parts)-1])
 	if err != nil {
@@ -98,7 +100,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	model  := r.FormValue("modelSelect")
 	
 	if r.Method == "POST" {
-		if (!isJSON(params)) {
+		if (!isJSON(params) && params != "{}") {
 			http.Error(w, "Invalid params, not json", 400)
 			return
 		}
@@ -134,6 +136,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 // handles graph drawing thingy requests, css files, that sort of thing.
 func staticHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("staticHandler, url:%s\n",r.URL.Path)
 	url := r.URL.Path
 	path := strings.TrimPrefix(url, "/")
 
@@ -201,7 +204,7 @@ func showCondition(cond float64) string {
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("dashboardHandler")
+	fmt.Printf("dashboardHandler, url:%s\n",r.URL.Path)
 	hosts, error_hosts := getHosts(w)
 
 	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
@@ -243,10 +246,10 @@ func layout(w http.ResponseWriter, t *template.Template, data interface{}) {
 // tells habbix to re-sync database after parameter update
 func updateFuture(id int) bool {
 	fmt.Printf("\nStarting sync...")
-	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id)).CombinedOutput()
+	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id),habbixCfg).CombinedOutput()
 	if err != nil {
 		fmt.Printf(err.Error())
-		return false
+		return true
 	}
 	fmt.Printf("%s", out)
 	fmt.Printf("\nDB Synced.")
@@ -257,7 +260,7 @@ func updateFuture(id int) bool {
 func getFutureNoUpdate(params string, id int) string {
 	fmt.Printf("params=%s,id=%d\n", params, id)
 	fmt.Printf(fmt.Sprintf("'%s'\n", params))
-	cmd := exec.Command("habbix", "execute", "--outcombine", "-p", params, strconv.Itoa(id))
+	cmd := exec.Command("habbix", "execute", "--outcombine", "-p", params, strconv.Itoa(id),habbixCfg)
 	fmt.Println(cmd.Args)
 	out, err := cmd.Output()
 	var newJSON = string(out)
@@ -551,8 +554,10 @@ func getFutureItems(w http.ResponseWriter) []Item {
 // initializes db connection and uses standard http.HandleFunc for routing
 func main() {
 	var database = flag.String("s","multi-axis","what db to connect to")
+	var hx = flag.String("h","config.yaml","what config for habbix")
 	flag.Parse()
-	fmt.Printf("connecting to: %s\n",*database)
+	habbixCfg = fmt.Sprintf("--config=%s", *hx)
+	fmt.Printf("connecting to: %s,\nhabbix cfg: %s\n",*database,habbixCfg)
 	var err error
 	db, err = sql.Open("postgres",fmt.Sprintf("user=ohtu dbname=%s sslmode=disable", *database))
 	if err != nil {
@@ -566,17 +571,21 @@ func main() {
 	}
 
 	// check that habbix is present
-	_, err = exec.Command("habbix", "--version").CombinedOutput()
+	var hab []byte
+	hab, err = exec.Command("habbix", "--version").CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Printf("%s is present\n",string(hab))
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
 	http.HandleFunc("/api/", apiHandler)
 
 	log.Print("Listening at port 8080 ( http://localhost:8080 )")
+
+
+	fmt.Printf("starting server...\n")
 
 	http.ListenAndServe(":8080", nil)
 }
