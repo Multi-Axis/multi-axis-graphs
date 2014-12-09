@@ -94,22 +94,33 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	params := r.FormValue("params")
-	model  := r.FormValue("modelSelect")
 	
 	if r.Method == "POST" {
+
+		model, err := strconv.Atoi(r.FormValue("model"))
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+		threshold  := r.FormValue("threshold")
+		lower      := r.FormValue("threshold_type")
+
 		if (!isJSON(params)) {
 			http.Error(w, "Invalid params, not json", 400)
 			return
 		}
 
-		threshold := r.FormValue("threshold")
-		lower := r.FormValue("threshold_type")
+		res, err := db.Exec(`UPDATE item_future SET params = $1, modelid = $3 WHERE id = $2`, params, id, model)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Printf("type: %s", lower)
-		db.Exec(`UPDATE item_future SET params = $1, model = $3 WHERE id = $2`, params, id, model)
+
 		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
-		res, err := db.Exec(`UPDATE threshold SET lower = $1, value = $2 WHERE itemid = $3`, lower, threshold, id)
+		res, err = db.Exec(`UPDATE threshold SET lower = $1, value = $2 WHERE itemid = $3`, lower, threshold, id)
 		if err == nil {
 			affected, _ := res.RowsAffected()
 			if affected == 0 {

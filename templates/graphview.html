@@ -45,7 +45,7 @@
          <!-- MODEL -->
          <div class="form-group">
             <label>Forecast model</label>
-            <select id="modelSelect" class="form-control">
+            <select name="model" id="modelSelect" class="form-control">
                {{ range .Models }}
                   <option value="{{ .Id }}">{{ .Name }}</option>
                {{ end }}
@@ -85,8 +85,8 @@
          </div>
 
          <!-- CONTROLS -->
-         <input  id="sendPeriod"    class="btn btn-primary" type="submit" value="Update item"/>
-         <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update forecast with trend</button>
+         <input  id="sendPeriod"    class="btn btn-primary" type="submit" value="Save"/>
+         <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update view</button>
          <button id="clearPeriods"  class="btn btn-default" onclick='return false'>Clear current forecast range</button>
 
       </div>
