@@ -108,7 +108,7 @@ function draw() {
     chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
 
     //set domain based on history, future and threshold
-    chart.yDomain(getYDomain(chartData, wholeData.threshold.value))
+    chart.yDomain(getYDomain(chartData, wholeData.threshold.high))
 
     //render the chart
     d3.select('#chart svg').datum(chartData).call(chart);
@@ -120,12 +120,13 @@ function draw() {
     chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
     chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
     period = [];
-    if (wholeData.params.stop_upper != null) {
-      period.push(wholeData.params.stop_upper)
-    }
     if (wholeData.params.stop_lower != null) {
-      period.push(wholeData.params.stop_lower);
+      period.push(wholeData.params.stop_lower)
     }
+    if (wholeData.params.stop_upper != null) {
+      period.push(wholeData.params.stop_upper);
+    }
+    period.sort(sortAscending);
     appendStartAndEnd(period)
     
     //Update the chart when window resizes.
@@ -172,15 +173,16 @@ function draw() {
 function appendStartAndEnd(period) {
   wholeData.params.stop_lower = Math.round(period[0]);
   wholeData.params.stop_upper = Math.round(period[1]);
-  $("#periodFrom").val(period[0] ? timeFormat(period[0]) : "");
-  $("#periodTo").val(period[1] ? timeFormat(period[1]) : "");
+  console.log(period)
+  $("#periodFrom").val(period[0] && period[0] > 0 ? timeFormat(period[0]) : "");
+  $("#periodTo").val(period[1] && period[1] > 0 ? timeFormat(period[1]) : "");
  
   updateParams();
 }
 
 function renderThreshold(chart) {
   chart.interactiveLayer.clearThresholdLineAndText();
-  chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.value));
+  chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.high));
 }
 
 
@@ -222,7 +224,7 @@ function setPeriodParams() {
 
 function updatePeriod(value, i) {
   var epoch = new Date(value).getTime()/1000;
-  if (!isNaN(epoch)) {
+  if (!isNaN(epoch) && epoch > 0) {
     period[i] = epoch;
     chart.interactiveLayer.clearPeriodLines();
     chart.interactiveLayer.renderPosition(period[0])
