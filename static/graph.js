@@ -159,7 +159,9 @@ function draw() {
                                                                         wholeData.params.stop_upper = null;
                                                                       });
     
-    document.getElementById('threshold').value = wholeData.threshold.value;
+    $('#tr_high').val(wholeData.threshold.high)
+    $('#tr_warning').val(wholeData.threshold.warning)
+    $('#tr_critical').val(wholeData.threshold.critical)
     return chart;
   });
 }

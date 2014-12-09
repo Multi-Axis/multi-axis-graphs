@@ -54,27 +54,26 @@
 
          <!-- THRESHOLD -->
          <div class="form-group">
-            <label>Current threshold</label>
-            <input type="number" step="any" id="threshold" name="threshold" class="form-control" />
-         </div>
-         <div class="form-group">
-            <div class="checkbox">
-               <b>Threshold:</b>
+            <label>Threshold (high / warning / critical)</label>
+            <div class="form-inline">
+               <input style="width:20%" type="number" step="any" id="tr_high" name="tr_high" class="form-control" />
+               <input style="width:20%" type="number" step="any" id="tr_warning" name="tr_warning" class="form-control" />
+               <input style="width:20%" type="number" step="any" id="tr_critical" name="tr_critical" class="form-control" />
                <label>
-                 <input type="radio" name="threshold_type" id="threshold_lower" value="t"/> Low
+                 <input type="radio" name="tr_lower" id="threshold_lower" value="t"/> Low
                </label>
                <label>
-                 <input type="radio" name="threshold_type" id="threshold_higher" value="f"/> High
+                 <input type="radio" name="tr_lower" id="threshold_higher" value="f"/> High
                </label>  
             </div>
          </div>
 
          <!-- PERIOD -->
-         <div class="form-group">
+         <div class="form-group form-inline">
             <label>Period</label>
             <p>
-               <b>From:</b>&nbsp;<input type="text" id="periodFrom" />
-               <b>To:</b>&nbsp;<input type="text" id="periodTo" />
+               <b>From:</b>&nbsp;<input style="width:35%" type="text" id="periodFrom" class="form-control" />
+               <b>To:</b>&nbsp;<input style="width:35%" type="text" id="periodTo" class="form-control" />
             </p>
          </div>
 

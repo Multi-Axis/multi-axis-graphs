@@ -102,8 +102,12 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		threshold  := r.FormValue("threshold")
-		lower      := r.FormValue("threshold_type")
+		lower, _    := strconv.ParseBool(r.FormValue("tr_lower"))
+		high, _     := strconv.ParseFloat(r.FormValue("tr_high"), 32)
+		warning, _  := strconv.ParseFloat(r.FormValue("tr_warning"), 32)
+		critical, _ := strconv.ParseFloat(r.FormValue("tr_critical"), 32)
+
+		tr := Threshold { lower, float32(high), float32(warning), float32(critical) }
 
 		if (!isJSON(params)) {
 			http.Error(w, "Invalid params, not json", 400)
@@ -115,17 +119,19 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("type: %s", lower)
-
-		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
-		res, err = db.Exec(`UPDATE threshold SET lower = $1, value = $2 WHERE itemid = $3`, lower, threshold, id)
-		if err == nil {
-			affected, _ := res.RowsAffected()
-			if affected == 0 {
-				db.Exec(`INSERT INTO threshold VALUES (default, $1, $2, $3)`, id, lower, threshold)
-			}
+		res, err = db.Exec(`UPDATE threshold SET lower = $1, high = $2, warning = $3, critical = $4
+		WHERE itemid = $5`, tr.Lower, tr.High, tr.Warning, tr.Critical, id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		affected, _ := res.RowsAffected()
+		log.Print(affected)
+		if affected == 0 {
+			db.Exec(`INSERT INTO threshold (id, itemid, lower, high, warning,
+			critical) VALUES (default, $1, $2, $3, $4, $5)`,
+			id, tr.Lower, tr.High, tr.Warning, tr.Critical)
 		}
 		updateFuture(id)
 		http.Redirect(w, r, r.Header["Referer"][0], 302)
@@ -162,8 +168,15 @@ type Dashboard struct {
 	ErrorHosts []ErrorHost
 }
 
+type Threshold struct {
+	Lower bool
+	High float32
+	Warning float32
+	Critical float32
+}
+
 type ByCondition struct { Hosts []Host }
-func (h ByCondition) Len() int {return len(h.Hosts) }
+func (h ByCondition) Len() int { return len(h.Hosts) }
 func (h ByCondition) Swap(i, j int) { h.Hosts[i], h.Hosts[j] = h.Hosts[j], h.Hosts[i] }
 func (h ByCondition) Less(i, j int) bool { return h.Hosts[i].ConditionNum > h.Hosts[j].ConditionNum }
 
@@ -171,15 +184,23 @@ func (h ByCondition) Less(i, j int) bool { return h.Hosts[i].ConditionNum > h.Ho
 // high = 1
 // warn = 2
 // critical = 3
-func getCondition(value float32, threshold float32, lower bool) (float64, string) {
-	if (lower && value < threshold) || (!lower && value > threshold) {
+func getCondition(value float32, tr Threshold) (float64, string) {
+	if comp(tr.Lower, value, tr.Critical) {
 		return 3, "critical"
-	} else if (lower && value < threshold*0.5) || (!lower && value > threshold*0.5) {
+	} else if comp(tr.Lower, value, tr.Warning) {
 		return 2, "warn"
-	} else if (lower && value < threshold*0.8) || (!lower && value > threshold*0.8) {
+	} else if comp(tr.Lower, value, tr.High) {
 		return 1, "high"
 	} else {
-		return 0, "normal" // Huh?
+		return 0, "normal"
+	}
+}
+
+func comp(lower bool, x float32, y float32) bool {
+	if lower {
+		return x < y
+	} else {
+		return x > y
 	}
 }
 
@@ -187,9 +208,9 @@ func setCondition(i *Item) float64 {
 	var c1 float64
 	var c2 float64
 	var c3 float64
-	c1, i.Color_past_7d  = getCondition(i.Max_past_7d, i.Threshold, i.ThresholdLow)
-	c2, i.Color_next_24h = getCondition(i.Max_next_24h, i.Threshold, i.ThresholdLow)
-	c3, i.Color_next_7d  = getCondition(i.Max_next_7d, i.Threshold, i.ThresholdLow)
+	c1, i.Color_past_7d  = getCondition(i.Max_past_7d, i.Threshold)
+	c2, i.Color_next_24h = getCondition(i.Max_next_24h, i.Threshold)
+	c3, i.Color_next_7d  = getCondition(i.Max_next_7d, i.Threshold)
 	c := math.Max(c1, math.Max(c2, c3))
 	i.Condition = showCondition(c)
 	return c
@@ -336,8 +357,6 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	var params string     // current parameters used by forecast calculation
 	var details string    // forecast-specific details
 	var metric string     // name of forecast metric
-	var threshold float32 // value of current treshold
-	var lower bool        // true if treshold is lower limit rather than upper
 
 	db.QueryRow(`SELECT item_future.modelid, items.value_type, item_future.itemid, items.name, host, params, details
 	FROM item_future
@@ -346,7 +365,7 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	WHERE item_future.id = $1`,
 		ifId).Scan(&modelId, &vtype, &itemId, &metric, &host, &params, &details)
 
-	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`, ifId).Scan(&threshold, &lower)
+	tr := queryThreshold(ifId)
 
 	// rows, _ := db.Query(`SELECT * FROM
 	// (SELECT DISTINCT ON (clock / 10800) clock, value FROM history WHERE itemid = $1) q
@@ -363,14 +382,23 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 		rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 		future = parseValueJSON(rows)
 	}
+
+	threshold := fmt.Sprintf(`{ "lower":%s, "high":%f, "warning":%f, "critical":%f }`,
+		boolToJson(tr.Lower), tr.High, tr.Warning, tr.Critical)
+
 	output := fmt.Sprintf(
 		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s,
 		"threshold":%s, "history":%s, "future":%s, "model":%d }`,
-		host, params, metric, details,
-		fmt.Sprintf(`{ "value":%f, "lower":%s }`, threshold, boolToJson(lower)),
-		history, future, modelId)
+		host, params, metric, details, threshold, history, future, modelId)
 
 	w.Write([]byte(output))
+}
+
+func queryThreshold(ifId int) Threshold {
+	var tr Threshold
+	db.QueryRow(`SELECT lower, high, warning, critical FROM threshold WHERE
+	itemid = $1`, ifId).Scan(&tr.Lower, &tr.High, &tr.Warning, &tr.Critical)
+	return tr
 }
 
 func boolToJson(b bool) string {
@@ -390,8 +418,7 @@ type Item struct {
 	Id             int
 	Name           string
 	ItemId         int
-	Threshold      float32
-	ThresholdLow   bool
+	Threshold      Threshold
 	Max_past_7d    float32
 	Max_next_24h   float32
 	Max_next_7d    float32
@@ -467,8 +494,7 @@ func getItem(ifid int) (error, Item) {
 		return fmt.Errorf("fetching info failed (%g): %s", ifid, err), Item{}
 	}
 
-	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
-		ifid).Scan(&res.Threshold, &res.ThresholdLow)
+	res.Threshold = queryThreshold(ifid)
 
 	row = db.QueryRow(`
 	SELECT max(h.value_max) as max_past_7d, max(f1.value) as max_next_24h,
@@ -485,13 +511,11 @@ func getItem(ifid int) (error, Item) {
 
 	if err := row.Scan(&res.Max_past_7d, &res.Max_next_24h, &res.Max_next_7d); err != nil {
 		log.Print("no history/future for item_future.id = ", ifid, ": ", err)
-		res.Threshold = -1;
 		res.Max_next_7d = -1;
 		res.Max_next_24h = -1;
 		res.Max_next_7d = -1;
 	}
 
-	res.Threshold = res.Threshold / float32(res.Scale)
 	res.Max_past_7d = res.Max_past_7d / float32(res.Scale)
 	res.Max_next_24h = res.Max_next_24h / float32(res.Scale)
 	res.Max_next_7d = res.Max_next_7d / float32(res.Scale)
