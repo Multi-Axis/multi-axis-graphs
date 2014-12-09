@@ -122,6 +122,10 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
+		fmt.Printf("type: %s", lower)
+
+
+		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
 		res, err = db.Exec(`UPDATE threshold SET lower = $1, high = $2, warning = $3, critical = $4
@@ -137,7 +141,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			id, tr.Lower, tr.High, tr.Warning, tr.Critical)
 		}
 		if updateFuture(id) {
-			http.Redirect(w, r, r.Header["Referer"][0], 302)
+			http.Redirect(w, r, r.Header.Get("Referer"), 302)
 		} else { 
 			http.Error(w, "Update failed, check params", 400)
 		}
@@ -280,11 +284,11 @@ func updateFuture(id int) bool {
 	fmt.Printf("\nStarting sync...")
 	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id),habbixCfg).CombinedOutput()
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Printf("DB sync error: %s\n",err.Error())
 		return true
 	}
 	fmt.Printf("%s", out)
-	fmt.Printf("\nDB Synced.")
+	fmt.Printf("DB Synced.\n")
 	return true
 }
 
@@ -298,7 +302,8 @@ func getFutureNoUpdate(params string, id int) string {
 	var newJSON = string(out)
 	fmt.Printf("%s", newJSON)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("habbix execute error: %s\nJSON:%s\n",err.Error(),newJSON)
+		
 	}
 	return newJSON
 }
