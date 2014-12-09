@@ -141,13 +141,13 @@ func TestUpdates(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 		if (!strings.Contains(string(body), fmt.Sprintf("threshold\":{ \"value\":%s",apiId.newthreshold))) {
-			t.Errorf("%s","wrong threshold")
+			t.Errorf("%s",fmt.Sprintf("wrong threshold for item %s",apiId.id))
 		}
 		if (!strings.Contains(string(body), fmt.Sprintf("lower\":%s }",apiId.newlower))) {
-			t.Errorf("%s","wrong  lower")
+			t.Errorf("%s",fmt.Sprintf("wrong  lower for item %s",apiId.id))
 		}
 		if (!strings.Contains(string(body), fmt.Sprintf("params\":%s",fmt.Sprintf("{\"test\":%s}",apiId.id)))) {
-			t.Errorf("%s","wrong params")
+			t.Errorf("%s",fmt.Sprintf("wrong params for item %s",apiId.id))
 		}
 	}
 }
