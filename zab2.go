@@ -471,9 +471,9 @@ func getItem(ifid int) (error, Item) {
 		ifid).Scan(&res.Threshold, &res.ThresholdLow)
 
 	row = db.QueryRow(`
-	SELECT max(h.value) as max_past_7d, max(f1.value) as max_next_24h,
+	SELECT max(h.value_max) as max_past_7d, max(f1.value) as max_next_24h,
 			max(f2.value) as max_next_7d
-	FROM history h, future f1, future f2
+	FROM trend h, future f1, future f2
 	WHERE h.itemid  = $1
 	AND   f1.itemid = $2
 	AND   f2.itemid = f1.itemid
@@ -484,7 +484,11 @@ func getItem(ifid int) (error, Item) {
 	AND f2.clock < EXTRACT(EPOCH FROM current_timestamp) + 7*86400`, res.ItemId, ifid)
 
 	if err := row.Scan(&res.Max_past_7d, &res.Max_next_24h, &res.Max_next_7d); err != nil {
-		log.Fatal("Could not find item_future ", ifid, " ", err)
+		log.Print("no history/future for item_future.id = ", ifid, ": ", err)
+		res.Threshold = -1;
+		res.Max_next_7d = -1;
+		res.Max_next_24h = -1;
+		res.Max_next_7d = -1;
 	}
 
 	res.Threshold = res.Threshold / float32(res.Scale)

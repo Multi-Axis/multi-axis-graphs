@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HOST="ohtu@85.23.130.197"
+HOST="ohtu"
 BIN="~/multiaxis-dist"
 TMP="~/multiaxis-dist.tmp"
 
