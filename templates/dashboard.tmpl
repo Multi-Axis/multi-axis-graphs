@@ -31,6 +31,7 @@
 <th>Past 7d</th>
 <th>Next 24h</th>
 <th>Next 6d</th>
+<th>Days in Data</th>
 {{ end }}
 
 {{ define "host_row" }}
@@ -41,11 +42,13 @@
    <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_past_7d }}>{{ printf "%.3f" .Cpu.Max_past_7d }}</span></td>
    <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_next_24h }}>{{ printf "%.3f" .Cpu.Max_next_24h }}</span></td>
    <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_next_7d }}>{{ printf "%.3f" .Cpu.Max_next_7d }}</span></td>
+   <td class="{{ .Cpu.Condition }}"><span class={{ .Cpu.Color_next_7d }}>{{ printf "%.3f" .Cpu.DaysInForecastRange }}</span></td>   
    <td class="{{ .Mem.Condition }}"><span><a href="/item/{{.Name}}/mem">Mem</a></span></td>
    <td class="{{ .Mem.Condition }}"><span>{{ .Mem.Threshold.CriticalScaled }}</span></td>
    <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_past_7d }}>{{ printf "%.3f" .Mem.Max_past_7d }}</span></td>
    <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_next_24h }}>{{ printf "%.3f" .Mem.Max_next_24h }}</span></td>
    <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_next_7d }}>{{ printf "%.3f" .Mem.Max_next_7d }}</span></td>
+   <td class="{{ .Mem.Condition }}"><span class={{ .Mem.Color_next_7d }}>{{ printf "%.3f" .Mem.DaysInForecastRange }}</span></td>   
 </tr>
 {{ end }}
 
