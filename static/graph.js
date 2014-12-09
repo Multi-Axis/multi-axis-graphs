@@ -22,6 +22,8 @@ $(function(){
     updatePeriod($("#periodTo").val(), 1)
   })
 
+
+
   document.getElementById('trendForecast').addEventListener('click', function() {
     wholeData.params.stop_lower = 14 * -86400;
     var days = document.getElementById('trendDays').value;
@@ -158,6 +160,7 @@ function draw() {
     document.getElementById('clearPeriods').addEventListener('click', function() {
                                                                         chart.interactiveLayer.clearPeriodLines();
                                                                         period = [];
+                                                                        clearPeriodDates();
                                                                         wholeData.params.stop_lower = null;
                                                                         wholeData.params.stop_upper = null;
                                                                       });
@@ -222,17 +225,32 @@ function setPeriodParams() {
 }
 
 function updatePeriod(value, i) {
-
   var epoch = new Date(value).getTime()/1000;
-  console.log(epoch)
   if (!isNaN(epoch)) {
-    console.log("ss")
     period[i] = epoch;
-    console.log(period)
     chart.interactiveLayer.clearPeriodLines();
     chart.interactiveLayer.renderPosition(period[0])
     chart.interactiveLayer.renderPosition(period[1])
+    setPeriodParams();
+    periodIsInvalid() ? setSubmitDisabled() : setSubmitEnabled();
   }
+}
+
+function clearPeriodDates() {
+  $("#periodFrom").val(" ")
+  $("#periodTo").val(" ")
+}
+
+function periodIsInvalid() {
+  return period[0] > period[1];
+}
+
+function setSubmitDisabled() {
+  $('#sendPeriod').attr('disabled', 'disabled');
+}
+
+function setSubmitEnabled() {
+  $('#sendPeriod').removeAttr('disabled')
 }
 
 function getYDomain(chartData, threshold) {
