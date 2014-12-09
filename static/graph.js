@@ -9,29 +9,26 @@ var zoomed;
 
 $(function(){
 
-  document.getElementById('zoomReset').addEventListener('click', function() {
-    document.getElementById('zoomReset').style.visibility = 'hidden'
+  $("#zoomReset").bind('click', function() {
+    $("#zoomReset").css('visibility', 'hidden');
     draw();
-  })
+  });
 
   $("#periodFrom").bind('input', function() {
     updatePeriod($("#periodFrom").val(), 0)
-  })
+  });
 
   $("#periodTo").bind('input', function() {
     updatePeriod($("#periodTo").val(), 1)
-  })
+  });
 
-
-
-  document.getElementById('trendForecast').addEventListener('click', function() {
-    wholeData.params.stop_lower = 14 * -86400;
-    var days = document.getElementById('trendDays').value;
-    if (!isNaN(parseInt(days))) {
-      wholeData.params.stop_lower = days * -86400;
-    }
+  $("#trendDays").bind('input', function(){
+    wholeData.params.stop_lower = parseInt($("#trendDays").val()) * -86400;
     wholeData.params.stop_upper = null;
-    console.log(wholeData.params)
+    updateParams();
+  });
+
+  $('#trendForecast').bind('click', function() {
     postData(wholeData.params, wholeData.threshold.value);
   });
 
@@ -41,13 +38,10 @@ $(function(){
 })
 
 function postData(params, threshold, doPost) {
-  f=doPost ? $.post : $.get;
-  f("/api/" + getCurrentFutid(), {
-      'params': JSON.stringify(params),
-      'threshold':threshold
-  }, function(data) {
-    drawAndSetData(data)
-  }, "json")
+  $[doPost ? "post" : "get"]("/api/" + getCurrentFutid(),
+      { 'params'   : JSON.stringify(params)
+      , 'threshold': threshold }
+      , drawAndSetData, "json")
 }
 
 function getCurrentFutid() {
@@ -176,8 +170,8 @@ function draw() {
 function appendStartAndEnd(period) {
   wholeData.params.stop_lower = Math.round(period[0]);
   wholeData.params.stop_upper = Math.round(period[1]);
-  $("#periodFrom").val(timeFormat(period[0]));
-  $("#periodTo").val(timeFormat(period[1]));
+  $("#periodFrom").val(period[0] ? timeFormat(period[0]) : "");
+  $("#periodTo").val(period[1] ? timeFormat(period[1]) : "");
  
   updateParams();
 }
