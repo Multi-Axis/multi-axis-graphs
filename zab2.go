@@ -280,6 +280,7 @@ func layout(w http.ResponseWriter, t *template.Template, data interface{}) {
 /* {{{ interfacing habbix --------------------------------------------------- */
 
 // tells habbix to re-sync database after parameter update
+// always returns true since my local habbix always fails...
 func updateFuture(id int) bool {
 	fmt.Printf("\nStarting sync...")
 	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id),habbixCfg).CombinedOutput()
