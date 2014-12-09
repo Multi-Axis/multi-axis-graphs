@@ -457,6 +457,11 @@ type Item struct {
 	Color_next_7d  string
 	Condition      string
 	Scale          int
+        ForecastDataRange   DataRange
+}
+type DataRange struct {
+	stop_lower  string
+	stop_upper  string
 }
 
 type Host struct {
@@ -512,19 +517,27 @@ func getItem(ifid int) (error, Item) {
 
 	var res Item
 	var vtype int
+        var dataRange string
+        var resRange DataRange
 
 	row := db.QueryRow(`
-		SELECT i.value_type, if.id, i.name, i.itemid, m.scale
+		SELECT i.value_type, if.id, i.name, i.itemid, m.scale, if.params
 		FROM item_future if
 		INNER JOIN items i on i.itemid = if.itemid
 		INNER JOIN metric m on m.key_ = i.key_
 		WHERE if.id = $1`, ifid)
 
-	if err := row.Scan(&vtype, &res.Id, &res.Name, &res.ItemId, &res.Scale); err != nil {
+
+	if err := row.Scan(&vtype, &res.Id, &res.Name, &res.ItemId, &res.Scale, &dataRange); err != nil {
 		return fmt.Errorf("fetching info failed (%g): %s", ifid, err), Item{}
 	}
 
 	res.Threshold = queryThreshold(ifid)
+        json.NewDecoder(strings.NewReader(dataRange)).Decode(&resRange)
+        res.ForecastDataRange=resRange
+	
+        db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
+		ifid).Scan(&res.Threshold, &res.ThresholdLow)
 
 	row = db.QueryRow(`
 	SELECT max(h.value_max) as max_past_7d, max(f1.value) as max_next_24h,
