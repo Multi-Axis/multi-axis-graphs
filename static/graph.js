@@ -64,7 +64,7 @@ function setData(data) {
       color: "green"
     }
   ];
-  $("#modelSelect").append($("<option></option>").val(1).html("linReg"));
+  $("#modelSelect").val(data.model);
 	$("#details").text(JSON.stringify(data.details));
 	$("#itemhost").text(data.metric + " @ " + data.host);
   $("#params").val(JSON.stringify(data.params));

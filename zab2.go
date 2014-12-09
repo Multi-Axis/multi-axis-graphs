@@ -33,6 +33,16 @@ func Scalefmt(s int, x float32) float32 {
 
 /* {{{ /item ---------------------------------------------------------------- */
 
+type GraphView struct {
+	Id string
+	Models []Model
+}
+
+type Model struct {
+	Id int
+	Name string
+}
+
 // handles requests/updates for specific items
 func itemHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("itemHandler")
@@ -53,8 +63,23 @@ func itemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	layout(w, itemTmpl, strconv.Itoa(id))
+	layout(w, itemTmpl, GraphView{strconv.Itoa(id), getModels()})
 }
+
+func getModels() []Model {
+	var models []Model
+	var id int
+	var name string
+
+	rows, _ := db.Query(`SELECT id, name FROM future_model`)
+	for rows.Next() {
+		rows.Scan(&id, &name)
+		models = append(models, Model{id, name})
+	}
+	return models
+}
+
+
 
 /* }}} */
 
@@ -69,6 +94,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	params := r.FormValue("params")
+	model  := r.FormValue("modelSelect")
 	
 	if r.Method == "POST" {
 		if (!isJSON(params)) {
@@ -79,7 +105,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		threshold := r.FormValue("threshold")
 		lower := r.FormValue("threshold_type")
 		fmt.Printf("type: %s", lower)
-		db.Exec(`UPDATE item_future SET params = $1 WHERE id = $2`, params, id)
+		db.Exec(`UPDATE item_future SET params = $1, model = $3 WHERE id = $2`, params, id, model)
 		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
@@ -293,6 +319,7 @@ func getItemFutureIdByHostMetric(host string, metric string) int {
 /* Deliver graph JSON data based on an item_future.id */
 func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams string) {
 	var vtype int
+	var modelId int
 	var itemId int        // unique id of item
 	var host string       // name of host server (?)
 	var params string     // current parameters used by forecast calculation
@@ -301,12 +328,12 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	var threshold float32 // value of current treshold
 	var lower bool        // true if treshold is lower limit rather than upper
 
-	db.QueryRow(`SELECT items.value_type, item_future.itemid, items.name, host, params, details
+	db.QueryRow(`SELECT item_future.modelid, items.value_type, item_future.itemid, items.name, host, params, details
 	FROM item_future
 	LEFT JOIN items on items.itemid = item_future.itemid
 	LEFT JOIN hosts on hosts.hostid = items.hostid
 	WHERE item_future.id = $1`,
-		ifId).Scan(&vtype, &itemId, &metric, &host, &params, &details)
+		ifId).Scan(&modelId, &vtype, &itemId, &metric, &host, &params, &details)
 
 	db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`, ifId).Scan(&threshold, &lower)
 
@@ -327,10 +354,10 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	}
 	output := fmt.Sprintf(
 		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s,
-		"threshold":%s, "history":%s, "future":%s }`,
+		"threshold":%s, "history":%s, "future":%s, "model":%d }`,
 		host, params, metric, details,
 		fmt.Sprintf(`{ "value":%f, "lower":%s }`, threshold, boolToJson(lower)),
-		history, future)
+		history, future, modelId)
 
 	w.Write([]byte(output))
 }
@@ -523,6 +550,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// establish db connection
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// check that habbix is present
 	_, err = exec.Command("habbix", "--version").CombinedOutput()
 	if err != nil {
@@ -533,6 +566,9 @@ func main() {
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
 	http.HandleFunc("/api/", apiHandler)
+
+	log.Print("Listening at port 8080 ( http://localhost:8080 )")
+
 	http.ListenAndServe(":8080", nil)
 }
 

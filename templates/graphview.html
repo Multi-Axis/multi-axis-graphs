@@ -19,42 +19,57 @@
 {{ end }}
 
 {{ define "body" }}
-   <div id="header">
-      <a href="/dashboard" class="btn">« Dashboard</a>
-   </div>
-   <div id="subheader">
-      <b data-futid="{{ . }}" id="itemhost"></b>
-      <a href="cpu" class="btn">cpu load</a>
-      <a href="mem" class="btn">available memory</a>
-      <a href="swap" class="btn">Free swap space</a>
-      <code>ItemFutureId = {{ . }}</code>
-      <input id="zoomReset" class="btn btn-primary" type="submit" value="Reset zoom" style="visibility:hidden;"/>
-   </div>
 
-   <div id="chart">
-      <svg style="height:500px; width:100%"></svg>
-   </div>  
-     
-   <div class="container-fluid">
-    <div class="row">
-      <form role="form" action="/api/{{ . }}" method="post" class="col-md-6">
+<div id="header">
+   <a href="/dashboard" class="btn">« Dashboard</a>
+</div>
 
+<div id="subheader">
+   <b data-futid="{{ .Id }}" id="itemhost"></b>
+   <a href="cpu" class="btn">cpu load</a>
+   <a href="mem" class="btn">available memory</a>
+   <a href="swap" class="btn">Free swap space</a>
+   <code>ItemFutureId = {{ .Id }}</code>
+   <input id="zoomReset" class="btn btn-primary" type="submit" value="Reset zoom" style="visibility:hidden;"/>
+</div>
+
+<div id="chart">
+   <svg style="height:500px; width:100%"></svg>
+</div>  
+  
+<form class="container-fluid" role="form" action="/api/{{ .Id }}" method="post">
+
+   <div class="row">
+      <div class="col-md-6">
+
+         <!-- MODEL -->
+         <div class="form-group">
+            <label>Forecast model</label>
+            <select id="modelSelect" class="form-control">
+               {{ range .Models }}
+                  <option value="{{ .Id }}">{{ .Name }}</option>
+               {{ end }}
+            </select>
+         </div>
+
+         <!-- THRESHOLD -->
          <div class="form-group">
             <label>Current threshold</label>
             <input type="number" step="any" id="threshold" name="threshold" class="form-control" />
          </div>
-
          <div class="form-group">
-         <div class="checkbox">
-            <b>Threshold:</b>
-            <label>
-              <input type="radio" name="threshold_type" id="threshold_lower" value="t"/> Low
-            </label>
-            <label>
-              <input type="radio" name="threshold_type" id="threshold_higher" value="f"/> High
-            </label>  
+            <div class="checkbox">
+               <b>Threshold:</b>
+               <label>
+                 <input type="radio" name="threshold_type" id="threshold_lower" value="t"/> Low
+               </label>
+               <label>
+                 <input type="radio" name="threshold_type" id="threshold_higher" value="f"/> High
+               </label>  
+            </div>
          </div>
-         </div>
+
+         <!-- PERIOD -->
          <div class="form-group">
             <label>Period</label>
             <p>
@@ -62,34 +77,30 @@
                <b>To:</b><input type="text" id="periodTo" />
             </p>
          </div>
-         <div class="form-group">
-            <label>Forecast model</label>
-            <select id="modelSelect" class="form-control"></select>
-         </div>
-         <div class="form-group">
-            <label>Model parameters</label>
-            <textarea class="form-control" name="params" id="params"></textarea>
-         </div>
 
-         <input id="sendPeriod" type="submit" class="btn btn-primary" value="Update item"/>
-         
-      </form>
-      <form role="form" class="col-md-6">
+         <!-- TREND -->
          <div class="form-group">
             <label>Trend forecast (default is 2 weeks)</label>
             <input type="number" step="any" class="form-control" id="trendDays" value="14" />
          </div>
-         <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update forecast with trend</button>
-         <button id="clearPeriods" class="btn btn-default" onclick='return false;'>Clear current forecast range</button>
 
-         <div class="form-group" style="margin-top:1em">
-            <label>Model details</label>
-            <p class="form-control-static">
-               <code id="details"></code>
-            </p>
+         <!-- CONTROLS -->
+         <input  id="sendPeriod"    class="btn btn-primary" type="submit" value="Update item"/>
+         <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update forecast with trend</button>
+         <button id="clearPeriods"  class="btn btn-default" onclick='return false'>Clear current forecast range</button>
+
+      </div>
+      <div class="col-md-6">
+         <i>Details from last forecast run</i>
+         <pre><code id="details"></code></pre>
+
+         <!-- PARAMS -->
+         <div class="form-group">
+            <label>Paramaters (Advanced configuration)</label>
+            <textarea class="form-control" name="params" id="params"></textarea>
          </div>
-      </form>
-    </div>
+      </div>
    </div>
+</form>
 
 {{ end }}
