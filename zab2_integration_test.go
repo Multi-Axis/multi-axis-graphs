@@ -100,7 +100,7 @@ func TestThresholds(t *testing.T) {
 			t.Errorf("%s","wrong threshold")
 		}
 		if (!strings.Contains(string(body), fmt.Sprintf("lower\":%s }",apiId.oldlower))) {
-			t.Errorf("%s","wrong  lower")
+			t.Errorf("%s","wrong lower")
 		}
 	}
 }
@@ -196,7 +196,7 @@ var wrongurl = []struct {
 	{"http://localhost:8080/"},
 }
 
-func TestWrong(t *testing.T) {
+func TestWrongUrl(t *testing.T) {
 	for _,wrong := range wrongurl {
 		r, err := http.Get(wrong.url)
 		if err != nil {
@@ -205,10 +205,10 @@ func TestWrong(t *testing.T) {
 		if (r.StatusCode != 404) {
 			t.Errorf("found url:%s with statuscode:%s",wrong.url,r.StatusCode)
 		}
-		err = server.Process.Kill()
-		if err != nil {
-			t.Errorf(err.Error())
-		}
+	}
+	err := server.Process.Kill()
+	if err != nil {
+		t.Errorf(err.Error())
 	}
 }
 
@@ -219,7 +219,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	server = exec.Command("go","run","zab2.go","-s","multi-axis-test","-h","--config=config_test.yaml")
+	exec.Command("go", "build", "-o", "test_bin", "zab2.go").Run()
+	server = exec.Command("test_bin","-s","multi-axis-test","-h","--config=config_test.yaml")
 	err = server.Start()
 	time.Sleep(5 * time.Second)
 	if err != nil {
