@@ -5,7 +5,7 @@ language: go
 
 before_script:
   - createuser -U postgres --createdb --superuser ohtu
-  - psql -c 'create database multi-axis-test;' -U postgres
-  - psql multi-axis-test -c 'create schema public;' -U postgres
-  - psql multi-axis-test -U postgres < test.dump.sql
+  - psql -c 'create database multi_axis_test;' -U postgres
+  - psql multi_axis_test -c 'create schema public;' -U postgres
+  - psql multi_axis_test -U postgres < test.dump.sql
 
