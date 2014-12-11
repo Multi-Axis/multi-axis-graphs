@@ -111,7 +111,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		warning, _  := strconv.ParseFloat(r.FormValue("tr_warning"), 32)
 		critical, _ := strconv.ParseFloat(r.FormValue("tr_critical"), 32)
 
-		tr := Threshold { lower, float32(high), float32(warning), float32(critical) }
+		tr := Threshold { lower, float32(high), float32(warning), float32(critical), 0 }
 
 		if (!isJSON(params)) {
 			http.Error(w, "Invalid params, not json", 400)
@@ -185,6 +185,7 @@ type Threshold struct {
 	High float32
 	Warning float32
 	Critical float32
+	CriticalScaled float32
 }
 
 type ByCondition struct { Hosts []Host }
@@ -196,12 +197,12 @@ func (h ByCondition) Less(i, j int) bool { return h.Hosts[i].ConditionNum > h.Ho
 // high = 1
 // warn = 2
 // critical = 3
-func getCondition(value float32, tr Threshold) (float64, string) {
-	if comp(tr.Lower, value, tr.Critical) {
+func getCondition(value float32, tr Threshold, scale float32) (float64, string) {
+	if comp(tr.Lower, value, tr.Critical / scale) {
 		return 3, "critical"
-	} else if comp(tr.Lower, value, tr.Warning) {
+	} else if comp(tr.Lower, value, tr.Warning / scale) {
 		return 2, "warn"
-	} else if comp(tr.Lower, value, tr.High) {
+	} else if comp(tr.Lower, value, tr.High / scale) {
 		return 1, "high"
 	} else {
 		return 0, "normal"
@@ -220,9 +221,9 @@ func setCondition(i *Item) float64 {
 	var c1 float64
 	var c2 float64
 	var c3 float64
-	c1, i.Color_past_7d  = getCondition(i.Max_past_7d, i.Threshold)
-	c2, i.Color_next_24h = getCondition(i.Max_next_24h, i.Threshold)
-	c3, i.Color_next_7d  = getCondition(i.Max_next_7d, i.Threshold)
+	c1, i.Color_past_7d  = getCondition(i.Max_past_7d, i.Threshold, float32(i.Scale))
+	c2, i.Color_next_24h = getCondition(i.Max_next_24h, i.Threshold, float32(i.Scale))
+	c3, i.Color_next_7d  = getCondition(i.Max_next_7d, i.Threshold, float32(i.Scale))
 	c := math.Max(c1, math.Max(c2, c3))
 	i.Condition = showCondition(c)
 	return c
@@ -525,6 +526,7 @@ func getItem(ifid int) (error, Item) {
 	}
 
 	res.Threshold = queryThreshold(ifid)
+	res.Threshold.CriticalScaled = res.Threshold.Critical / float32(res.Scale)
 
 	row = db.QueryRow(`
 	SELECT max(h.value_max) as max_past_7d, max(f1.value) as max_next_24h,
