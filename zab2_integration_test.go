@@ -107,10 +107,6 @@ func TestWrongUrl(t *testing.T) {
 			t.Errorf("found false url:%s with statuscode:%s", wrong.url, r.StatusCode)
 		}
 	}
-	err := server.Process.Kill()
-	if err != nil {
-		t.Errorf(err.Error())
-	}
 }
 
 func TestItemsFound(t *testing.T) {
@@ -284,6 +280,13 @@ func TestApi(t *testing.T) {
 
 	if !bytes.Equal(body, body2) {
 		t.Errorf("zoink!")
+	}
+}
+
+func TestEnds(t *testing.T) {
+	err := server.Process.Kill()
+	if err != nil {
+		t.Errorf(err.Error())
 	}
 }
 
