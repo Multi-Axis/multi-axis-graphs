@@ -132,7 +132,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		res, err = db.Exec(`UPDATE threshold SET lower = $1, high = $2, warning = $3, critical = $4
 		WHERE itemid = $5`, tr.Lower, tr.High, tr.Warning, tr.Critical, id)
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, "Update failed, check thresholds", 400)
 		}
 		affected, _ := res.RowsAffected()
 		log.Print(affected)
