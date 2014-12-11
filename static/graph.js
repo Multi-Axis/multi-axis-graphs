@@ -229,9 +229,11 @@ function updatePeriod(value, i) {
     chart.interactiveLayer.clearPeriodLines();
     chart.interactiveLayer.renderPosition(period[0])
     chart.interactiveLayer.renderPosition(period[1])
-    setPeriodParams();
-    periodIsInvalid() ? setSubmitDisabled() : setSubmitEnabled();
+  } else {
+    period[i] = null;
   }
+  periodIsInvalid() ? setSubmitDisabled() : setSubmitEnabled();
+  setPeriodParams();
 }
 
 function clearPeriodDates() {
