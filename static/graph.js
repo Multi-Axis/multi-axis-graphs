@@ -66,6 +66,7 @@ function setData(data) {
   $("#params").val(JSON.stringify(data.params));
   $("#threshold_lower").prop('checked', data.threshold.lower);
   $("#threshold_higher").prop('checked', !data.threshold.lower);
+  $("#trendDays").val(data.params.stop_lower < 0 ? (data.params.stop_lower / -86400) : '')
 }
 
 function updateParams() {
@@ -77,6 +78,10 @@ var timeFormat = function(d) {
   date.setUTCSeconds(d);
   return d3.time.format('%Y %b %d, %H:%M')(date);
 };
+
+var valueFormat = function(d) {
+  return Math.round((d / wholeData.scale)*100)/100;
+}
 
 var sortAscending = function(a, b) {
   return a-b;
@@ -105,7 +110,7 @@ function draw() {
 
     //set up X and Y-axis
     chart.xAxis.axisLabel('Time').tickFormat(timeFormat);
-    chart.yAxis.axisLabel('Values').tickFormat(d3.format('.02f'));
+    chart.yAxis.axisLabel('Values').tickFormat(valueFormat);
 
     //set domain based on history, future and threshold
     chart.yDomain(getYDomain(chartData, wholeData.threshold.high))
@@ -120,10 +125,10 @@ function draw() {
     chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
     chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
     period = [];
-    if (wholeData.params.stop_lower != null) {
+    if (wholeData.params.stop_lower != null && wholeData.params.stop_lower > 0) {
       period.push(wholeData.params.stop_lower)
     }
-    if (wholeData.params.stop_upper != null) {
+    if (wholeData.params.stop_upper != null && wholeData.params.stop_lower > 0) {
       period.push(wholeData.params.stop_upper);
     }
     period.sort(sortAscending);
@@ -145,11 +150,12 @@ function draw() {
     // draw a line when chart is clicked
     chart.interactiveLayer.dispatch.on('elementClick', function(e) {
                                                           if (e != undefined && period.length<2) {
-                                                            chart.interactiveLayer.renderPosition(e.pointXValue)
+                                                            chart.interactiveLayer.renderPosition(e.pointXValue);
                                                             period.push(e.pointXValue);
                                                             period.sort(sortAscending);
-
-                                                            if (period.length == 2) {appendStartAndEnd(period)}
+                                                            appendStartAndEnd(period);
+                                                            updateWholeData(period);
+                                                            updateParams();
                                                         }});
     //clear start and end points
     document.getElementById('clearPeriods').addEventListener('click', function() {
@@ -158,6 +164,7 @@ function draw() {
                                                                         clearPeriodDates();
                                                                         wholeData.params.stop_lower = null;
                                                                         wholeData.params.stop_upper = null;
+                                                                        updateParams();
                                                                       });
     
     $('#tr_high').val(wholeData.threshold.high)
@@ -171,20 +178,20 @@ function draw() {
 
 //Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
-  wholeData.params.stop_lower = Math.round(period[0]);
-  wholeData.params.stop_upper = Math.round(period[1]);
-  console.log(period)
   $("#periodFrom").val(period[0] && period[0] > 0 ? timeFormat(period[0]) : "");
   $("#periodTo").val(period[1] && period[1] > 0 ? timeFormat(period[1]) : "");
- 
   updateParams();
+}
+
+function updateWholeData(period) {
+  wholeData.params.stop_lower = Math.round(period[0]);
+  wholeData.params.stop_upper = Math.round(period[1]);
 }
 
 function renderThreshold(chart) {
   chart.interactiveLayer.clearThresholdLineAndText();
   chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.high));
 }
-
 
 function drawZoomedChart(data) {
   var newHistory = chartData[0].values.filter(function(d) {return d.time > data[0] && d.time < data[1]})
@@ -229,9 +236,11 @@ function updatePeriod(value, i) {
     chart.interactiveLayer.clearPeriodLines();
     chart.interactiveLayer.renderPosition(period[0])
     chart.interactiveLayer.renderPosition(period[1])
-    setPeriodParams();
-    periodIsInvalid() ? setSubmitDisabled() : setSubmitEnabled();
+  } else {
+    period[i] = null;
   }
+  periodIsInvalid() ? setSubmitDisabled() : setSubmitEnabled();
+  setPeriodParams();
 }
 
 function clearPeriodDates() {

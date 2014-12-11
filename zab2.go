@@ -15,11 +15,13 @@ import (
 	"strings"
 	"math"
 	"sort"
+	"flag"
 
 )
 
 //	Makes constant new db connections unnecessary.
 var db *sql.DB
+var habbixCfg string
 
 func isJSON(s string) bool {
     var js map[string]interface{}
@@ -45,7 +47,7 @@ type Model struct {
 
 // handles requests/updates for specific items
 func itemHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("itemHandler")
+	fmt.Printf("itemHandler, url:%s\n",r.URL.Path)
 
 	parts := strings.Split(r.URL.Path, "/")
 
@@ -85,6 +87,7 @@ func getModels() []Model {
 
 /* {{{ /api */
 func apiHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("apiHandler, url:%s\n",r.URL.Path)
 	parts := strings.Split(r.URL.Path, "/")
 	id, err := strconv.Atoi(parts[len(parts)-1])
 	if err != nil {
@@ -94,11 +97,12 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	params := r.FormValue("params")
-	
+	fmt.Printf(r.Method+"\n")
 	if r.Method == "POST" {
 
 		model, err := strconv.Atoi(r.FormValue("model"))
 		if err != nil {
+			fmt.Printf("model value fail")
 			http.Error(w, err.Error(), 400)
 			return
 		}
@@ -119,6 +123,10 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
+		fmt.Printf("type: %s", lower)
+
+
+		// threshold: update, or insert if non exists
 		// TODO: client should specify which threshold.id to use (or create new
 		// threshold)
 		res, err = db.Exec(`UPDATE threshold SET lower = $1, high = $2, warning = $3, critical = $4
@@ -133,8 +141,11 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 			critical) VALUES (default, $1, $2, $3, $4, $5)`,
 			id, tr.Lower, tr.High, tr.Warning, tr.Critical)
 		}
-		updateFuture(id)
-		http.Redirect(w, r, r.Header["Referer"][0], 302)
+		if updateFuture(id) {
+			http.Redirect(w, r, r.Header.Get("Referer"), 302)
+		} else { 
+			http.Error(w, "Update failed, check params", 400)
+		}
 
 	} else {
 		deliverItemByItemFutureId(w, id, params)
@@ -147,6 +158,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 // handles graph drawing thingy requests, css files, that sort of thing.
 func staticHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("staticHandler, url:%s\n",r.URL.Path)
 	url := r.URL.Path
 	path := strings.TrimPrefix(url, "/")
 
@@ -229,7 +241,7 @@ func showCondition(cond float64) string {
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("dashboardHandler")
+	fmt.Printf("dashboardHandler, url:%s\n",r.URL.Path)
 	hosts, error_hosts := getHosts(w)
 
 	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
@@ -269,27 +281,31 @@ func layout(w http.ResponseWriter, t *template.Template, data interface{}) {
 /* {{{ interfacing habbix --------------------------------------------------- */
 
 // tells habbix to re-sync database after parameter update
-func updateFuture(id int) {
+// always returns true since my local habbix always fails...
+func updateFuture(id int) bool {
 	fmt.Printf("\nStarting sync...")
-	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id)).CombinedOutput()
+	out, err := exec.Command("habbix", "sync", "-i", strconv.Itoa(id),habbixCfg).CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("DB sync error: %s\n",err.Error())
+		return true
 	}
 	fmt.Printf("%s", out)
-	fmt.Printf("\nDB Synced.")
+	fmt.Printf("DB Synced.\n")
+	return true
 }
 
 // gets future data from habbix without changing stored parameters
 func getFutureNoUpdate(params string, id int) string {
 	fmt.Printf("params=%s,id=%d\n", params, id)
 	fmt.Printf(fmt.Sprintf("'%s'\n", params))
-	cmd := exec.Command("habbix", "execute", "--outcombine", "-p", params, strconv.Itoa(id))
+	cmd := exec.Command("habbix", "execute", "--outcombine", "-p", params, strconv.Itoa(id),habbixCfg)
 	fmt.Println(cmd.Args)
 	out, err := cmd.Output()
 	var newJSON = string(out)
 	fmt.Printf("%s", newJSON)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("habbix execute error: %s\nJSON:%s\n",err.Error(),newJSON)
+		
 	}
 	return newJSON
 }
@@ -357,7 +373,8 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	var params string     // current parameters used by forecast calculation
 	var details string    // forecast-specific details
 	var metric string     // name of forecast metric
-
+	var scale int		//scale of forecast metric
+	
 	db.QueryRow(`SELECT item_future.modelid, items.value_type, item_future.itemid, items.name, host, params, details
 	FROM item_future
 	LEFT JOIN items on items.itemid = item_future.itemid
@@ -378,19 +395,32 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	var future string
 	if len(noUpdateParams) > 0 {
 		future = getFutureNoUpdate(noUpdateParams, ifId)
+		params = noUpdateParams
 	} else {
 		rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 		future = parseValueJSON(rows)
 	}
-
+	
+	row := db.QueryRow(`
+		SELECT m.scale
+		FROM item_future if
+		INNER JOIN items i on i.itemid = if.itemid
+		INNER JOIN metric m on m.key_ = i.key_
+		WHERE if.id = $1`, ifId)
+	
+	if err := row.Scan(&scale); err != nil {
+		fmt.Printf("fetching scale failed: %s", ifId, err)
+		scale = 1
+	}
+	
 	threshold := fmt.Sprintf(`{ "lower":%s, "high":%f, "warning":%f, "critical":%f }`,
 		boolToJson(tr.Lower), tr.High, tr.Warning, tr.Critical)
-
+	fmt.Printf("scale: %d\n",scale)
 	output := fmt.Sprintf(
 		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s,
-		"threshold":%s, "history":%s, "future":%s, "model":%d }`,
-		host, params, metric, details, threshold, history, future, modelId)
-
+		"threshold":%s, "history":%s, "future":%s, "model":%d, "scale":%d }`,
+		host, params, metric, details, threshold, history, future, modelId, scale)
+	
 	w.Write([]byte(output))
 }
 
@@ -583,8 +613,13 @@ func getFutureItems(w http.ResponseWriter) []Item {
 
 // initializes db connection and uses standard http.HandleFunc for routing
 func main() {
+	var database = flag.String("s","multi-axis","what db to connect to")
+	var hx = flag.String("h","config.yaml","what config for habbix")
+	flag.Parse()
+	habbixCfg = fmt.Sprintf("--config=%s", *hx)
+	fmt.Printf("connecting to: %s,\nhabbix cfg: %s\n",*database,habbixCfg)
 	var err error
-	db, err = sql.Open("postgres", "user=ohtu dbname=multi-axis sslmode=disable")
+	db, err = sql.Open("postgres",fmt.Sprintf("user=ohtu dbname=%s sslmode=disable", *database))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -596,17 +631,21 @@ func main() {
 	}
 
 	// check that habbix is present
-	_, err = exec.Command("habbix", "--version").CombinedOutput()
+	var hab []byte
+	hab, err = exec.Command("habbix", "--version").CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Printf("%s ...is present\n",string(hab))
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
 	http.HandleFunc("/api/", apiHandler)
 
 	log.Print("Listening at port 8080 ( http://localhost:8080 )")
+
+
+	fmt.Printf("starting server...\n")
 
 	http.ListenAndServe(":8080", nil)
 }
