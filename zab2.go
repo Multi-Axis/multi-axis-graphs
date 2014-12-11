@@ -373,7 +373,8 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	var params string     // current parameters used by forecast calculation
 	var details string    // forecast-specific details
 	var metric string     // name of forecast metric
-
+	var scale int		//scale of forecast metric
+	
 	db.QueryRow(`SELECT item_future.modelid, items.value_type, item_future.itemid, items.name, host, params, details
 	FROM item_future
 	LEFT JOIN items on items.itemid = item_future.itemid
@@ -398,15 +399,27 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 		rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 		future = parseValueJSON(rows)
 	}
-
+	
+	row := db.QueryRow(`
+		SELECT m.scale
+		FROM item_future if
+		INNER JOIN items i on i.itemid = if.itemid
+		INNER JOIN metric m on m.key_ = i.key_
+		WHERE if.id = $1`, ifId)
+	
+	if err := row.Scan(&scale); err != nil {
+		fmt.Printf("fetching scale failed: %s", ifId, err)
+		scale = 1
+	}
+	
 	threshold := fmt.Sprintf(`{ "lower":%s, "high":%f, "warning":%f, "critical":%f }`,
 		boolToJson(tr.Lower), tr.High, tr.Warning, tr.Critical)
-
+	fmt.Printf("scale: %d\n",scale)
 	output := fmt.Sprintf(
 		`{ "host":"%s", "params":%s, "metric":"%s", "details":%s,
-		"threshold":%s, "history":%s, "future":%s, "model":%d }`,
-		host, params, metric, details, threshold, history, future, modelId)
-
+		"threshold":%s, "history":%s, "future":%s, "model":%d, "scale":%d }`,
+		host, params, metric, details, threshold, history, future, modelId, scale)
+	
 	w.Write([]byte(output))
 }
 
