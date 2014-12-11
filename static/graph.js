@@ -66,6 +66,7 @@ function setData(data) {
   $("#params").val(JSON.stringify(data.params));
   $("#threshold_lower").prop('checked', data.threshold.lower);
   $("#threshold_higher").prop('checked', !data.threshold.lower);
+  $("#trendDays").val(data.params.stop_lower < 0 ? (data.params.stop_lower / -86400) : '')
 }
 
 function updateParams() {
@@ -120,10 +121,10 @@ function draw() {
     chart.interactiveLayer.renderPosition(wholeData.params.stop_lower)
     chart.interactiveLayer.renderPosition(wholeData.params.stop_upper)
     period = [];
-    if (wholeData.params.stop_lower != null) {
+    if (wholeData.params.stop_lower != null && wholeData.params.stop_lower > 0) {
       period.push(wholeData.params.stop_lower)
     }
-    if (wholeData.params.stop_upper != null) {
+    if (wholeData.params.stop_upper != null && wholeData.params.stop_lower > 0) {
       period.push(wholeData.params.stop_upper);
     }
     period.sort(sortAscending);
