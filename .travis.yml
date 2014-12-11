@@ -1,1 +1,10 @@
+addons:
+  postgresql: "9.3"
+
 language: go
+
+before_script:
+  - createuser -U postgres --createdb --superuser ohtu
+  - psql -c 'create database multi_axis_test;' -U postgres
+  - psql multi_axis_test -U postgres < test.dump.sql
+
