@@ -215,7 +215,7 @@ func TestWrongUrl(t *testing.T) {
 
 func init() {
 	exec.Command("go", "build", "-o", "test_bin", "zab2.go").Run()
-	server = exec.Command("test_bin","-s","multi-axis-test","-h","--config=config_test.yaml")
+	server = exec.Command("./test_bin","-s","multi-axis-test","-h","--config=config_test.yaml")
 	err := server.Start()
 	time.Sleep(5 * time.Second)
 	if err != nil {
