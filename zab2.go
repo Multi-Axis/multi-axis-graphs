@@ -395,6 +395,7 @@ func deliverItemByItemFutureId(w http.ResponseWriter, ifId int, noUpdateParams s
 	var future string
 	if len(noUpdateParams) > 0 {
 		future = getFutureNoUpdate(noUpdateParams, ifId)
+		params = noUpdateParams
 	} else {
 		rows, _ = db.Query(`SELECT clock, value FROM future WHERE itemid = $1 ORDER BY clock`, ifId)
 		future = parseValueJSON(rows)
