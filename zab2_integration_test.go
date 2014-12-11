@@ -122,6 +122,7 @@ func TestUpdates(t *testing.T) {
 		form.Set("params", fmt.Sprintf("{\"test\":%s}",apiId.id))
 		form.Set("threshold", apiId.newthreshold)
 		form.Set("threshold_type", apiId.newlower)
+		form.Set("model", "1")
 		//_, err := 
 		http.PostForm(fmt.Sprintf("http://localhost:8080/api/%s", apiId.id), form)	
 	//	defer resp.Body.Close()

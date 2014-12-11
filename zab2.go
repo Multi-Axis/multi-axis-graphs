@@ -97,11 +97,12 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 	params := r.FormValue("params")
-	
+	fmt.Printf(r.Method+"\n")
 	if r.Method == "POST" {
 
 		model, err := strconv.Atoi(r.FormValue("model"))
 		if err != nil {
+			fmt.Printf("model value fail")
 			http.Error(w, err.Error(), 400)
 			return
 		}
@@ -621,7 +622,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s is present\n",string(hab))
+	fmt.Printf("%s ...is present\n",string(hab))
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
