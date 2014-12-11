@@ -11,9 +11,10 @@ install:
   - gvm update && source $HOME/.gvm/scripts/gvm
   - gvm install go1.3.3 --binary || gvm install go1.3.3
   - gvm use go1.3.3
-  - go get -t -v ./...
 
 before_script:
+  - export GOPATH=$TRAVIS_BUILD_DIR:$GOPATH
+  - go get -t -v ./...
   - createuser -U postgres --createdb --superuser ohtu
   - psql -c 'create database multi_axis_test;' -U postgres
   - psql multi_axis_test -U postgres < test.dump.sql
