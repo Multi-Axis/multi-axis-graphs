@@ -246,6 +246,12 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
 	for i := range hosts {
+        	fmt.Println(hosts[i].Cpu.ItemId)
+        	fmt.Println(hosts[i].Cpu.ForecastDataRange.Stop_lower)
+        	fmt.Println(hosts[i].Cpu.ForecastDataRange.Stop_upper)
+        	fmt.Println(hosts[i].Mem.ItemId)
+        	fmt.Println(hosts[i].Mem.ForecastDataRange.Stop_lower)
+        	fmt.Println(hosts[i].Mem.ForecastDataRange.Stop_upper)
 		// cpu
 		c1 := setCondition(&hosts[i].Cpu)
 		c2 := setCondition(&hosts[i].Mem)
@@ -460,8 +466,8 @@ type Item struct {
         ForecastDataRange   DataRange
 }
 type DataRange struct {
-	stop_lower  string
-	stop_upper  string
+	Stop_lower  float64
+	Stop_upper  float64
 }
 
 type Host struct {
@@ -517,8 +523,9 @@ func getItem(ifid int) (error, Item) {
 
 	var res Item
 	var vtype int
-        var dataRange string
-        var resRange DataRange
+        var dataRange []byte
+//        var resRange DataRange
+//        var stop_lower string
 
 	row := db.QueryRow(`
 		SELECT i.value_type, if.id, i.name, i.itemid, m.scale, if.params
@@ -533,8 +540,14 @@ func getItem(ifid int) (error, Item) {
 	}
 
 	res.Threshold = queryThreshold(ifid)
-        json.NewDecoder(strings.NewReader(dataRange)).Decode(&resRange)
-        res.ForecastDataRange=resRange
+        //kaivetaan item_futuren params -jsonista rangen alku ja loppu
+
+        var dat map[string]interface{}
+        if err := json.Unmarshal(dataRange, &dat); err != nil {
+            panic(err)
+        }
+        res.ForecastDataRange.Stop_lower = dat["stop_lower"].(float64)
+        res.ForecastDataRange.Stop_upper = dat["stop_upper"].(float64)
 	
         db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
 		ifid).Scan(&res.Threshold, &res.ThresholdLow)
@@ -644,12 +657,14 @@ func main() {
 	}
 
 	// check that habbix is present
+/*
 	var hab []byte
 	hab, err = exec.Command("habbix", "--version").CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s ...is present\n",string(hab))
+*/
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
