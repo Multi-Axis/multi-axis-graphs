@@ -12,4 +12,5 @@ before_script:
   - mkdir forecast_models
   - curl -o bin/habbix https://github.com/Multi-Axis/test-utils/blob/master/ubuntu-bin/habbix
   - curl -o forecast_models/linreg https://github.com/Multi-Axis/test-utils/blob/master/ubuntu-bin/forecast_models/linreg
+  - habbix --version
 
