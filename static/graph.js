@@ -29,7 +29,14 @@ $(function(){
   });
 
   $('#trendForecast').bind('click', function() {
-    postData(wholeData.params, wholeData.threshold.value);
+    postData(wholeData.params, wholeData.threshold.value*wholeData.scale);
+  });
+
+  $('#sendPeriod').bind('click', function() {
+    var critical = $('#tr_critical').val() * wholeData.scale;
+    $('#tr_critical').val(critical);
+    $('#tr_warning').val(wholeData.threshold.lower ? critical / $('#tr_warning').val() : $('#tr_warning').val() * critical);
+    $('#tr_high').val(wholeData.threshold.lower ? critical / $('#tr_high').val() : $('#tr_high').val() * critical);
   });
 
   $.getJSON("/api/" + getCurrentFutid(), function(data) {
@@ -113,12 +120,16 @@ function draw() {
     chart.yAxis.axisLabel('Values').tickFormat(valueFormat);
 
     //set domain based on history, future and threshold
-    chart.yDomain(getYDomain(chartData, wholeData.threshold.high))
+    chart.yDomain(getYDomain(chartData, wholeData.threshold.critical, wholeData.threshold.warning, wholeData.threshold.high))
 
     //render the chart
     d3.select('#chart svg').datum(chartData).call(chart);
 
-    renderThreshold(chart);
+    chart.interactiveLayer.clearThresholdLineAndText();
+
+    renderThreshold(chart.yScale()(wholeData.threshold.critical), "Critical", "#FF0000")
+    renderThreshold(chart.yScale()(wholeData.threshold.warning), "s", "#FF3399")
+    renderThreshold(chart.yScale()(wholeData.threshold.high), "s", "#FF9933");
 
     //if the period comes from db it should be rendered
     chart.interactiveLayer.clearPeriodLines();
@@ -137,7 +148,10 @@ function draw() {
     //Update the chart when window resizes.
     nv.utils.windowResize(function() { 
       chart.update();
-      renderThreshold(chart);
+      chart.interactiveLayer.clearThresholdLineAndText();
+      renderThreshold(chart.yScale()(wholeData.threshold.critical), "Critical", "#FF0000")
+      renderThreshold(chart.yScale()(wholeData.threshold.warning), "s", "#FF3399")
+      renderThreshold(chart.yScale()(wholeData.threshold.high), "s", "#FF9933");
     });
 
     chart.interactiveLayer.dispatch.on('elementMouseup', function(e) {
@@ -167,14 +181,17 @@ function draw() {
                                                                         updateParams();
                                                                       });
     
-    $('#tr_high').val(wholeData.threshold.high)
-    $('#tr_warning').val(wholeData.threshold.warning)
-    $('#tr_critical').val(wholeData.threshold.critical)
+    $('#tr_critical').val(Math.round(wholeData.threshold.critical / wholeData.scale *100) / 100);
+    $('#tr_warning').val(roundAndScale(wholeData.threshold.warning));
+    $('#tr_high').val(roundAndScale(wholeData.threshold.high));
+
     return chart;
   });
 }
 
-
+function roundAndScale(data) {
+  return Math.round(wholeData.threshold.lower ? (wholeData.threshold.critical / data) * 100  : (data / wholeData.threshold.critical)*100)/100;
+}
 
 //Clear the previous threshold line and render the given threshold
 function appendStartAndEnd(period) {
@@ -188,9 +205,8 @@ function updateWholeData(period) {
   wholeData.params.stop_upper = Math.round(period[1]);
 }
 
-function renderThreshold(chart) {
-  chart.interactiveLayer.clearThresholdLineAndText();
-  chart.interactiveLayer.renderThreshold(chart.yScale()(wholeData.threshold.high));
+function renderThreshold(y, label, color) {
+  chart.interactiveLayer.renderThreshold(y, label, color);
 }
 
 function drawZoomedChart(data) {
@@ -260,13 +276,15 @@ function setSubmitEnabled() {
   $('#sendPeriod').removeAttr('disabled')
 }
 
-function getYDomain(chartData, threshold) {
-  if (threshold !== undefined) {
+function getYDomain(chartData, critical, warning, high) {
+  if (critical !== undefined && warning !== undefined && high !== undefined) {
+    var thresholdLines = [critical, warning, high];
     var domain = [];
     //we don't always know how many data objects there are in the chart
     for (i = 0; i < chartData.length; i++) {
-      domain.push(Math.min(threshold, Array.min(chartData[i].values)));
-      domain.push(Math.max(threshold, Array.max(chartData[i].values)));
+      console.log(chartData[i].values)
+      domain.push(Math.min(Math.min.apply(Math, thresholdLines), Array.min(chartData[i].values)));
+      domain.push(Math.max(Math.max.apply(Math, thresholdLines), Array.max(chartData[i].values)));
     }
     domain.sort(sortAscending);
     //After sorting all the potential domain max and min the real domain

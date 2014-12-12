@@ -42,6 +42,8 @@ nv.interactiveGuideline = function() {
 				var wrap = container.selectAll("g.nv-wrap.nv-interactiveLineLayer").data([data]);
 				var wrapEnter = wrap.enter().append("g").attr("class", " nv-wrap nv-interactiveLineLayer");
         wrapEnter.append("g").attr("class", 'nv-text');
+        wrapEnter.append("g").attr("class", 'nv-assistTexts ');
+        wrapEnter.append("g").attr("class", "nv-assistLines")
 				wrapEnter.append("g").attr("class", "nv-line");				
 				wrapEnter.append("g").attr("class", "nv-guideline")
         wrapEnter.append("g").attr("class", "nv-zoomCurtain")
@@ -225,8 +227,8 @@ nv.interactiveGuideline = function() {
         }
 
         layer.clearThresholdLineAndText = function() {
-          var line = wrap.select(".nv-line").selectAll("line");
-          var text = wrap.select(".nv-text").selectAll("text");
+          var line = wrap.select(".nv-assistLines").selectAll("line");
+          var text = wrap.select(".nv-assistTexts").selectAll("text");
           text.remove();
           line.remove();
         }
@@ -245,24 +247,25 @@ nv.interactiveGuideline = function() {
             .attr("y2",0);    
         }
 
-        layer.renderThreshold = function(x) {
+        layer.renderThreshold = function(x, label, color) {
           if (isNaN(x)) return;
           
-          var line = wrap.select(".nv-line")
+          var line = wrap.select(".nv-assistLines")
                 .selectAll("line")
                 .data((x != null) ? [nv.utils.NaNtoZero(x)] : [], String);
 
-          var text = wrap.select(".nv-text").selectAll("text").data("Threshold")
+          var text = wrap.select(".nv-assistTexts").selectAll("text").data([label]);
+          console.log(label, text.enter())
           text.enter()
-              .append("text")
-              .text("Threshold")
+              .append('text')
               .style("text-anchor", "middle")  
               .attr("y", x-4)
-              .attr("x", availableWidth/2);
+              .attr("x", availableWidth/2)
+              .text(label)
 
           line.enter()
             .append("line")
-            .attr("stroke", "red")
+            .attr("stroke", color)
             .style("stroke-dasharray", ("3, 3"))
             .attr("x1", 0)
             .attr("x2", availableWidth)

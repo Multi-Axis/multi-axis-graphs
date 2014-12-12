@@ -54,11 +54,15 @@
 
          <!-- THRESHOLD -->
          <div class="form-group">
-            <label>Threshold (high / warning / critical)</label>
+            <label style="width:100%">
+               <span style="width:20%;display:inline-block">Critical</span>
+               <span style="width:20%;display:inline-block">Severe</span>
+               <span style="width:20%;display:inline-block">High</span>
+            </label>
             <div class="form-inline">
-               <input style="width:20%" type="number" step="any" id="tr_high" name="tr_high" class="form-control" />
-               <input style="width:20%" type="number" step="any" id="tr_warning" name="tr_warning" class="form-control" />
                <input style="width:20%" type="number" step="any" id="tr_critical" name="tr_critical" class="form-control" />
+               <input style="width:20%" type="number" step="any" id="tr_warning" name="tr_warning" class="form-control" />
+               <input style="width:20%" type="number" step="any" id="tr_high" name="tr_high" class="form-control" />
                <label>
                  <input type="radio" name="tr_lower" id="threshold_lower" value="t"/> Low
                </label>
