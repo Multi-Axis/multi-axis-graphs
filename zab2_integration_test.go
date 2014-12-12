@@ -39,6 +39,9 @@ var graphtests = []struct {
 
 var basicupdatetests = []struct {
 	id          string
+	scale       string
+	oldmodel    string
+	newmodel    string
 	oldlower    string
 	newlower    string
 	oldhigh     string
@@ -49,30 +52,47 @@ var basicupdatetests = []struct {
 	newcritical string
 	oldparams   string
 	newparams   string
+	badparams   string
 }{
-	{"9",
+	{"9", "1",
+		"1", "1",
 		"false", "true",
 		"1.000000", "5.000000",
 		"0.800000", "15.000000",
 		"0.900000", "25.000000",
 		"params\":{\"stop_lower\":-518400,\"stop_upper\":null}",
 		"{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax\"}",
+		"",
 	},
-	{"6",
+	{"6", "1",
+		"1", "1",
 		"true", "true",
 		"60.000000", "95.000000",
 		"0.000000", "75.000000",
 		"0.000000", "35.000000",
 		"params\":{\"test\":6}",
 		"{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax\"}",
+		"",
 	},
-	{"8",
+	{"8", "1073741824",
+		"1", "2",
 		"false", "true",
 		"826781184.000000", "500000000.000000",
 		"885836992.000000", "500000000.000000",
 		"1181116032.000000", "500000000.000000",
 		"params\":{\"stop_lower\":1415488908,\"stop_upper\":1416395691}",
 		"{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax\"}",
+		"",
+	},
+	{"10", "1",
+		"1", "1",
+		"false", "false",
+		"0.000000", "0.000000",
+		"0.000000", "0.000000",
+		"0.000000", "0.000000",
+		"params\":{\"stop_lower\":1416638813,\"stop_upper\":1417050015,\"predict_length\":30}",
+		"{\"stop_lower\":1416638813,\"stop_upper\":1417050015,\"predict_length\":30}",
+		"{ i am not valid json",
 	},
 }
 
@@ -83,11 +103,11 @@ var forecasttests = []struct {
 }{
 	{"6",
 		"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
-		"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
+		"future", // habbix fail so doesn't work anyway
 	},
 	{"9",
 		"future\":[{\"time\":1418372405,\"val\":0},{\"time\":1418458805,\"val\":-0.0002},{\"time\":1418545205,\"val\":-0.0004},{\"time\":1418631605,\"val\":-0.0005},{\"time\":1418718005,\"val\":-0.0007},{\"time\":1418804405,\"val\":-0.0009},{\"time\":1418890805,\"val\":-0.0011},{\"time\":1418977205,\"val\":-0.0012}]",
-		"future", // habbix fail so doesn't work anyway
+		"future",
 	},
 	{"8",
 		"future\":[{\"time\":1418372405,\"val\":8.6340384e+08},{\"time\":1418458805,\"val\":8.6209216e+08},{\"time\":1418545205,\"val\":8.607805e+08},{\"time\":1418631605,\"val\":8.594688e+08},{\"time\":1418718005,\"val\":8.581571e+08},{\"time\":1418804405,\"val\":8.5684544e+08},{\"time\":1418890805,\"val\":8.5553376e+08},{\"time\":1418977205,\"val\":8.542221e+08}]",
@@ -130,32 +150,54 @@ func TestItemsFound(t *testing.T) {
 	}
 }
 
+func TestScales(t *testing.T) {
+	for _, apiId := range basicupdatetests {
+		r, err := http.Get(fmt.Sprintf("http://localhost:8080/api/%s", apiId.id))
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil && err != io.EOF {
+			t.Errorf(err.Error())
+		}
+		if !strings.Contains(string(body), fmt.Sprintf("\"scale\":%s", apiId.scale)) {
+			t.Errorf("wrong or no scale for item %s, should be %s", apiId.id, apiId.scale)
+		}
+	}
+}
+
 func TestDashBoard(t *testing.T)  { dashboarding(t, false) }
 func TestParams(t *testing.T)     { parametring(t, false) }
 func TestThresholds(t *testing.T) { tresholding(t, false) }
 func TestForecast(t *testing.T)   { forecasting(t, false) }
+func TestModel(t *testing.T)      { modeling(t, false) }
 
 func TestUpdates(t *testing.T) {
 	for _, apiId := range basicupdatetests {
 		form := url.Values{}
-		form.Set("params", apiId.newparams)
+		if apiId.badparams != "" {
+			form.Set("params", apiId.badparams)
+		} else {
+			form.Set("params", apiId.newparams)
+		}
 		form.Set("tr_high", apiId.newhigh)
 		form.Set("tr_critical", apiId.newcritical)
 		form.Set("tr_warning", apiId.newwarning)
 		form.Set("tr_lower", apiId.newlower)
-		form.Set("model", "1")
+		form.Set("model", apiId.newmodel)
 		_, err := http.PostForm(fmt.Sprintf("http://localhost:8080/api/%s", apiId.id), form)
 		if err != nil {
 			t.Errorf("error sending POST to server: %s", err.Error())
 		}
 	}
-	time.Sleep(5 * time.Second)
 }
 
 func TestPostUpdateDashBoard(t *testing.T)  { dashboarding(t, true) }
 func TestPostUpdateParams(t *testing.T)     { parametring(t, true) }
 func TestPostUpdateForecast(t *testing.T)   { forecasting(t, true) }
 func TestPostUpdateThresholds(t *testing.T) { tresholding(t, true) }
+func TestPostUpdateModel(t *testing.T)      { modeling(t, true) }
 
 func dashboarding(t *testing.T, post bool) {
 	r, err := http.Get("http://localhost:8080/dashboard")
@@ -221,8 +263,35 @@ func parametring(t *testing.T, post bool) {
 		if err != nil && err != io.EOF {
 			t.Errorf(err.Error())
 		}
-		if !strings.Contains(string(body), params) {
+		if apiId.badparams != "" {
+			if !strings.Contains(string(body), apiId.oldparams) ||
+				strings.Contains(string(body), apiId.badparams) {
+				t.Errorf("wrong params for item %s", apiId.id)
+			}
+		} else if !strings.Contains(string(body), params) {
 			t.Errorf("wrong params for item %s", apiId.id)
+		}
+	}
+}
+
+func modeling(t *testing.T, post bool) {
+	var model string
+	for _, apiId := range basicupdatetests {
+		if post {
+			model = apiId.newmodel
+		} else {
+			model = apiId.oldmodel
+		}
+		r, err := http.Get(fmt.Sprintf("http://localhost:8080/api/%s", apiId.id))
+		if err != nil && err != io.EOF {
+			t.Errorf(err.Error())
+		}
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil && err != io.EOF {
+			t.Errorf(err.Error())
+		}
+		if !strings.Contains(string(body), model) {
+			t.Errorf("wrong model for item %s", apiId.id)
 		}
 	}
 }
