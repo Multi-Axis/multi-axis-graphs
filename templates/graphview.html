@@ -1,0 +1,109 @@
+
+{{ define "head" }}
+   <title>Multi-Axis</title>
+   <link rel="stylesheet" href="/static/css/nv.d3.css" type="text/css">
+   <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+   <script src="http://d3js.org/d3.v3.min.js"></script>
+   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+   <script src="/static/nv.d3.js"></script>
+   <script src="/static/src/tooltip.js"></script>
+   <script src="/static/src/utils.js"></script>
+   <script src="/static/src/interactiveLayer.js"></script>
+   <script src="/static/src/models/legend.js"></script>
+   <script src="/static/src/models/axis.js"></script>
+   <script src="/static/src/models/scatter.js"></script>
+   <script src="/static/src/models/line.js"></script>
+   <script src="/static/src/models/lineChart.js"></script>
+   <script src="//code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+   <script src="/static/graph.js"></script>
+{{ end }}
+
+{{ define "body" }}
+
+<div id="header">
+   <a href="/dashboard" class="btn">« Dashboard</a>
+</div>
+
+<div id="subheader">
+   <b data-futid="{{ .Id }}" id="itemhost"></b>
+   <a href="cpu" class="btn">cpu load</a>
+   <a href="mem" class="btn">available memory</a>
+   <a href="swap" class="btn">Free swap space</a>
+   <code>ItemFutureId = {{ .Id }}</code>
+   <input id="zoomReset" class="btn btn-primary" type="submit" value="Reset zoom" style="visibility:hidden;"/>
+</div>
+
+<div id="chart">
+   <svg style="height:500px; width:100%"></svg>
+</div>  
+  
+<form class="container-fluid" role="form" action="/api/{{ .Id }}" method="post">
+
+   <div class="row">
+      <div class="col-md-6">
+
+         <!-- MODEL -->
+         <div class="form-group">
+            <label>Forecast model</label>
+            <select name="model" id="modelSelect" class="form-control">
+               {{ range .Models }}
+                  <option value="{{ .Id }}">{{ .Name }}</option>
+               {{ end }}
+            </select>
+         </div>
+
+         <!-- THRESHOLD -->
+         <div class="form-group">
+            <label style="width:100%">
+               <span style="width:20%;display:inline-block">Critical</span>
+               <span style="width:20%;display:inline-block">Severe</span>
+               <span style="width:20%;display:inline-block">High</span>
+            </label>
+            <div class="form-inline">
+               <input style="width:20%" type="number" step="any" id="tr_critical" name="tr_critical" class="form-control" />
+               <input style="width:20%" type="number" step="any" id="tr_warning" name="tr_warning" class="form-control" />
+               <input style="width:20%" type="number" step="any" id="tr_high" name="tr_high" class="form-control" />
+               <label>
+                 <input type="radio" name="tr_lower" id="threshold_lower" value="t"/> Low
+               </label>
+               <label>
+                 <input type="radio" name="tr_lower" id="threshold_higher" value="f"/> High
+               </label>  
+            </div>
+         </div>
+
+         <!-- PERIOD -->
+         <div class="form-group form-inline">
+            <label>Period</label>
+            <p>
+               <b>From:</b>&nbsp;<input style="width:35%" type="text" id="periodFrom" class="form-control" />
+               <b>To:</b>&nbsp;<input style="width:35%" type="text" id="periodTo" class="form-control" />
+            </p>
+         </div>
+
+         <!-- TREND -->
+         <div class="form-group">
+            <label>Predict from last <i>n</i> days</label>
+            <input type="number" step="any" class="form-control" id="trendDays" />
+         </div>
+
+         <!-- CONTROLS -->
+         <input  id="sendPeriod"    class="btn btn-primary" type="submit" value="Save"/>
+         <button id="trendForecast" class="btn btn-primary" onclick='return false'>Update view</button>
+         <button id="clearPeriods"  class="btn btn-default" onclick='return false'>Clear current forecast range</button>
+
+      </div>
+      <div class="col-md-6">
+         <i>Details from last forecast run</i>
+         <pre><code id="details"></code></pre>
+
+         <!-- PARAMS -->
+         <div class="form-group">
+            <label>Parameters (Advanced configuration)</label>
+            <textarea class="form-control" name="params" id="params"></textarea>
+         </div>
+      </div>
+   </div>
+</form>
+
+{{ end }}

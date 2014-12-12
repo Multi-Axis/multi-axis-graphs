@@ -1,0 +1,62 @@
+.dashboard td:nth-child(1), .dashboard th:nth-child(1),
+.dashboard td:nth-child(6), .dashboard th:nth-child(6) {
+   border-right:2px solid #ddd;
+}
+.high {
+   background:yellow;
+}
+.warn {
+   background:orange;
+}
+.critical {
+   background:#f2dede;
+}
+#header {
+   background:rgb(49,49,49);
+}
+#header a {
+   color:white;
+}
+#subheader {
+   background:rgb(131,255,141);
+   padding-left:0.5em;
+}
+
+span.critical {
+   color:red;
+}
+
+#slider {
+   margin: 5px;
+   margin-left: 100px;
+   margin-right: 35px;
+
+}
+#zoomWrap {
+   margin-left: 100px;
+}
+#zoomRange {
+   width: 20%;
+   border:0;
+   color:#f6931f;
+   background:none;
+   font-weight:bold;
+   width: 270px;
+}
+
+#main {
+   background:rgb(240, 240, 240);
+   min-height:100vh;
+   padding-bottom:1em;
+}
+
+#footer {
+   height:10em;
+   background:rgb(180,180,180);
+   box-shadow:0px 5px 10px rgb(100,100,100) inset;
+   padding:1em;
+}
+#footer .logo {
+   height:100%;
+   opacity:0.8;
+}

@@ -1,0 +1,21 @@
+{{ define "default-layout" }}
+<!DOCTYPE html>
+<html lang=en>
+   <head>
+      <meta charset="UTF-8">
+      {{ template "head" }}
+      <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+      <link rel="stylesheet" href="/static/css/style.css">
+      <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+   </head>
+   <body>
+      <main id=main>
+         {{ template "body" . }}
+      </main>
+   </body>
+   <footer id=footer>
+      <img class=logo src="/static/logo_multiaxis.png" />
+      &copy; Multi-Axis ohtu team
+   </footer>
+</html>
+{{ end }}
