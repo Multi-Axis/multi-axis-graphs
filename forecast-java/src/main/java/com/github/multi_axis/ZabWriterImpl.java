@@ -30,8 +30,10 @@ public abstract class ZabWriterImpl {
       return  
         timedValsDetailsJson(
           result.map( fun  -> 
-                        plot(fun, meta.bounds.start, meta.bounds.end, daySecs))
-                .orSome(Stream.nil()),
+            meta.drawFuture.map(time  ->
+              timedVal( time.longValue(),
+                        fun(BigDecimal.valueOf(time.longValue()))))
+            ).orSome(Stream.nil()),
           formatter(meta.type),
           result.map(fun  -> jsonbldr.build())
                 .orSome(jsonbldr

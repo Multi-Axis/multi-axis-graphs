@@ -86,21 +86,17 @@ public abstract class ZabReaderImpl {
                       .f().bind(err  -> success(List.nil()));
 
         final Validation<Errors, Stream<Long>>
-          boundsv = getJsonArray(json, "draw_future")
-                    .bind(arr  -> jsonNumbers(arr))
-                    .bind(nums  -> longs(nums))
-                    .bind(bounds  -> 
-                      (bounds.length() == 2)  
-                        ? success(bounds)
-                        : fail(badBounds()));
+          drawfutv =  getJsonArray(json, "draw_future")
+                      .bind(arr  -> jsonNumbers(arr))
+                      .bind(nums  -> longs(nums));
 
         return 
           ztypev.bind(    ztype  ->
           clocksv.bind(   clocks  ->
           valuesv.bind(   values  ->
           filtersv.bind(  filters  ->
-          boundsv.map(    bounds  ->
-          data( zab(ztype, bounds.index(0), bounds.index(1), filters),
+          drawfutv.map(   drawfuture  ->
+          data( zab(ztype, drawfuture, filters),
                 clocks.zip(values)
                   .map(cv  -> timedVal(cv._1().longValue(), cv._2()))))))));
 
