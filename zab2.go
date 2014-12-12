@@ -16,6 +16,7 @@ import (
 	"math"
 	"sort"
 	"flag"
+        "time"
 
 )
 
@@ -247,16 +248,16 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	//Analysoidaan liikennevalot ja määritetään serverikohtainen danger tai normal -luokittelu, sen perusteella syttyykö valot
 	for i := range hosts {
         	fmt.Println(hosts[i].Cpu.ItemId)
-        	fmt.Println(hosts[i].Cpu.ForecastDataRange.Stop_lower)
-        	fmt.Println(hosts[i].Cpu.ForecastDataRange.Stop_upper)
+        	fmt.Println(hosts[i].Cpu.DaysInForecastRange)
         	fmt.Println(hosts[i].Mem.ItemId)
-        	fmt.Println(hosts[i].Mem.ForecastDataRange.Stop_lower)
-        	fmt.Println(hosts[i].Mem.ForecastDataRange.Stop_upper)
-		// cpu
+        	fmt.Println(hosts[i].Mem.DaysInForecastRange)
+
 		c1 := setCondition(&hosts[i].Cpu)
 		c2 := setCondition(&hosts[i].Mem)
 		hosts[i].ConditionNum = math.Max(c1, c2)
 		hosts[i].Condition = showCondition(hosts[i].ConditionNum)
+        	fmt.Println(hosts[i].Condition)
+        	fmt.Println(hosts[i].ConditionNum)
 	}
 	sort.Sort(ByCondition{hosts})
 	dashboard := Dashboard{hosts, error_hosts}
@@ -463,11 +464,7 @@ type Item struct {
 	Color_next_7d  string
 	Condition      string
 	Scale          int
-        ForecastDataRange   DataRange
-}
-type DataRange struct {
-	Stop_lower  float64
-	Stop_upper  float64
+        DaysInForecastRange float64
 }
 
 type Host struct {
@@ -487,7 +484,7 @@ func getHosts(w http.ResponseWriter) ([]Host, []ErrorHost) {
 	rows, err := db.Query(`SELECT name FROM hosts WHERE hostid IN
 		(SELECT DISTINCT hosts_groups.hostid FROM hosts_groups INNER
 		JOIN items ON hosts_groups.hostid = items.hostid
-		WHERE hosts_groups.groupid > 1)`) // >1 discards templates
+		WHERE hosts_groups.groupid > 1) and hostid=10105`) // >1 discards templates
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -524,7 +521,7 @@ func getItem(ifid int) (error, Item) {
 	var res Item
 	var vtype int
         var dataRange []byte
-//        var resRange DataRange
+        var resRange float64
 //        var stop_lower string
 
 	row := db.QueryRow(`
@@ -546,11 +543,45 @@ func getItem(ifid int) (error, Item) {
         if err := json.Unmarshal(dataRange, &dat); err != nil {
             panic(err)
         }
-        res.ForecastDataRange.Stop_lower = dat["stop_lower"].(float64)
-        res.ForecastDataRange.Stop_upper = dat["stop_upper"].(float64)
-	
-        db.QueryRow(`SELECT value, lower FROM threshold WHERE itemid = $1`,
-		ifid).Scan(&res.Threshold, &res.ThresholdLow)
+ 
+        //muodostetaan alun, lopun ja tämän hetken perusteella ennusteaikavälin pituus sekunneissa
+        if dat["stop_upper"]==nil {
+            fmt.Println("nil")
+            if dat["stop_lower"].(float64)<0 {
+                resRange = dat["stop_lower"].(float64)*(-1)
+                fmt.Println("nil1")
+
+            } else if dat["stop_lower"].(float64)>=0 {
+                resRange = float64(time.Now().Unix()) - dat["stop_lower"].(float64)
+                fmt.Println("nil2")
+            } else {
+                resRange = 0
+                fmt.Println("nil3")
+            }
+        } else if dat["stop_upper"].(float64)>0 {
+            fmt.Println("upper")
+            if dat["stop_lower"].(float64)<0 {
+                resRange = dat["stop_lower"].(float64)*(-1) - (float64(time.Now().Unix())-dat["stop_lower"].(float64))
+                fmt.Println("upper1")
+            } else if dat["stop_lower"].(float64)>=0 {
+                resRange = dat["stop_upper"].(float64)-dat["stop_lower"].(float64)
+                fmt.Println("upper2")
+            } else {
+                resRange = 0
+                fmt.Println("upper3")
+            }            
+        } else {
+            resRange = 0
+        }
+
+        fmt.Println("Times:")
+        fmt.Println(float64(time.Now().Unix()))
+        fmt.Println(dat["stop_upper"])
+        fmt.Println(dat["stop_lower"])
+        fmt.Println(resRange)
+        
+        //muutos päiviksi ja tallennus Itemiin
+        res.DaysInForecastRange = resRange/(3600*24)
 
 	row = db.QueryRow(`
 	SELECT max(h.value_max) as max_past_7d, max(f1.value) as max_next_24h,

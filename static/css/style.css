@@ -1,5 +1,5 @@
 .dashboard td:nth-child(1), .dashboard th:nth-child(1),
-.dashboard td:nth-child(6), .dashboard th:nth-child(6) {
+.dashboard td:nth-child(7), .dashboard th:nth-child(7) {
    border-right:2px solid #ddd;
 }
 .high {
