@@ -7,4 +7,9 @@ before_script:
   - createuser -U postgres --createdb --superuser ohtu
   - createdb multi-axis-test -U postgres
   - psql multi-axis-test -U postgres < test.dump.sql
+  - mkdir bin
+  - export PATH=$PWD/bin:$PATH
+  - mkdir forecast_models
+  - curl -o bin/habbix https://github.com/Multi-Axis/test-utils/blob/master/ubuntu-bin/habbix
+  - curl -o forecast_models/linreg https://github.com/Multi-Axis/test-utils/blob/master/ubuntu-bin/forecast_models/linreg
 
