@@ -15,6 +15,7 @@ import static javax.json.Json.createObjectBuilder;
 
 import static com.github.multi_axis.ZabWriterUtils.timedValsDetailsJson;
 import static com.github.multi_axis.ZabWriterUtils.formatter;
+import static com.github.multi_axis.TimedValue.timedVal;
 import static com.github.multi_axis.Utils.*;
 
 public abstract class ZabWriterImpl {
@@ -32,7 +33,7 @@ public abstract class ZabWriterImpl {
           result.map( fun  -> 
             meta.drawFuture.map(time  ->
               timedVal( time.longValue(),
-                        fun(BigDecimal.valueOf(time.longValue()))))
+                        fun.f((BigDecimal.valueOf(time.longValue())))))
             ).orSome(Stream.nil()),
           formatter(meta.type),
           result.map(fun  -> jsonbldr.build())

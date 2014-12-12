@@ -1,6 +1,7 @@
 package com.github.multi_axis;
 
 import fj.data.List;
+import fj.data.Stream;
 
 public final class Zab {
 
