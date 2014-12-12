@@ -25,7 +25,7 @@ var dashboardtests = []struct {
 	new string
 }{
 	{"ohtu1", "ohtu1"},
-	{"kurpitsa", "ohtu1"},
+	{"kivimylly.relex.fi", "kivimylly.relex.fi"},
 	{"ohtu1", "ohtu1"},
 }
 
@@ -39,40 +39,40 @@ var graphtests = []struct {
 
 var basicupdatetests = []struct {
 	id           string
-	oldthreshold string
-	newthreshold string
-	oldcritical  string
-	newcritical  string
-	oldwarning   string
-	newwarning   string
 	oldlower     string
 	newlower     string
+	oldhigh string
+	newhigh string
+	oldwarning   string
+	newwarning   string
+	oldcritical  string
+	newcritical  string
 	oldparams    string
 	newparams    string
 }{
-	{"1",
-		"10.000000", "5.000000",
-		"10.000000", "5.000000",
-		"10.000000", "5.000000",
+	{"9",
 		"false", "true",
-		"params\":{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax",
-		"params\":{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax",
+		"1.000000", "5.000000",
+		"0.800000", "15.000000",
+		"0.900000", "25.000000",
+		"params\":{\"stop_lower\":-518400,\"stop_upper\":null}",
+		"{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax\"}",
 	},
 	{"6",
-		"85.000000", "95.000000",
-		"85.000000", "95.000000",
-		"85.000000", "95.000000",
-		"true", "false",
-		"params\":{\"pre_filter\":\"DailyMax\",\"stop_lower\":1411951812,\"stop_upper\":1414023544",
-		"params\":{\"pre_filter\":\"DailyMax\",\"stop_lower\":1411951812,\"stop_upper\":1414023544",
+		"true", "true",
+		"60.000000", "95.000000",
+		"0.000000", "75.000000",
+		"0.000000", "35.000000",
+		"params\":{\"test\":6}",
+		"{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax\"}",
 	},
 	{"8",
-		"900000000.000000", "500000000.000000",
-		"900000000.000000", "500000000.000000",
-		"900000000.000000", "500000000.000000",
-		"true", "false",
-		"params\":{\"stop_lower\":1413898327,\"stop_upper\":1416125574",
-		"params\":{\"stop_lower\":1413898327,\"stop_upper\":1416125574",
+		"false", "true",
+		"826781184.000000", "500000000.000000",
+		"885836992.000000", "500000000.000000",
+		"1181116032.000000", "500000000.000000",
+		"params\":{\"stop_lower\":1415488908,\"stop_upper\":1416395691}",
+		"{\"stop_lower\":1414380539,\"pre_filter\":\"DailyMax\"}",
 	},
 }
 
@@ -81,9 +81,18 @@ var forecasttests = []struct {
 	old string
 	new string
 }{
-	{"1", "ohtu1", "ohtu1"},
-	{"6", "kurpitsa", "ohtu1"},
-	{"8", "ohtu1", "koink1"},
+	{"6",
+	"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
+	"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
+	},
+	{"9", 
+	"future\":[{\"time\":1418372405,\"val\":0},{\"time\":1418458805,\"val\":-0.0002},{\"time\":1418545205,\"val\":-0.0004},{\"time\":1418631605,\"val\":-0.0005},{\"time\":1418718005,\"val\":-0.0007},{\"time\":1418804405,\"val\":-0.0009},{\"time\":1418890805,\"val\":-0.0011},{\"time\":1418977205,\"val\":-0.0012}]",
+	"future", // habbix fail so doesn't work anyway
+	},
+	{"8",
+	"future\":[{\"time\":1418372405,\"val\":8.6340384e+08},{\"time\":1418458805,\"val\":8.6209216e+08},{\"time\":1418545205,\"val\":8.607805e+08},{\"time\":1418631605,\"val\":8.594688e+08},{\"time\":1418718005,\"val\":8.581571e+08},{\"time\":1418804405,\"val\":8.5684544e+08},{\"time\":1418890805,\"val\":8.5553376e+08},{\"time\":1418977205,\"val\":8.542221e+08}]",
+	"future",
+	},
 }
 
 var wrongurl = []struct {
@@ -130,16 +139,17 @@ func TestUpdates(t *testing.T) {
 	for _, apiId := range basicupdatetests {
 		form := url.Values{}
 		form.Set("params", apiId.newparams)
-		form.Set("threshold", apiId.newthreshold)
-		form.Set("critical", apiId.newcritical)
-		form.Set("warning", apiId.newwarning)
-		form.Set("threshold_type", apiId.newlower)
+		form.Set("tr_high", apiId.newhigh)
+		form.Set("tr_critical", apiId.newcritical)
+		form.Set("tr_warning", apiId.newwarning)
+		form.Set("tr_lower", apiId.newlower)
 		form.Set("model", "1")
 		_, err := http.PostForm(fmt.Sprintf("http://localhost:8080/api/%s", apiId.id), form)
 		if err != nil {
 			t.Errorf("error sending POST to server: %s", err.Error())
 		}
 	}
+	time.Sleep(5 * time.Second)
 }
 
 func TestPostUpdateDashBoard(t *testing.T)  { dashboarding(t, true) }
@@ -218,15 +228,15 @@ func parametring(t *testing.T, post bool) {
 }
 
 func tresholding(t *testing.T, post bool) {
-	var threshold, critical, warning, lower string
+	var high, critical, warning, lower string
 	for _, apiId := range basicupdatetests {
 		if post {
-			threshold = apiId.newthreshold
+			high = apiId.newhigh
 			critical = apiId.newcritical
 			warning = apiId.newwarning
 			lower = apiId.newlower
 		} else {
-			threshold = apiId.oldthreshold
+			high = apiId.oldhigh
 			critical = apiId.oldcritical
 			warning = apiId.oldwarning
 			lower = apiId.oldlower
@@ -239,16 +249,19 @@ func tresholding(t *testing.T, post bool) {
 		if err != nil && err != io.EOF {
 			t.Errorf(err.Error())
 		}
-		tresbolding(t, body, "threshold", threshold, apiId.id)
-		tresbolding(t, body, "critical", critical, apiId.id)
-		tresbolding(t, body, "warning", warning, apiId.id)
 		tresbolding(t, body, "lower", lower, apiId.id)
+		tresbolding(t, body, "high", high, apiId.id)
+		tresbolding(t, body, "warning", warning, apiId.id)
+		tresbolding(t, body, "critical", critical, apiId.id)
+
+
+
 	}
 }
 
 func tresbolding(t *testing.T, body []byte, thing string, value string, id string) {
-	if !strings.Contains(string(body), fmt.Sprintf("%s\":{ \"value\":%s", thing, value)) {
-		t.Errorf("wrong %s for item %s", thing, id)
+	if !strings.Contains(string(body), fmt.Sprintf("%s\":%s", thing, value)) {
+		t.Errorf("wrong %s for item %s, should be %s", thing, id, value)
 	}
 }
 
