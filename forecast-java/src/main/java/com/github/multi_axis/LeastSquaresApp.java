@@ -5,8 +5,6 @@ import java.io.IOException;
 import fj.Unit;
 import fj.data.IO;
 
-import com.github.multi_axis.DummyErrorWriterImpl;
-
 import static com.github.multi_axis.Utils.first;
 import static com.github.multi_axis.Formats.Reader.zabReader;
 import static com.github.multi_axis.Formats.Writer.zabWriter;
@@ -20,7 +18,7 @@ public class LeastSquaresApp {
     run(final String arg) { 
 
       final ForecastProcesses fcasts =
-        forecastProcesses(DummyErrorWriterImpl.write)
+        forecastProcesses(ErrorWriterImpl.write)
           .with("leastSquares",
                 zabReader,
                 filtersFromZab,

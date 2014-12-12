@@ -5,8 +5,6 @@ import java.io.IOException;
 import fj.Unit;
 import fj.data.IO;
 
-import com.github.multi_axis.DummyErrorWriterImpl;
-
 import static fj.data.IOFunctions.stdoutPrintln;
 
 import static com.github.multi_axis.Utils.first;
@@ -20,7 +18,7 @@ public class ForecastApp {
 
   private static final ForecastProcesses
     fcasts =
-      forecastProcesses(DummyErrorWriterImpl.write)
+      forecastProcesses(ErrorWriterImpl.write)
         .with("leastSquares",
               zabReader,
               filtersFromZab,
