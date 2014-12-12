@@ -291,15 +291,9 @@ func TestEnds(t *testing.T) {
 }
 
 func init() {
-	dbinit := exec.Command("ssh", "ohtu@83.150.98.77",
-		"psql multi-axis-test -c 'drop schema public cascade;create schema public;';psql multi-axis-test < test.dump.sql")
-	err := dbinit.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
 	exec.Command("go", "build", "-o", "test_bin", "zab2.go").Run()
-	server = exec.Command("test_bin", "-s", "multi-axis-test", "-h", "--config=config_test.yaml")
-	err = server.Start()
+	server = exec.Command("./test_bin","-s","multi-axis-test","-h","--config=config_test.yaml")
+	err := server.Start()
 	time.Sleep(5 * time.Second)
 	if err != nil {
 		log.Fatal(err)
