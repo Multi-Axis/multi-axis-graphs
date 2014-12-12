@@ -26,7 +26,7 @@ var dashboardtests = []struct {
 }{
 	{"ohtu1", "ohtu1"},
 	{"kivimylly.relex.fi", "kivimylly.relex.fi"},
-	{"ohtu1", "ohtu1"},
+	{"<span class=high>0.813</span>", "<span class=normal>0.813</span>"},
 }
 
 var graphtests = []struct {
@@ -38,17 +38,17 @@ var graphtests = []struct {
 }
 
 var basicupdatetests = []struct {
-	id           string
-	oldlower     string
-	newlower     string
-	oldhigh string
-	newhigh string
-	oldwarning   string
-	newwarning   string
-	oldcritical  string
-	newcritical  string
-	oldparams    string
-	newparams    string
+	id          string
+	oldlower    string
+	newlower    string
+	oldhigh     string
+	newhigh     string
+	oldwarning  string
+	newwarning  string
+	oldcritical string
+	newcritical string
+	oldparams   string
+	newparams   string
 }{
 	{"9",
 		"false", "true",
@@ -82,16 +82,16 @@ var forecasttests = []struct {
 	new string
 }{
 	{"6",
-	"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
-	"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
+		"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
+		"future\":[{\"time\":1418372406,\"val\":99.6706},{\"time\":1418458806,\"val\":99.7462},{\"time\":1418545206,\"val\":99.8219},{\"time\":1418631606,\"val\":99.8975},{\"time\":1418718006,\"val\":99.9731},{\"time\":1418804406,\"val\":100.0487},{\"time\":1418890806,\"val\":100.1243},{\"time\":1418977206,\"val\":100.1999}]",
 	},
-	{"9", 
-	"future\":[{\"time\":1418372405,\"val\":0},{\"time\":1418458805,\"val\":-0.0002},{\"time\":1418545205,\"val\":-0.0004},{\"time\":1418631605,\"val\":-0.0005},{\"time\":1418718005,\"val\":-0.0007},{\"time\":1418804405,\"val\":-0.0009},{\"time\":1418890805,\"val\":-0.0011},{\"time\":1418977205,\"val\":-0.0012}]",
-	"future", // habbix fail so doesn't work anyway
+	{"9",
+		"future\":[{\"time\":1418372405,\"val\":0},{\"time\":1418458805,\"val\":-0.0002},{\"time\":1418545205,\"val\":-0.0004},{\"time\":1418631605,\"val\":-0.0005},{\"time\":1418718005,\"val\":-0.0007},{\"time\":1418804405,\"val\":-0.0009},{\"time\":1418890805,\"val\":-0.0011},{\"time\":1418977205,\"val\":-0.0012}]",
+		"future", // habbix fail so doesn't work anyway
 	},
 	{"8",
-	"future\":[{\"time\":1418372405,\"val\":8.6340384e+08},{\"time\":1418458805,\"val\":8.6209216e+08},{\"time\":1418545205,\"val\":8.607805e+08},{\"time\":1418631605,\"val\":8.594688e+08},{\"time\":1418718005,\"val\":8.581571e+08},{\"time\":1418804405,\"val\":8.5684544e+08},{\"time\":1418890805,\"val\":8.5553376e+08},{\"time\":1418977205,\"val\":8.542221e+08}]",
-	"future",
+		"future\":[{\"time\":1418372405,\"val\":8.6340384e+08},{\"time\":1418458805,\"val\":8.6209216e+08},{\"time\":1418545205,\"val\":8.607805e+08},{\"time\":1418631605,\"val\":8.594688e+08},{\"time\":1418718005,\"val\":8.581571e+08},{\"time\":1418804405,\"val\":8.5684544e+08},{\"time\":1418890805,\"val\":8.5553376e+08},{\"time\":1418977205,\"val\":8.542221e+08}]",
+		"future",
 	},
 }
 
@@ -254,8 +254,6 @@ func tresholding(t *testing.T, post bool) {
 		tresbolding(t, body, "warning", warning, apiId.id)
 		tresbolding(t, body, "critical", critical, apiId.id)
 
-
-
 	}
 }
 
@@ -304,8 +302,16 @@ func TestEnds(t *testing.T) {
 }
 
 func init() {
+	//	uncomment the following to enable automatic reset of test database before testing
+	//	this *will* cause problems with travis, so remember to undo/recomment!
+	/*	dbinit := exec.Command("ssh", "ohtu@83.150.98.77",
+		 "psql multi-axis-test -c 'drop schema public cascade;create schema public;';psql multi-axis-test < test.dump.sql")
+		err := dbinit.Run()
+		if err != nil {
+			log.Fatal(err)
+		} */
 	exec.Command("go", "build", "-o", "test_bin", "zab2.go").Run()
-	server = exec.Command("./test_bin","-s","multi-axis-test","-h","--config=config_test.yaml")
+	server = exec.Command("./test_bin", "-s", "multi-axis-test", "-h", "--config=config_test.yaml")
 	err := server.Start()
 	time.Sleep(5 * time.Second)
 	if err != nil {
