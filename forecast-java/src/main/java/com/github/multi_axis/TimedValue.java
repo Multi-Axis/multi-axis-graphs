@@ -1,5 +1,6 @@
 package com.github.multi_axis;
 
+/** A value associated with a moment in time. */
 
 public final class TimedValue<V> {
 

@@ -13,8 +13,12 @@ import static fj.data.Stream.iterateWhile;
 
 import static com.github.multi_axis.TimedValue.timedVal;
 
+/** Miscellaneous utilities. */
+
 public abstract class Utils {
 
+  /** Turn a List into Stream without exhausting the stack like 
+   *  List.toStream(). */
   public static final <A> Stream<A> toStream(final List<A> list) {
     final Stream<A> nil = Stream.nil();
     return list.foldRightC( (A a, Stream<A> stream)  -> stream.cons(a),

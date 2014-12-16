@@ -12,6 +12,8 @@ import static com.github.multi_axis.ForecastFunctions.timedValsLeastSquares;
 import static com.github.multi_axis.ForecastProcesses.forecastProcesses;
 import static com.github.multi_axis.Filters.filtersFromZab;
 
+/** An application that runs the least squares process from STDIN to STDOUT. */
+
 public class LeastSquaresApp {
 
   private static IO<Unit> 

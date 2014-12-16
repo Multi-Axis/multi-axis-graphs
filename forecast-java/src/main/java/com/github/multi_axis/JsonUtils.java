@@ -47,6 +47,8 @@ import static javax.json.Json.createArrayBuilder;
 import static com.github.multi_axis.Errors.*;
 import static com.github.multi_axis.TimedValue.timedVal;
 
+/** Various tools for dealing with JSON input and output. */
+
 public abstract class JsonUtils {
 
 

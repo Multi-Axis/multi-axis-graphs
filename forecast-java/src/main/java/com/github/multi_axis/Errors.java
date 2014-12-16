@@ -5,8 +5,14 @@ import java.lang.ClassCastException;
 import javax.json.stream.JsonParsingException;
 import javax.json.JsonException;
 
+/**
+ * A container for any one of the various error types. */
 
 public abstract class Errors {
+
+  /**
+   * A visitor interface that can be used in producing functions on
+   * Errors objects. */
 
   public interface ErrorMatcher<R> {
     public R caseMiscJsonError(JsonException e);

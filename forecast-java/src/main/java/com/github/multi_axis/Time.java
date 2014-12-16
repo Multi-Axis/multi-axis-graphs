@@ -10,6 +10,9 @@ import static fj.Ordering.EQ;
 import static fj.Ordering.GT;
 import static fj.Ord.ord;
 
+/** Miscellaneous time-related utilities. Provides an ordering relation for LocalDate
+ *  and conversions between LocalDate and long-valued seconds from unix epoch.
+ *  */
 
 public abstract class Time {
 
