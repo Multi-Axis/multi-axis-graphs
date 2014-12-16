@@ -29,16 +29,32 @@ import static com.github.multi_axis.Time.epochSecs;
 import static com.github.multi_axis.Time.dateOrd;
 import static com.github.multi_axis.Utils.*;
 
+/** Functions that do forecasts, and various methods used in building them. */
 
 public abstract class ForecastFunctions {
 
-  //TODO FIXME Add Javadocs for these.
+
+  /** Get a 'some'-wrapped maximum from a stream of values or a 'none' if the
+   *  input stream is empty.
+   *
+   *  @param ord  The ordering relation used for determining a maximum value.
+   *
+   *  @param as   The stream from which to find a maximum value. */
+
   public static <A> Option<A> 
     maximum(final Ord<A> ord, final Stream<A> as) {
       return as.foldLeft(
                   (Option<A> maxO, A a)  ->
                     maxO.map( max  -> ord.max.f(max).f(a)),
                   as.toOption()); }
+
+
+  /** Get a 'some'-wrapped minimum from a stream of values or a 'none' if the
+   *  input stream is empty.
+   *
+   *  @param ord  The ordering relation used for determining a minimum value.
+   *
+   *  @param as   The stream from which to find a minimum value. */
 
   public static <A> Option<A> 
     minimum(final Ord<A> ord, final Stream<A> as) {
@@ -47,13 +63,19 @@ public abstract class ForecastFunctions {
                     minO.map( min  -> ord.min.f(min).f(a)),
                   as.toOption()); }
 
+
+  /** A first-class function version of timedValsLeastSquares. */
   
   public static F<Stream<TimedValue<BigDecimal>>,
                   Option<F<BigDecimal,BigDecimal>>>
     timedValsLeastSquares =
       data  -> timedValsLeastSquares(data);
       
-  //TODO FIXME Add Javadocs for these.
+
+  /** Returns a 'some'-wrapped linear function fitted into an
+   *  input stream of TimedValue<BigDecimal> with least squares error if the
+   *  input has sufficient data, or a 'none' if it does not. */
+
   public static Option<F<BigDecimal, BigDecimal>>
     timedValsLeastSquares(final Stream<TimedValue<BigDecimal>> data) {
 
@@ -65,8 +87,10 @@ public abstract class ForecastFunctions {
 
       return simpleLeastSquares(times,vals); }
 
+  
   //TODO THINK these could perhaps use some code reuse?
-  //TODO FIXME Add Javadocs for these.
+
+  /** Returns the daily maximum values of the input stream. */
   public static Stream<TimedValue<BigDecimal>>
     dailyMaximums(final Stream<TimedValue<BigDecimal>> data) {
       return
@@ -83,10 +107,12 @@ public abstract class ForecastFunctions {
               TreeMap.empty(dateOrd)
             ).values()); }
 
+  /** A first-class function version of dailyMaximums. */
   public static F<Stream<TimedValue<BigDecimal>>,
                   Stream<TimedValue<BigDecimal>>>
     dailyMaximums = data  -> dailyMaximums(data);
 
+  /** Returns the daily minimum values of the input stream. */
   public static Stream<TimedValue<BigDecimal>>
     dailyMinimums(final Stream<TimedValue<BigDecimal>> data) {
       return
@@ -103,10 +129,12 @@ public abstract class ForecastFunctions {
               TreeMap.empty(dateOrd)
             ).values()); }
 
+  /** A first-class function version of dailyMinimums. */
   public static F<Stream<TimedValue<BigDecimal>>,
                   Stream<TimedValue<BigDecimal>>>
     dailyMinimums = data  -> dailyMinimums(data);
 
+  /** Returns the daily averages of the input stream. */
   public static Stream<TimedValue<BigDecimal>>
     dailyAverages(final Stream<TimedValue<BigDecimal>> data) {
 
@@ -130,11 +158,14 @@ public abstract class ForecastFunctions {
                         .valueE("No mean value. This shouldn't happen.")))
             .values()); }
 
+  /** A first-class function version of dailyMaximums. */
   public static F<Stream<TimedValue<BigDecimal>>,
                   Stream<TimedValue<BigDecimal>>>
     dailyAverages = data  -> dailyAverages(data);
 
-  /** Return the linear function fitted into the data with least squares error.
+  /** Return a 'some'-wrapped linear function fitted into the data with least
+   *  squares error if the input has sufficient data, or a 'none' if it does
+   *  not.
    * */
   public static Option<F<BigDecimal,BigDecimal>>
     simpleLeastSquares( final Stream<BigDecimal> as,
@@ -165,7 +196,8 @@ public abstract class ForecastFunctions {
       return result; }
 
 
-  /** Return the covariance of the values in the two streams. Values are
+  /** Return the 'some'-wrapped covariance of the values in the two streams,
+   *  or 'none' in case of insufficient data. Values are
    *  paired index by index. In case of uneven length, the leftovers at the
    *  tail end of the longer stream are ignored. */
   public static Option<BigDecimal>
@@ -191,19 +223,22 @@ public abstract class ForecastFunctions {
               x  -> x.divide(n.subtract(ONE),20,HALF_EVEN))
           : none())); }
 
-  /** Return the variance of the values in the stream. */
+  /** Return the 'some'-wrapped variance of the values in the stream, or 'none'
+   *  in case of insufficient data. */
   public static Option<BigDecimal> variance(Stream<BigDecimal> as) {
     return covariance(as,as); }
 
   //TODO FIXME THINK Better number type for this kind of arithmetic?
-  /** Return the mean of the values in the stream. */
+  /** Return the 'some'-wrapped mean of the values in the stream or 'none'
+   *  in case of an empty stream. */
   public static Option<BigDecimal>
     mean(final Stream<BigDecimal> as) {
       return  as.isNotEmpty()
                 ? sum(as).map(x  -> x.divide(length(as),20,HALF_EVEN))
                 : none(); }
 
-  /** Return the sum of the numbers in the stream. */
+  /** Return the 'some'-wrapped sum of the numbers in the stream or 'none' in
+   *  case of an empty stream. */
   public static Option<BigDecimal>
     sum(final Stream<BigDecimal> as) {
       return  as.isNotEmpty()

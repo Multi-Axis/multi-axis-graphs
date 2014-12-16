@@ -12,6 +12,8 @@ import fj.data.Option;
 
 import javax.json.JsonObject;
 
+/** Contains approved readers and writers for types of JSON input and output.
+ *  At the moment there is only one of each. */
 
 public abstract class Formats {
 

@@ -12,6 +12,10 @@ import com.github.multi_axis.Errors;
 
 import static javax.json.Json.createObjectBuilder;
 
+/**
+ * Holds a writer function for producing a JsonObject from an Errors.
+ * TODO: make some actual use of the various Exception arguments. */
+
 public final class ErrorWriterImpl {
 
   public static final F<Errors,JsonObject>
@@ -19,7 +23,6 @@ public final class ErrorWriterImpl {
 
   public static JsonObject
     writeError(final Errors err) {
-      //TODO THINK Something cleverer?
       return createObjectBuilder().add("error", errorString(err)).build(); }
 
   public static String

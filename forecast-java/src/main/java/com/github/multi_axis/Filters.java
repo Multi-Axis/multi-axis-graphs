@@ -22,6 +22,9 @@ import static com.github.multi_axis.ForecastFunctions.dailyMaximums;
 import static com.github.multi_axis.ForecastFunctions.dailyMinimums;
 import static com.github.multi_axis.ForecastFunctions.dailyAverages;
 
+/** Functions for extracting filters from metadata. At the moment only deals
+ *  with 'Zab'-type metadata. */
+
 public abstract class Filters {
 
   // The type inference has been very ornery here for some reason.
