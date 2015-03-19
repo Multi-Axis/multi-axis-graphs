@@ -1,4 +1,4 @@
 
-localDatabase: "host=localhost port=5432 user=ohtu dbname=multi-axis"
+localDatabase: "host=localhost port=5432 user=postgres dbname=multi-axis"
 
-zabbixDatabase: "host=localhost port=5432 user=ohtu dbname=zabbix"
+zabbixDatabase: "host=localhost port=5432 user=postgres dbname=zabbix"

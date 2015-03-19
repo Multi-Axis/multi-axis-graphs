@@ -87,6 +87,13 @@ func getModels() []Model {
 /* }}} */
 
 /* {{{ /api */
+
+/**
+ * 'apiHandler' is used to update the 'item_future' table.
+ *
+ * Updated item_future.id is the last part of the URL.  We parse updatable info
+ * from POST request body.
+ */
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("apiHandler, url:%s\n",r.URL.Path)
 	parts := strings.Split(r.URL.Path, "/")
@@ -210,6 +217,7 @@ func getCondition(value float32, tr Threshold, scale float32) (float64, string) 
 	}
 }
 
+/* (lower && x < y) || (!lower && x > y) */
 func comp(lower bool, x float32, y float32) bool {
 	if lower {
 		return x < y
@@ -276,6 +284,10 @@ var dashboardTmpl = template.Must(template.New("dashboard").ParseFiles(
 var itemTmpl = template.Must(template.New("item").ParseFiles(
 	"templates/default-layout.tmpl",
 	"templates/graphview.html"))
+
+var newDashboardTmpl = template.Must(template.New("dashboard-new").ParseFiles(
+	"templates/default-layout.tmpl",
+	"templates/dashboard-new.tmpl"))
 
 func layout(w http.ResponseWriter, t *template.Template, data interface{}) {
 	err := t.ExecuteTemplate(w, "default-layout", data)
@@ -513,6 +525,8 @@ func getHosts(w http.ResponseWriter) ([]Host, []ErrorHost) {
 	}
 	return hosts, error_hosts
 }
+
+/* Item by item_future.id */
 func getItem(ifid int) (error, Item) {
 
    if ifid < 0 {
@@ -547,40 +561,23 @@ func getItem(ifid int) (error, Item) {
 	}
 
 	//muodostetaan alun, lopun ja tämän hetken perusteella ennusteaikavälin pituus sekunneissa
-	if dat["stop_upper"]==nil {
-		fmt.Println("nil")
-		if dat["stop_lower"].(float64)<0 {
-			resRange = dat["stop_lower"].(float64)*(-1)
-			fmt.Println("nil1")
+	var stop_upper float64
+	var stop_lower float64
 
-		} else if dat["stop_lower"].(float64)>=0 {
-			resRange = float64(time.Now().Unix()) - dat["stop_lower"].(float64)
-			fmt.Println("nil2")
-		} else {
-			resRange = 0
-			fmt.Println("nil3")
-		}
-	} else if dat["stop_upper"].(float64)>0 {
-		fmt.Println("upper")
-		if dat["stop_lower"].(float64)<0 {
-			resRange = dat["stop_lower"].(float64)*(-1) - (float64(time.Now().Unix())-dat["stop_lower"].(float64))
-			fmt.Println("upper1")
-		} else if dat["stop_lower"].(float64)>=0 {
-			resRange = dat["stop_upper"].(float64)-dat["stop_lower"].(float64)
-			fmt.Println("upper2")
-		} else {
-			resRange = 0
-			fmt.Println("upper3")
-		}            
+	if dat["stop_upper"] == nil {
+		stop_upper = float64(time.Now().Unix())
 	} else {
-		resRange = 0
+		stop_upper = dat["stop_upper"].(float64)
 	}
 
-	fmt.Println("Times:")
-	fmt.Println(float64(time.Now().Unix()))
-	fmt.Println(dat["stop_upper"])
-	fmt.Println(dat["stop_lower"])
-	fmt.Println(resRange)
+	if dat["stop_lower"] == nil {
+		stop_lower = float64(time.Now().Unix())
+	} else {
+		stop_lower = dat["stop_lower"].(float64)
+	}
+
+	resRange = stop_upper - stop_lower
+
 	
 	//muutos päiviksi ja tallennus Itemiin
 	res.DaysInForecastRange = resRange/(3600*24)
@@ -612,6 +609,7 @@ func getItem(ifid int) (error, Item) {
 	return nil, res
 }
 
+/* ALL item_future.id's */
 func getFutureIds(w http.ResponseWriter) []int {
 	rows, err := db.Query("select id FROM item_future")
 	if err != nil {
@@ -672,43 +670,67 @@ func getFutureItems(w http.ResponseWriter) []Item {
 
 // initializes db connection and uses standard http.HandleFunc for routing
 func main() {
-	var database = flag.String("s","multi-axis","what db to connect to")
-	var hx = flag.String("h","config.yaml","what config for habbix")
-	flag.Parse()
-	habbixCfg = fmt.Sprintf("--config=%s", *hx)
-	fmt.Printf("connecting to: %s,\nhabbix cfg: %s\n",*database,habbixCfg)
 	var err error
-	db, err = sql.Open("postgres",fmt.Sprintf("user=ohtu dbname=%s sslmode=disable", *database))
+
+	var database = flag.String("s", "multi-axis", "Postgres database")
+	var user     = flag.String("u", "postgres", "Postgres user")
+	var config   = flag.String("c", "config.yaml", "Config file for habbix")
+	var port     = flag.String("p", "8080", "Port to bind to")
+	var host     = flag.String("h", "localhost", "Host to listen on")
+	flag.Parse()
+
+	habbixCfg = fmt.Sprintf("--config=%s", *config)
+
+	fmt.Printf("connecting to: %s,\nhabbix cfg: %s\n",*database,habbixCfg)
+
+	// establish db connection
+	db, err = sql.Open("postgres", fmt.Sprintf("user=%s dbname=%s sslmode=disable", *user, *database))
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// establish db connection
 	err = db.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// check that habbix is present
-/*
 	var hab []byte
 	hab, err = exec.Command("habbix", "--version").CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s ...is present\n",string(hab))
-*/
+	fmt.Printf("%s ...is present\n", string(hab))
+
 	http.HandleFunc("/static/", staticHandler)
 	http.HandleFunc("/dashboard", dashboardHandler)
+	http.HandleFunc("/new-dashboard", newDashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
+	http.HandleFunc("/habbix/", apiDirectHabbix)
 	http.HandleFunc("/api/", apiHandler)
 
-	log.Print("Listening at port 8080 ( http://localhost:8080 )")
+	addr := *host + ":" + *port
 
+	log.Printf("Listening at http://%s\n", addr)
+	http.ListenAndServe(addr, nil)
+}
 
-	fmt.Printf("starting server...\n")
+/* NOTE: this is possibly unsafe. running habbix with random arguments should is
+ * rather safe, but one may cause problems by reconfiguring something in the db. */
+func apiDirectHabbix(w http.ResponseWriter, r *http.Request) {
+	args := strings.Split(strings.TrimPrefix(r.URL.Path, "/habbix/"), " ")
+	fmt.Println(args)
+	cmd := exec.Command("habbix", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("habbix errored: %s", err)
+		http.Error(w, err.Error() + "\n" + string(out), 500)
+	} else {
+		w.Write(out)
+	}
+}
 
-	http.ListenAndServe(":8080", nil)
+func newDashboardHandler(w http.ResponseWriter, r *http.Request) {
+	layout(w, newDashboardTmpl, nil)
 }
 
 /* }}} */
