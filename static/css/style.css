@@ -2,15 +2,6 @@
 .dashboard td:nth-child(7), .dashboard th:nth-child(7) {
    border-right:2px solid #ddd;
 }
-.high {
-   background:yellow;
-}
-.warn {
-   background:orange;
-}
-.critical {
-   background:#f2dede;
-}
 #header {
    background:rgb(49,49,49);
 }
@@ -47,7 +38,6 @@ span.critical {
 #main {
    background:rgb(240, 240, 240);
    min-height:100vh;
-   padding-bottom:1em;
 }
 
 #footer {
@@ -60,3 +50,81 @@ span.critical {
    height:100%;
    opacity:0.8;
 }
+
+/* new dashboard */
+
+.new-dashboard {
+   display:flex;
+   flex-flow: row wrap;
+   justify-content:space-around;
+   align-items:stretch;
+   min-height:98vh;
+   background:#555;
+}
+
+.host-block {
+   flex-flow:row wrap;
+   flex-grow:1;
+
+   background:#DDD;
+   min-width:21em;
+   border:1px solid rgb(110, 110, 110);
+}
+.legend table, .host-block table {
+   width:100%;
+}
+.host-block tr {
+   border-top:1px solid rgb(155, 155, 155);
+}
+.legend th, .host-block th {
+   padding: 0 0.3em;
+   font-weight:normal;
+   text-align:center;
+}
+.legend td, .host-block td {
+   padding:0 0.5em;
+   text-align:right;
+   font-weight:bold;
+}
+.legend th:nth-child(1), .host-block th:nth-child(1) { /* item header */
+   background:rgb(211,211,211);
+}
+.legend td:nth-child(3), .host-block td:nth-child(3) { /* now */
+   background:rgb(211,211,211);
+}
+.legend td:nth-child(4), .host-block td:nth-child(4) { /* next 6h */
+   background:rgb(197,197,197);
+}
+.legend td:nth-child(5), .host-block td:nth-child(5) { /* next 6h */
+   background:rgb(180,180,180);
+}
+.host-block h2 {
+   font-size:1em;
+   font-weight:bold;
+   margin:0;
+   padding:0.2em;
+   letter-spacing:0.07em;
+   background:rgb(194, 194, 194);
+}
+.host-block h2 a {
+   color:rgb(0, 108, 231);
+   text-shadow:0 0 3px rgb(213, 234, 255);
+}
+.legend {
+   background:#DDD;
+   border:1px solid rgb(255, 68, 0);
+   border-left:none;
+   border-right:none;
+}
+
+/* indicator colors */
+.high { color:yellow; text-shadow: 0 0 4px black; }
+.normal { color:rgb(0,126,0);; text-shadow: 0 0 3px white; }
+.warn { color:orange;; text-shadow: 0 0 2px black; }
+.critical { color:red;; text-shadow: 0 0 4px rgb(255,173,173); }
+
+.error { background:rgb(255, 123, 123); }
+.warning { background:orange; }
+
+/* common */
+.right { float:right; }

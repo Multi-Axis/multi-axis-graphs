@@ -702,8 +702,8 @@ func main() {
 	fmt.Printf("%s ...is present\n", string(hab))
 
 	http.HandleFunc("/static/", staticHandler)
-	http.HandleFunc("/dashboard", dashboardHandler)
-	http.HandleFunc("/new-dashboard", newDashboardHandler)
+	http.HandleFunc("/old-dashboard", dashboardHandler)
+	http.HandleFunc("/dashboard", newDashboardHandler)
 	http.HandleFunc("/item/", itemHandler)
 	http.HandleFunc("/habbix/", apiDirectHabbix)
 	http.HandleFunc("/api/", apiHandler)
