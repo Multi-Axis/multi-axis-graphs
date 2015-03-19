@@ -9,5 +9,12 @@
     "node_modules",
     "bower_components",
     "output"
-  ]
+  ],
+  "dependencies": {
+    "purescript-jquery-ajax": "~0.0.2",
+    "purescript-maps": "~0.3.2",
+    "purescript-smolder": "~2.0.0",
+    "purescript-lists": "~0.6.0",
+    "purescript-json": "~0.4.8"
+  }
 }

@@ -2,3 +2,15 @@
 localDatabase: "host=localhost port=5432 user=postgres dbname=multi-axis"
 
 zabbixDatabase: "host=localhost port=5432 user=postgres dbname=zabbix"
+
+dashboard:
+   "default":
+      - cpu
+      - mem
+      - swap
+      - fsdata
+   # "pippurimylly.relex.fi":
+   #    - cpu
+   #    - mem
+   #    - swap
+   #    - fsdata
