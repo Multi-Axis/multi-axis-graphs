@@ -12,13 +12,14 @@ import Data.List (List())
 import DOM
 import Data.Foreign.Undefined
 
-import Text.Smolder.HTML (table, tr, th, td, a, h2, div, span)
+import Text.Smolder.HTML (small, table, tr, th, td, a, h2, div, span)
 import Text.Smolder.HTML.Attributes (href, className, title, colspan)
 import Text.Smolder.Markup
 import Text.Smolder.Renderer.String (render)
 
 import Debug.Trace
 import Data.Array (sortBy, map, length, null)
+import Math (round, pow, log, abs, ln10, floor)
 
 main = do
    runContT getCont trace
@@ -55,14 +56,21 @@ hostView x
             h2 $ do
                 a (text $ x.host.hostname) ! href ("https://monitoring.relex.fi/hostinventories.php?hostid=" <> show x.host.hostid)
                 span (text $ show x.score) ! className ("right " <> scoreClassName x.score)
-            table $ for_ (x.host.items) (itemView x.host.hostname)
+            table $ do
+                tr $ do
+                    th (text "days")    ! className "tiny"
+                    td (text "(-7, 0)") ! className "tiny"
+                    td (text "(0)")     ! className "tiny"
+                    td (text "(0, 1)")  ! className "tiny"
+                    td (text "(0, 6)")  ! className "tiny"
+                for_ (x.host.items) (itemView x.host.hostname)
 
 orderHosts :: [Host] -> [ScoredHost]
 orderHosts xs = sortBy cmp $ map withCritScore xs
   where cmp a b = compare b.score a.score
 
 withCritScore :: Host -> ScoredHost
-withCritScore h = { score : sum (map itemScore h.items) / length h.items, host : h }
+withCritScore h = { score : round (sum (map itemScore h.items) / length h.items), host : h }
   where itemScore i = sum $ map (thresholdScore i) [i.current_value, i.next24h, i.next6d]
 
 -- | Dashboard legend
@@ -114,6 +122,11 @@ thresholdScore i n = go
              | cmp n i.threshold_high     = 1
              | otherwise                  = 0
 
+sigFigs :: Number -> Number -> Number
+sigFigs n sig | n == 0 = 0
+              | otherwise = let mult = pow 10 (sig - floor (log (abs n) / ln10) - 1)
+                                in round (n * mult) / mult
+
 -- * foreign stuff
 
 foreign import asDashboard
@@ -123,12 +136,3 @@ foreign import asDashboard
     \   }\
     \}" :: forall eff. String -> Eff (dom :: DOM | eff) Unit
 
-foreign import sigFigs
-    "function sigFigs(n) {\
-    \   return function(sig) {\
-    \     if (n == 0) return 0;\
-    \     var mult = Math.pow(10, sig - Math.floor(Math.log(Math.abs(n)) / Math.LN10) - 1);\
-    \     console.log(n, sig, mult);\
-    \     return Math.round(n * mult) / mult;\
-    \   }\
-    \}" :: Number -> Number -> Number

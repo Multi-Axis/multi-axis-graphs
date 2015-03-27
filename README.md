@@ -8,6 +8,11 @@ Server metrics on multi-axis graphs.
 new-dashboard
 -------------
 
+The new dashboard javascript is checked out in git, `static/new-dashboard.js`,
+so it works out of the box with just the webserver set up.
+
+To develop it:
+
 ```sh
 cabal install purescript-0.6.8 # or later
 pacman -S npm
