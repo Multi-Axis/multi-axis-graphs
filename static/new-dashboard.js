@@ -6372,7 +6372,16 @@ var withCritScore = function (h) {
         return Data_Foldable.sum(Data_Foldable.foldableArray)(Data_Array.map(thresholdScore(i))([ i.current_value, i.next24h, i.next6d ]));
     };
     return {
-        score: $$Math.round(Data_Foldable.sum(Data_Foldable.foldableArray)(Data_Array.map(itemScore)(h.items)) / Data_Array.length(h.items)), 
+        score: (function () {
+            var _9 = Data_Array["null"](h.items);
+            if (_9) {
+                return 0;
+            };
+            if (!_9) {
+                return $$Math.round(Data_Foldable.sum(Data_Foldable.foldableArray)(Data_Array.map(itemScore)(h.items)) / Data_Array.length(h.items));
+            };
+            throw new Error("Failed pattern match");
+        })(), 
         host: h
     };
 };

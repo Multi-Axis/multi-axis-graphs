@@ -70,7 +70,8 @@ orderHosts xs = sortBy cmp $ map withCritScore xs
   where cmp a b = compare b.score a.score
 
 withCritScore :: Host -> ScoredHost
-withCritScore h = { score : round (sum (map itemScore h.items) / length h.items), host : h }
+withCritScore h = { score : if null h.items then 0 else round (sum (map itemScore h.items) / length h.items)
+                  , host : h }
   where itemScore i = sum $ map (thresholdScore i) [i.current_value, i.next24h, i.next6d]
 
 -- | Dashboard legend
