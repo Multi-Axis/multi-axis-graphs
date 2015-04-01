@@ -6489,14 +6489,15 @@ var hostView = function (_1) {
         return Data_Monoid.mempty(Text_Smolder_Markup.monoidMarkup);
     };
     if (Prelude.otherwise) {
-        var theView = Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.h2(Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.a(Text_Smolder_Markup.text(_1.host.hostname)))(Text_Smolder_HTML_Attributes.href("https://monitoring.relex.fi/hostinventories.php?hostid=" + Prelude.show(Prelude.showNumber)(_1.host.hostid))))(function () {
+        var hostNameView = Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.a(Text_Smolder_Markup.text(_1.host.hostname)))(Text_Smolder_HTML_Attributes.href("https://monitoring.relex.fi/host_screen.php?screenid=26&hostid=" + Prelude.show(Prelude.showNumber)(_1.host.hostid))))(function () {
             return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.span(Text_Smolder_Markup.text(Prelude.show(Prelude.showNumber)(_1.score))))(Text_Smolder_HTML_Attributes.className("right " + scoreClassName(_1.score)));
-        })))(function () {
+        });
+        var theView = Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.h2(hostNameView))(Text_Smolder_HTML_Attributes.className(scoreClassName(_1.score))))(function () {
             return Text_Smolder_HTML.table(Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_HTML.tr(Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.th(Text_Smolder_Markup.text("days")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
-                return Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("(-7, 0)")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
-                    return Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("(0)")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
-                        return Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("(0, 1)")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
-                            return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("(0, 6)")))(Text_Smolder_HTML_Attributes.className("tiny"));
+                return Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("last 7 days")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
+                    return Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("now")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
+                        return Prelude[">>="](Text_Smolder_Markup.bindMarkupM)(Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("tomorrow")))(Text_Smolder_HTML_Attributes.className("tiny")))(function () {
+                            return Text_Smolder_Markup["!"](Text_Smolder_Markup.attributableMarkupM)(Text_Smolder_HTML.td(Text_Smolder_Markup.text("next week")))(Text_Smolder_HTML_Attributes.className("tiny"));
                         });
                     });
                 });

@@ -53,17 +53,19 @@ hostView x
     | null x.host.items = mempty
     | otherwise = div theView ! className "host-block"
   where theView = do
-            h2 $ do
-                a (text $ x.host.hostname) ! href ("https://monitoring.relex.fi/hostinventories.php?hostid=" <> show x.host.hostid)
-                span (text $ show x.score) ! className ("right " <> scoreClassName x.score)
+            h2 hostNameView ! className (scoreClassName x.score)
             table $ do
                 tr $ do
                     th (text "days")    ! className "tiny"
-                    td (text "(-7, 0)") ! className "tiny"
-                    td (text "(0)")     ! className "tiny"
-                    td (text "(0, 1)")  ! className "tiny"
-                    td (text "(0, 6)")  ! className "tiny"
+                    td (text "last 7 days") ! className "tiny"
+                    td (text "now")     ! className "tiny"
+                    td (text "tomorrow")  ! className "tiny"
+                    td (text "next week")  ! className "tiny"
                 for_ (x.host.items) (itemView x.host.hostname)
+
+        hostNameView = do
+            a (text $ x.host.hostname) ! href ("https://monitoring.relex.fi/host_screen.php?screenid=26&hostid=" <> show x.host.hostid)
+            span (text $ show x.score) ! className ("right " <> scoreClassName x.score)
 
 orderHosts :: [Host] -> [ScoredHost]
 orderHosts xs = sortBy cmp $ map withCritScore xs
