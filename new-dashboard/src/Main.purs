@@ -13,6 +13,7 @@ import DOM
 import Data.Foreign.Undefined
 import Data.Date (fromString, nowEpochMilliseconds, toEpochMilliseconds)
 import Data.Time
+import Control.Timer (timeout)
 
 import Text.Smolder.HTML (small, table, tr, th, td, a, h2, div, span)
 import Text.Smolder.HTML.Attributes (href, className, title, colspan)
@@ -35,7 +36,10 @@ getCont = do
         lift $ do
             now <- nowEpochMilliseconds
             asDashboard $ render $ dashboardView now res
-        return ""
+
+        callCC \cont -> lift $ do
+            timeout 8000 (runContT getCont (\_ -> return unit ))
+        return "succesfully started"
 
 type Dashboard = { timestamp :: String, hosts :: [Host] }
 type Host = { hostname :: String, hostid :: Number, items :: [Item] }
