@@ -6373,11 +6373,11 @@ var withCritScore = function (h) {
     };
     return {
         score: (function () {
-            var _9 = Data_Array["null"](h.items);
-            if (_9) {
+            var _10 = Data_Array["null"](h.items);
+            if (_10) {
                 return 0;
             };
-            if (!_9) {
+            if (!_10) {
                 return $$Math.round(Data_Foldable.sum(Data_Foldable.foldableArray)(Data_Array.map(itemScore)(h.items)) / Data_Array.length(h.items));
             };
             throw new Error("Failed pattern match");
@@ -6385,29 +6385,29 @@ var withCritScore = function (h) {
         host: h
     };
 };
-var sigFigs = function (_5) {
-    return function (_6) {
-        if (_5 === 0) {
+var sigFigs = function (_6) {
+    return function (_7) {
+        if (_6 === 0) {
             return 0;
         };
         if (Prelude.otherwise) {
-            var mult = $$Math.pow(10)(_6 - $$Math.floor($$Math.log($$Math.abs(_5)) / $$Math.ln10) - 1);
-            return $$Math.round(_5 * mult) / mult;
+            var mult = $$Math.pow(10)(_7 - $$Math.floor($$Math.log($$Math.abs(_6)) / $$Math.ln10) - 1);
+            return $$Math.round(_6 * mult) / mult;
         };
         throw new Error("Failed pattern match");
     };
 };
-var scoreClassName = function (_4) {
-    if (_4 === 0) {
+var scoreClassName = function (_5) {
+    if (_5 === 0) {
         return "normal";
     };
-    if (_4 === 1) {
+    if (_5 === 1) {
         return "high";
     };
-    if (_4 <= 3) {
+    if (_5 <= 3) {
         return "warn";
     };
-    if (_4 >= 4) {
+    if (_5 >= 4) {
         return "critical";
     };
     if (Prelude.otherwise) {
@@ -6420,6 +6420,12 @@ var thresholdClassName = function (i) {
         return scoreClassName(thresholdScore(i)(n));
     };
 };
+var scalePP = function (_4) {
+    if (_4 === 1073741824) {
+        return "G";
+    };
+    return "";
+};
 var orderHosts = function (xs) {
     var cmp = function (a) {
         return function (b) {
@@ -6430,7 +6436,7 @@ var orderHosts = function (xs) {
 };
 var metricPP = function (i) {
     return function (v) {
-        return Prelude.show(Prelude.showNumber)(sigFigs(v / i.metric_scale)(2));
+        return Prelude.show(Prelude.showNumber)(sigFigs(v / i.metric_scale)(2)) + scalePP(i.metric_scale);
     };
 };
 
@@ -6515,12 +6521,12 @@ var dashboardView = function (x) {
     });
 };
 var getCont = (function () {
-    var handleContent = function (_7) {
-        if (_7 instanceof Data_Either.Left) {
+    var handleContent = function (_8) {
+        if (_8 instanceof Data_Either.Left) {
             return Prelude["return"](Control_Monad_Cont_Trans.monadContT(Control_Monad_Eff.monadEff))("request error");
         };
-        if (_7 instanceof Data_Either.Right) {
-            return Prelude[">>="](Control_Monad_Cont_Trans.bindContT(Control_Monad_Eff.monadEff))(Control_Monad_Trans.lift(Control_Monad_Cont_Trans.monadTransContT)(Control_Monad_Eff.monadEff)(asDashboard(Text_Smolder_Renderer_String.render(dashboardView(_7.value0)))))(function () {
+        if (_8 instanceof Data_Either.Right) {
+            return Prelude[">>="](Control_Monad_Cont_Trans.bindContT(Control_Monad_Eff.monadEff))(Control_Monad_Trans.lift(Control_Monad_Cont_Trans.monadTransContT)(Control_Monad_Eff.monadEff)(asDashboard(Text_Smolder_Renderer_String.render(dashboardView(_8.value0)))))(function () {
                 return Prelude["return"](Control_Monad_Cont_Trans.monadContT(Control_Monad_Eff.monadEff))("");
             });
         };
@@ -6542,6 +6548,7 @@ module.exports = {
     thresholdScore: thresholdScore, 
     scoreClassName: scoreClassName, 
     thresholdClassName: thresholdClassName, 
+    scalePP: scalePP, 
     metricPP: metricPP, 
     itemView: itemView, 
     legend: legend, 

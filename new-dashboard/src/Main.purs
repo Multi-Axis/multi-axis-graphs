@@ -89,7 +89,7 @@ legend timestamp = table $ tr $ do
 -- Item row (tr).
 itemView :: String -> Item -> Markup
 itemView hn i
-    | i.current_time < 0 = tr $ td (text "metric n/a") ! colspan "5" ! className "warning"
+    | i.current_time < 0 = tr $ td (text "metric n/a") ! colspan "5"
     | otherwise          = tr $ do
         th $ a (text i.metric_name)
             ! href ("/item/" <> hn <> "/" <> i.metric_name)
@@ -103,7 +103,10 @@ itemView hn i
         pp i.next6d
 
 metricPP :: Item -> Number -> String
-metricPP i v = show $ sigFigs (v / i.metric_scale) 2
+metricPP i v = show (sigFigs (v / i.metric_scale) 2) ++ scalePP i.metric_scale
+
+scalePP 1073741824 = "G"
+scalePP _ = ""
 
 thresholdClassName :: Item -> Number -> String
 thresholdClassName i n = scoreClassName (thresholdScore i n)

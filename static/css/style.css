@@ -118,24 +118,23 @@ span.critical {
 }
 
 /* indicator colors */
-.high {
+td.high {
    color:rgb(105, 105, 0);
    background:rgb(224, 215, 41) !important;
 }
-.normal {
+td.normal {
    color:rgb(0,126,0);
    text-shadow: 0 0 3px white;
 }
-.warn {
+td.warn {
    color:rgb(89, 67, 0);
    background:rgb(255,190,71) !important;
 }
-.critical {
+td.critical {
    color:red;
    background:rgb(255, 163, 163) !important;
    text-shadow: 0 0 4px rgb(255,173,173);
 }
-
 .error {
    background:rgb(255, 123, 123);
 }
