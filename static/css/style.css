@@ -131,7 +131,7 @@ td.warn {
    background:rgb(255,190,71) !important;
 }
 td.critical {
-   color:red;
+   color:rgb(157,0,0);
    background:rgb(255, 163, 163) !important;
    text-shadow: 0 0 4px rgb(255,173,173);
 }

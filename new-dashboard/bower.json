@@ -15,6 +15,7 @@
     "purescript-maps": "~0.3.2",
     "purescript-smolder": "~2.0.0",
     "purescript-lists": "~0.6.0",
-    "purescript-json": "~0.4.8"
+    "purescript-json": "~0.4.8",
+    "purescript-datetime": "~0.4.0"
   }
 }

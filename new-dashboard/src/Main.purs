@@ -8,9 +8,11 @@ import Data.Either
 import Data.Maybe
 import Data.Foldable
 import Data.Monoid
-import Data.List (List())
+import Data.List (List(), drop)
 import DOM
 import Data.Foreign.Undefined
+import Data.Date (fromString, nowEpochMilliseconds, toEpochMilliseconds)
+import Data.Time
 
 import Text.Smolder.HTML (small, table, tr, th, td, a, h2, div, span)
 import Text.Smolder.HTML.Attributes (href, className, title, colspan)
@@ -30,7 +32,9 @@ getCont = do
   where
     handleContent (Left err)  = return "request error"
     handleContent (Right res) = do
-        lift $ asDashboard $ render $ dashboardView res
+        lift $ do
+            now <- nowEpochMilliseconds
+            asDashboard $ render $ dashboardView now res
         return ""
 
 type Dashboard = { timestamp :: String, hosts :: [Host] }
@@ -43,9 +47,9 @@ type Item = { metric_name :: String, metric_scale :: Number
 
 type ScoredHost = { score :: Number, host :: Host }
 
-dashboardView :: Dashboard -> Markup
-dashboardView x = do
-    div (legend x.timestamp) ! className "legend"
+dashboardView :: Milliseconds -> Dashboard -> Markup
+dashboardView now x = do
+    div (legend now x.timestamp) ! className "legend"
     div (for_ (orderHosts x.hosts) hostView) ! className "new-dashboard"
 
 hostView :: ScoredHost -> Markup
@@ -77,14 +81,18 @@ withCritScore h = { score : if null h.items then 0 else round (sum (map itemScor
   where itemScore i = sum $ map (thresholdScore i) [i.current_value, i.next24h, i.next6d]
 
 -- | Dashboard legend
-legend :: String -> Markup
-legend timestamp = table $ tr $ do
+legend :: Milliseconds -> String -> Markup
+legend (Milliseconds now) timestamp = table $ tr $ do
     th (text "item link")
     td (text "past 7d")
     td (text "now")
     td (text "next 24h")
     td (text "next 6d")
-    td (text timestamp)
+    td (text $ "Updated " ++ show (floor $ (now - ts) / 1000) ++ " seconds ago")
+    where ts = case fromString timestamp of
+                   Nothing -> 0
+                   Just x -> case toEpochMilliseconds x of 
+                        Milliseconds y -> y
 
 -- Item row (tr).
 itemView :: String -> Item -> Markup
@@ -106,7 +114,9 @@ metricPP :: Item -> Number -> String
 metricPP i v = show (sigFigs (v / i.metric_scale) 2) ++ scalePP i.metric_scale
 
 scalePP 1073741824 = "G"
-scalePP _ = ""
+scalePP 1 = "%"
+scalePP 0.01 = "%"
+scalePP x = " (" ++ show x ++ ")"
 
 thresholdClassName :: Item -> Number -> String
 thresholdClassName i n = scoreClassName (thresholdScore i n)
